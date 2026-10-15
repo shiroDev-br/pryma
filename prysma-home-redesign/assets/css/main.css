@@ -1,0 +1,168 @@
+/* ── Design system — preto profundo + azul elétrico cinematográfico ───────── */
+:root {
+  --color-bg: #080808;
+  --color-surface: #111111;
+  --color-surface-elevated: #191919;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-gold: #1688ff;
+  --color-gold-light: #75b9ff;
+  --color-gold-dark: #0b5fca;
+  --color-text: #f4f1ea;
+  --color-text-muted: #a4a09a;
+  --color-danger: #df6666;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --focus-ring: 0 0 0 3px rgba(22, 136, 255, 0.55);
+  --transition-fast: 160ms ease;
+  --transition-normal: 260ms ease;
+  --transition-slow: 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* Carrossel cinematográfico — passo horizontal responsivo (cards próximos). */
+  --carousel-step: clamp(11rem, 20vw, 24rem);
+  --carousel-perspective: 1200px;
+}
+
+html {
+  background-color: var(--color-bg);
+  color-scheme: dark;
+}
+
+body {
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(22, 136, 255, 0.32);
+  color: var(--color-text);
+}
+
+/* Foco de teclado/remoto — muito evidente, independente de hover. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* Áreas seguras para bordas de TV. */
+.tv-safe {
+  padding-left: max(env(safe-area-inset-left), clamp(1rem, 3vw, 3rem));
+  padding-right: max(env(safe-area-inset-right), clamp(1rem, 3vw, 3rem));
+}
+
+/* Barra de rolagem discreta em trilhos horizontais. */
+.rail-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 136, 255, 0.25) transparent;
+}
+
+.rail-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.rail-scroll::-webkit-scrollbar-thumb {
+  background: rgba(22, 136, 255, 0.25);
+  border-radius: 3px;
+}
+
+/* Kicker dourado com traço — usado em títulos de seção. */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.kicker::before {
+  content: '';
+  width: 1.75rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-gold), transparent);
+}
+
+/* Brilho sutil no topo de superfícies. */
+.card-sheen {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
+}
+
+/* Fundo ambiente — usado por telas legadas e como fallback. */
+.bg-ambient {
+  background:
+    radial-gradient(120% 85% at 50% -20%, #161512 0%, transparent 55%),
+    linear-gradient(180deg, #0c0b0a 0%, var(--color-bg) 45%, #060606 100%);
+}
+
+/* Hairline dourada do card central — borda refinada, sem neon. */
+.gold-hairline {
+  position: relative;
+}
+
+.gold-hairline::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    rgba(225, 199, 131, 0.75),
+    rgba(200, 166, 90, 0.28) 38%,
+    rgba(200, 166, 90, 0.08) 62%,
+    rgba(225, 199, 131, 0.45)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Entradas sutis. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* Indicador AO VIVO. */
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.live-dot {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

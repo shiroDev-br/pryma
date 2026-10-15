@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#01040c"/>
+      <stop offset="0.45" stop-color="#06142d"/>
+      <stop offset="0.78" stop-color="#0a1f45"/>
+      <stop offset="1" stop-color="#0b5cff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.62" cy="0.68" r="0.45">
+      <stop offset="0" stop-color="#1688ff" stop-opacity="0.75"/>
+      <stop offset="0.4" stop-color="#0b5cff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#0b5cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="farM" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e2a5c"/>
+      <stop offset="1" stop-color="#071a3a"/>
+    </linearGradient>
+    <linearGradient id="midM" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#081c3f"/>
+      <stop offset="1" stop-color="#04122b"/>
+    </linearGradient>
+    <linearGradient id="nearM" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#030d22"/>
+      <stop offset="1" stop-color="#01040c"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1688ff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#1688ff" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+
+  <g fill="#a9b9d6" opacity="0.5">
+    <circle cx="240" cy="120" r="1.6"/>
+    <circle cx="520" cy="80" r="1.2"/>
+    <circle cx="880" cy="150" r="1.4"/>
+    <circle cx="1340" cy="90" r="1.6"/>
+    <circle cx="1620" cy="180" r="1.2"/>
+    <circle cx="1780" cy="70" r="1.5"/>
+    <circle cx="120" cy="260" r="1.1"/>
+    <circle cx="1120" cy="220" r="1.2"/>
+  </g>
+
+  <!-- Cordilheira distante -->
+  <path d="M0 700 L180 560 L300 640 L470 470 L610 610 L760 520 L900 640 L1060 500 L1210 620 L1380 480 L1530 600 L1680 530 L1810 620 L1920 540 L1920 1080 L0 1080 Z"
+        fill="url(#farM)" opacity="0.85"/>
+
+  <!-- Névoa entre camadas -->
+  <rect y="640" width="1920" height="220" fill="url(#mist)" opacity="0.5"/>
+
+  <!-- Cordilheira média -->
+  <path d="M0 820 L140 700 L280 780 L430 630 L560 760 L700 660 L840 790 L1010 640 L1160 770 L1320 650 L1470 780 L1620 690 L1760 800 L1920 700 L1920 1080 L0 1080 Z"
+        fill="url(#midM)"/>
+
+  <!-- Pico iluminado com luz de crista -->
+  <path d="M1010 640 L1090 720 L1160 770" fill="none" stroke="#1688ff" stroke-opacity="0.55" stroke-width="3"/>
+  <path d="M430 630 L500 700 L560 760" fill="none" stroke="#4d9dff" stroke-opacity="0.35" stroke-width="2.5"/>
+
+  <!-- Primeiro plano -->
+  <path d="M0 940 L220 860 L420 920 L640 830 L860 930 L1080 850 L1300 940 L1520 860 L1740 940 L1920 880 L1920 1080 L0 1080 Z"
+        fill="url(#nearM)"/>
+
+  <!-- Reflexo/brilho sutil no solo -->
+  <ellipse cx="1200" cy="1040" rx="700" ry="90" fill="#0b5cff" opacity="0.12"/>
+</svg>

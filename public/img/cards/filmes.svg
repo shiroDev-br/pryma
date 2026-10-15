@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#020817"/>
+      <stop offset="0.55" stop-color="#06142d"/>
+      <stop offset="1" stop-color="#0a1f45"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1688ff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#1688ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <polygon points="0,0 320,0 640,480 380,480" fill="url(#beam)"/>
+  <g fill="#0a1f45" stroke="#1688ff" stroke-opacity="0.4" stroke-width="2">
+    <rect x="50" y="70" width="540" height="46" rx="8"/>
+    <rect x="50" y="364" width="540" height="46" rx="8"/>
+  </g>
+  <g fill="#020817">
+    <rect x="70" y="82" width="34" height="22" rx="4"/>
+    <rect x="130" y="82" width="34" height="22" rx="4"/>
+    <rect x="190" y="82" width="34" height="22" rx="4"/>
+    <rect x="250" y="82" width="34" height="22" rx="4"/>
+    <rect x="310" y="82" width="34" height="22" rx="4"/>
+    <rect x="370" y="82" width="34" height="22" rx="4"/>
+    <rect x="430" y="82" width="34" height="22" rx="4"/>
+    <rect x="490" y="82" width="34" height="22" rx="4"/>
+    <rect x="550" y="82" width="34" height="22" rx="4"/>
+    <rect x="70" y="376" width="34" height="22" rx="4"/>
+    <rect x="130" y="376" width="34" height="22" rx="4"/>
+    <rect x="190" y="376" width="34" height="22" rx="4"/>
+    <rect x="250" y="376" width="34" height="22" rx="4"/>
+    <rect x="310" y="376" width="34" height="22" rx="4"/>
+    <rect x="370" y="376" width="34" height="22" rx="4"/>
+    <rect x="430" y="376" width="34" height="22" rx="4"/>
+    <rect x="490" y="376" width="34" height="22" rx="4"/>
+    <rect x="550" y="376" width="34" height="22" rx="4"/>
+  </g>
+  <g transform="translate(320 240)">
+    <circle r="56" fill="#020817" opacity="0.7" stroke="#1688ff" stroke-opacity="0.7" stroke-width="3"/>
+    <path d="M-16 -26 L30 0 L-16 26 Z" fill="#ffffff"/>
+  </g>
+  <rect width="640" height="480" fill="#020817" opacity="0.2"/>
+</svg>

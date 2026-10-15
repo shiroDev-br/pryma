@@ -1,0 +1,134 @@
+/* ── Design system — preto/azul profundo + azul elétrico ─────────────────────
+   Paleta da identidade Prysma (plano §9): base navy + acento azul elétrico. */
+:root {
+  --color-bg: #020817;
+  --color-surface: #06142d;
+  --color-surface-elevated: #0a1f45;
+  --color-border: rgba(169, 185, 214, 0.14);
+  --color-blue: #1688ff;
+  --color-blue-light: #4d9dff;
+  --color-blue-dark: #0b5cff;
+  --color-accent: #7c5cff;
+  --color-accent-light: #a18bff;
+  --color-text: #ffffff;
+  --color-text-muted: #a9b9d6;
+  --color-danger: #df6666;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --focus-ring: 0 0 0 3px rgba(11, 92, 255, 0.55);
+  --transition-fast: 160ms ease;
+  --transition-normal: 260ms ease;
+  --transition-slow: 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* Carrossel cinematográfico — larguras por profundidade (ativo / vizinho / distante).
+     Os offsets horizontais são derivados delas em NavigationCard. */
+  --card-w-active: clamp(16rem, 24vw, 26rem);
+  --card-w-near: clamp(9.5rem, 15vw, 16rem);
+  --card-w-far: clamp(8.5rem, 12.5vw, 13.5rem);
+  --card-gap: clamp(0.5rem, 1.2vw, 1.5rem);
+  --carousel-perspective: 1200px;
+}
+
+html {
+  background-color: var(--color-bg);
+  color-scheme: dark;
+}
+
+body {
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(22, 136, 255, 0.32);
+  color: var(--color-text);
+}
+
+/* Foco de teclado/remoto — muito evidente, independente de hover. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* Áreas seguras para bordas de TV. */
+.tv-safe {
+  padding-left: max(env(safe-area-inset-left), clamp(1rem, 3vw, 3rem));
+  padding-right: max(env(safe-area-inset-right), clamp(1rem, 3vw, 3rem));
+}
+
+/* Barra de rolagem discreta em trilhos horizontais. */
+.rail-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(22, 136, 255, 0.35) transparent;
+}
+
+.rail-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.rail-scroll::-webkit-scrollbar-thumb {
+  background: rgba(22, 136, 255, 0.35);
+  border-radius: 3px;
+}
+
+/* Kicker com traço — usado em títulos de seção. */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+}
+
+.kicker::before {
+  content: '';
+  width: 1.75rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-blue), transparent);
+}
+
+/* Brilho sutil no topo de superfícies. */
+.card-sheen {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
+}
+
+/* Fundo ambiente — base azul profundo, usada pelo AppBackground
+   e pela prévia da opção "Padrão" na tela de plano de fundo. */
+.bg-ambient {
+  background:
+    radial-gradient(120% 85% at 50% -20%, #0a1f45 0%, transparent 55%),
+    linear-gradient(180deg, #06142d 0%, var(--color-bg) 45%, #01040c 100%);
+}
+
+/* Indicador AO VIVO. */
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.live-dot {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
