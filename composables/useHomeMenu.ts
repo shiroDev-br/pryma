@@ -37,6 +37,7 @@ const EXTRA_ITEMS: HomeMenuItem[] = [
     title: 'Sobre',
     description: 'Versão, créditos e informações do app.',
     icon: 'material-symbols:info-outline-rounded',
+    to: '/about',
   },
   {
     id: 'cache',
