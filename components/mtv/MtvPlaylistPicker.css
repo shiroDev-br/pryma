@@ -1,0 +1,126 @@
+.mtv-picker {
+  background: radial-gradient(ellipse at top, #1a0a2e 0%, #0a0a1a 100%);
+}
+
+.mtv-picker__header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.mtv-picker__title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 2px 0 0 #ff2d95, -2px 0 0 #00e5ff;
+}
+
+.mtv-picker__subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.mtv-picker__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+}
+
+.mtv-picker__status--error {
+  color: #ff6b6b;
+}
+
+.mtv-picker__spinner {
+  width: 2rem;
+  height: 2rem;
+  color: #ff2d95;
+  animation: mtv-spin 1s linear infinite;
+}
+
+.mtv-picker__retry {
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  background: #ff2d95;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.mtv-picker__retry:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}
+
+.mtv-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  max-width: 900px;
+  width: 100%;
+}
+
+.mtv-picker__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 2rem 1.5rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s ease;
+}
+
+.mtv-picker__card:hover,
+.mtv-picker__card:focus-visible {
+  background: rgba(255, 45, 149, 0.08);
+  border-color: #ff2d95;
+  box-shadow: 0 0 30px rgba(255, 45, 149, 0.2);
+  transform: translateY(-4px);
+}
+
+.mtv-picker__card:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}
+
+.mtv-picker__card-era {
+  font-size: 3rem;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  color: #ff2d95;
+}
+
+.mtv-picker__card-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mtv-picker__card-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+}
+
+.mtv-picker__card-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #ff2d95;
+}
+
+@keyframes mtv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -54,7 +54,12 @@ export const ENDPOINTS = {
   search: `${API_PREFIX}/search`,
   suggest: `${API_PREFIX}/search/suggest`,
   heartbeat: `${API_PREFIX}/playback/heartbeat`,
+  mtvPlaylists: `${API_PREFIX}/mtv/playlists`,
+  mtvClips: `${API_PREFIX}/mtv/clips`,
 } as const;
+
+/** MTV — tamanho de página de clipes. */
+export const MTV_CLIPS_PAGE_SIZE = 50;
 
 /** Paginação — servidor nunca devolve o catálogo inteiro. */
 export const DEFAULT_PAGE_SIZE = 48;
@@ -86,8 +91,6 @@ export const SERIES_PROGRESS_MAX = 100;
 export const HTTP_TIMEOUT_MS = 15_000;
 export const MAX_RETRIES = 2;
 
-export const AUTH_COOKIE = 'iptv_session';
-
 /** Chaves de persistência local (preferências, nunca credenciais). */
 export const STORAGE_KEYS = {
   recentSearches: 'iptv.recentSearches',
@@ -103,13 +106,7 @@ export const STORAGE_KEYS = {
 
 export const MAX_RECENT_SEARCHES = 10;
 
-/** Futebol — endpoints do proxy Nitro (a chave da API nunca chega ao browser). */
-export const FOOTBALL_ENDPOINTS = {
-  teams: '/api/football/teams',
-  next: '/api/football/next',
-} as const;
-
-/** Live/EPG — endpoints do proxy Nitro. */
+/** Live/EPG — passa pela base da API (/api/v1). */
 export const LIVE_ENDPOINTS = {
   nowNext: (id: string) => `/api/v1/media/${encodeURIComponent(id)}/now-next`,
 } as const;

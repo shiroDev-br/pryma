@@ -2,15 +2,19 @@ import { useRuntimeConfig } from '#imports';
 import { createHttpClient } from '~/services/http';
 import { mockMediaRepository } from '~/mocks/media.mock';
 import { mockAuthRepository } from '~/mocks/auth.mock';
+import { mockMtvRepository } from '~/mocks/mtv.mock';
+import { clearTokens } from '~/utils/tokenStorage';
 import { createHttpMediaRepository } from './media.repository';
 import { createHttpAuthRepository } from './auth.repository';
-import type { AuthRepository, MediaRepository } from './contracts';
+import { createHttpMtvRepository } from './mtv.repository';
+import type { AuthRepository, MediaRepository, MtvRepository } from './contracts';
 
-export type { AuthRepository, MediaRepository } from './contracts';
+export type { AuthRepository, MediaRepository, MtvRepository } from './contracts';
 
 interface RepositoryBundle {
   media: MediaRepository;
   auth: AuthRepository;
+  mtv: MtvRepository;
 }
 
 let bundle: RepositoryBundle | null = null;
@@ -29,7 +33,11 @@ function createBundle(): RepositoryBundle {
         refreshInFlight = authRepository
           .refresh()
           .then(() => true)
-          .catch(() => false)
+          .catch(() => {
+            // Refresh recusado — a sessão local está morta.
+            clearTokens();
+            return false;
+          })
           .finally(() => {
             refreshInFlight = null;
           });
@@ -43,6 +51,7 @@ function createBundle(): RepositoryBundle {
   return {
     auth: authRepository,
     media: isMockMode() ? mockMediaRepository : createHttpMediaRepository(client),
+    mtv: isMockMode() ? mockMtvRepository : createHttpMtvRepository(client),
   };
 }
 

@@ -1,13 +1,10 @@
 import { computed, ref, watch } from 'vue';
-import {
-  FOOTBALL_ENDPOINTS,
-  FOOTBALL_MIN_SEARCH_CHARS,
-  FOOTBALL_SEARCH_DEBOUNCE_MS,
-} from '~/constants';
+import { FOOTBALL_MIN_SEARCH_CHARS, FOOTBALL_SEARCH_DEBOUNCE_MS } from '~/constants';
+import { searchFootballTeams } from '~/services/footballApi';
 import { readErrorMessage } from '~/utils/errors';
 import { sanitizeQuery } from '~/utils/sanitize';
 import { useDebouncedValue } from './useDebouncedValue';
-import type { FavoriteTeam, TeamSearchResponse } from '~/types';
+import type { FavoriteTeam } from '~/types';
 
 export interface TeamSearch {
   query: Ref<string>;
@@ -53,9 +50,7 @@ export function useTeamSearch(): TeamSearch {
     error.value = null;
 
     try {
-      const payload = await $fetch<TeamSearchResponse>(FOOTBALL_ENDPOINTS.teams, {
-        query: { search },
-      });
+      const payload = await searchFootballTeams(search);
 
       if (current !== token) return;
       results.value = payload.items;

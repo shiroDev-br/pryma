@@ -1,25 +1,28 @@
+import { useRuntimeConfig } from '#imports';
 import { ENDPOINTS } from '~/constants';
+import { getAccessToken } from '~/utils/tokenStorage';
 import type { HeartbeatPayload } from '~/types';
 
 /**
  * Heartbeat de reprodução — fire-and-forget.
- * Usa sendBeacon para sobreviver a navegação/fechamento da aba; fallback fetch keepalive.
+ * Usa fetch keepalive (não sendBeacon: beacon não leva header Authorization)
+ * para sobreviver a navegação/fechamento da aba.
  * Erros são engolidos de propósito: nunca devem derrubar a reprodução.
  */
 export function sendPlaybackHeartbeat(payload: HeartbeatPayload): void {
   if (typeof navigator === 'undefined') return;
 
-  const body = JSON.stringify(payload);
-  const blob = new Blob([body], { type: 'application/json' });
-  const beaconSent = navigator.sendBeacon?.(ENDPOINTS.heartbeat, blob) ?? false;
+  const base = String(useRuntimeConfig().public.apiBaseUrl || '').replace(/\/+$/, '');
+  const url = base + ENDPOINTS.heartbeat;
+  const token = getAccessToken();
 
-  if (beaconSent) return;
-
-  fetch(ENDPOINTS.heartbeat, {
+  fetch(url, {
     method: 'POST',
-    body,
-    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     keepalive: true,
-    credentials: 'same-origin',
   }).catch(() => undefined);
 }

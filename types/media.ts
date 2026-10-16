@@ -107,3 +107,23 @@ export interface GuideProgram {
   /** Marcador interno: true = está no ar agora */
   isNow?: boolean;
 }
+
+/* ── MTV (§6.14/6.15) ─────────────────────────────────────────────────── */
+
+/** Playlist de clipes MTV — id opaco (ex.: PL_80S). */
+export interface MtvPlaylist {
+  id: string;
+  name: string;
+  description: string;
+  clipCount: number;
+}
+
+/** Clip dentro de uma playlist — videoId é o ID oficial do YouTube. */
+export interface MtvClip {
+  id: string;
+  title: string;
+  artist: string;
+  playlistId: string;
+  durationSec: number;
+  thumbnailUrl: string;
+}

@@ -1,0 +1,61 @@
+.mtv-screen {
+  overflow: hidden;
+}
+
+.mtv-screen__scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+.mtv-screen__header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+}
+
+.mtv-screen__logo {
+  font-size: 2.25rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.06em;
+  color: #fff;
+  text-shadow:
+    2px 0 0 #ff2d95,
+    -2px 0 0 #00e5ff;
+}
+
+.mtv-screen__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.mtv-screen__home:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.mtv-screen__home:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}

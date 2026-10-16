@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
-import { FOOTBALL_ENDPOINTS, STORAGE_KEYS } from '~/constants';
+import { STORAGE_KEYS } from '~/constants';
+import { fetchNextFixture } from '~/services/footballApi';
 import { readErrorMessage } from '~/utils/errors';
-import type { FavoriteTeam, NextFixture, NextFixtureResponse } from '~/types';
+import type { FavoriteTeam, NextFixture } from '~/types';
 
 /** Estado de erro re-tenta em 5 min — evita martelar o proxy a cada render. */
 const ERROR_RETRY_MS = 5 * 60_000;
@@ -171,9 +172,7 @@ export const useFootballStore = defineStore('football', {
       this.error = null;
 
       try {
-        const payload = await $fetch<NextFixtureResponse>(FOOTBALL_ENDPOINTS.next, {
-          query: { team: team.id },
-        });
+        const payload = await fetchNextFixture(team.id);
 
         // O usuário trocou de time enquanto a request rodava — descarta.
         if (this.team?.id !== team.id) return;

@@ -1,12 +1,11 @@
 import { createApiError } from '~/utils/errors';
-import { sanitizeEmail } from '~/utils/sanitize';
 import { simulateLatency } from './latency';
 import type { AuthRepository } from '~/repositories/contracts';
 import type { User } from '~/types';
 
 /** Credenciais do modo dev — usadas pela página /dev. */
 export const MOCK_DEMO_CREDENTIALS = {
-  email: 'demo@iptv.dev',
+  username: 'demo',
   password: 'password',
 } as const;
 
@@ -15,13 +14,10 @@ const MOCK_SESSION_KEY = 'iptv.mock.session';
 /** Só persiste onde existe sessionStorage (browser); SSR/memory fica sem sessão. */
 const canPersist = typeof sessionStorage !== 'undefined';
 
-function buildUser(email: string): User {
-  const displayName = email.split('@')[0] || 'Viewer';
-
+function buildUser(username: string): User {
   return {
-    id: `user_${email}`,
-    email,
-    displayName: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+    id: `user_${username}`,
+    username,
     role: 'user',
     createdAt: '2026-01-01T00:00:00.000Z',
   };
@@ -62,12 +58,12 @@ export const mockAuthRepository: AuthRepository = {
   async login(payload) {
     await simulateLatency();
 
-    const email = sanitizeEmail(payload.email);
-    if (email !== MOCK_DEMO_CREDENTIALS.email || payload.password !== MOCK_DEMO_CREDENTIALS.password) {
-      throw createApiError(401, 'invalid_credentials', 'E-mail ou senha inválidos.');
+    const username = payload.username.trim();
+    if (username !== MOCK_DEMO_CREDENTIALS.username || payload.password !== MOCK_DEMO_CREDENTIALS.password) {
+      throw createApiError(401, 'invalid_credentials', 'Usuário ou senha inválidos.');
     }
 
-    const user = buildUser(email);
+    const user = buildUser(username);
     writeSession(user);
     return { user };
   },
@@ -96,8 +92,7 @@ export const mockAuthRepository: AuthRepository = {
       throw createApiError(403, 'invalid_credentials', 'Senha atual incorreta.');
     }
 
-    const updated: User = { ...user, displayName: payload.displayName ?? user.displayName };
-    writeSession(updated);
-    return updated;
+    writeSession(user);
+    return user;
   },
 };

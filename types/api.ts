@@ -33,4 +33,10 @@ export type QueryParams = Record<string, QueryValue>;
 
 export interface ApiRequestOptions {
   signal?: AbortSignal;
+  /**
+   * Se `false`, um `401 session_expired` NÃO dispara o refresh automático —
+   * usado pelo próprio `POST /auth/refresh` para não tentar se renovar
+   * recursivamente (evita deadlock quando o refresh token também está morto).
+   */
+  allowRefresh?: boolean;
 }

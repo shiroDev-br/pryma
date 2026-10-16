@@ -5,7 +5,6 @@ import type { ApiError, RequestStatus } from '~/types';
 export interface AuthComposable {
   user: ComputedRef<User | null>;
   isAuthenticated: ComputedRef<boolean>;
-  displayName: ComputedRef<string>;
   status: ComputedRef<RequestStatus>;
   error: ComputedRef<ApiError | null>;
   login(payload: LoginPayload): Promise<boolean>;
@@ -22,7 +21,6 @@ export function useAuth(): AuthComposable {
   return {
     user: computed(() => store.user),
     isAuthenticated: computed(() => store.isAuthenticated),
-    displayName: computed(() => store.displayName),
     status: computed(() => store.status),
     error: computed(() => store.error),
     login: (payload) => store.login(payload),

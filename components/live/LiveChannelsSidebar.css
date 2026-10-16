@@ -1,0 +1,31 @@
+/* Caixa de busca da coluna. */
+.search-box {
+  border: 1px solid rgba(124, 154, 255, 0.16);
+  border-radius: var(--radius-md);
+  background: rgba(3, 9, 24, 0.55);
+}
+
+/* Linha "grupo atual" — mesmo degradê da aba ativa. */
+.group-row {
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, #1e55e6 0%, #4a43d8 100%);
+  box-shadow: 0 8px 24px rgba(30, 85, 230, 0.28);
+}
+
+.group-row:focus-visible {
+  border-radius: var(--radius-md);
+}
+
+/* Slide transition para categorias e guias da coluna. */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.25s ease-out;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+  overflow: hidden;
+}

@@ -34,6 +34,8 @@ export function toApiError(value: unknown): ApiError {
 export function readErrorMessage(value: unknown, fallback = 'Ocorreu um erro inesperado.'): string {
   if (!value || typeof value !== 'object') return fallback;
 
+  if (isApiError(value)) return value.message;
+
   const payload = (value as { data?: unknown }).data;
 
   if (payload && typeof payload === 'object') {

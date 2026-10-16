@@ -22,121 +22,20 @@
       class="grid h-[calc(100svh-7.5rem)] min-h-[30rem] grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.8fr)] xl:grid-cols-[minmax(16rem,0.54fr)_minmax(0,1fr)_minmax(19rem,0.73fr)] xl:gap-6"
     >
       <!-- Coluna 1: busca + atalhos -->
-      <aside class="live-panel hidden min-h-0 flex-col p-4 xl:flex" aria-label="Atalhos de canais">
-        <label class="search-box flex h-12 shrink-0 items-center gap-3 px-4 focus-within:shadow-focus">
-          <Icon name="material-symbols:search-rounded" class="h-5 w-5 shrink-0 text-ink-muted" aria-hidden="true" />
-          <input
-            v-model="search.search.query.value"
-            type="search"
-            inputmode="search"
-            autocomplete="off"
-            maxlength="100"
-            placeholder="Buscar canais…"
-            aria-label="Buscar canais"
-            class="min-w-0 flex-1 bg-transparent text-[0.95rem] text-ink placeholder:text-ink-muted focus:outline-none [&::-webkit-search-cancel-button]:hidden"
-            data-nav="search"
-          />
-          <button
-            v-if="search.search.query.value"
-            type="button"
-            class="flex h-6 w-6 items-center justify-center rounded-full text-ink-muted hover:text-ink focus:outline-none focus-visible:shadow-focus"
-            aria-label="Limpar busca"
-            tabindex="-1"
-            @click="search.search.clear()"
-          >
-            <Icon name="material-symbols:close-rounded" class="h-4 w-4" aria-hidden="true" />
-          </button>
-        </label>
-
-        <!-- Grupo atual (reflete a aba ativa) -->
-        <button
-          type="button"
-          class="group-row mt-4 flex h-[3.4rem] w-full shrink-0 items-center gap-3.5 px-4 text-left text-ink focus:outline-none focus-visible:shadow-focus"
-          data-nav="sidebar"
-          @click="focusFirstRow"
-        >
-          <Icon name="material-symbols:tv-gen-outline-rounded" class="h-6 w-6 shrink-0" aria-hidden="true" />
-          <span class="min-w-0 flex-1 truncate text-[1rem] font-semibold">{{ groupLabel }}</span>
-          <span class="shrink-0 text-[0.95rem] font-medium tabular-nums">{{ countFormatter.format(total) }}</span>
-          <Icon name="material-symbols:chevron-right-rounded" class="h-6 w-6 shrink-0" aria-hidden="true" />
-        </button>
-
-        <div ref="sideEl" class="rail-scroll mt-1 min-h-0 flex-1 overflow-y-auto pr-1" role="list">
-          <!-- Categorias expansíveis -->
-          <div v-for="cat in sidebarCategories" :key="cat.name" class="space-y-1">
-            <button
-              type="button"
-              class="w-full flex items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors duration-fast border-line bg-surface/70 hover:border-blue-dark/60 hover:bg-elevated/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue/50"
-              :class="{ 'bg-blue/15 border-blue/50': activeSlug === cat.slug }"
-              @click="selectSidebarCategory(cat)"
-              :aria-expanded="isSidebarCategoryExpanded(cat.name)"
-              data-nav="sidebar"
-            >
-              <Icon
-                :name="isSidebarCategoryExpanded(cat.name) ? 'material-symbols:keyboard-arrow-up' : 'material-symbols:keyboard-arrow-down'"
-                class="h-5 w-5 shrink-0 text-ink-muted transition-transform duration-fast"
-                aria-hidden="true"
-              />
-              <Icon name="material-symbols:live-tv" class="h-5 w-5 shrink-0" :class="activeSlug === cat.slug ? 'text-blue-light' : 'text-blue'" aria-hidden="true" />
-              <span class="min-w-0 truncate text-sm font-semibold" :class="activeSlug === cat.slug ? 'text-blue-light' : ''">{{ cat.name }}</span>
-              <span class="shrink-0 text-[0.7rem] text-ink-muted/70 flex items-center gap-1.5">
-                <span class="px-2 py-0.5 rounded-full text-[0.65rem] font-medium" :class="activeSlug === cat.slug ? 'bg-blue/25 text-blue-light' : 'bg-blue/10 text-blue'">
-                  {{ cat.channels.length }}
-                </span>
-              </span>
-            </button>
-
-<Transition name="slide">
-                  <div v-show="isSidebarCategoryExpanded(cat.name)" class="space-y-1 pl-4 border-l border-white/5 ml-2">
-                    <div v-for="(channel, idx) in cat.channels" :key="channel.id" class="space-y-1">
-                      <!-- Canal -->
-                      <button
-                        type="button"
-                        class="w-full flex items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-fast border-line bg-surface/50 hover:border-blue-dark/60 hover:bg-elevated/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue/50"
-                        @click="toggleChannelGuide(channel.id)"
-                        :class="{ 'bg-blue/10 border-blue/60': selected?.id === channel.id }"
-                        :aria-expanded="isChannelGuideExpanded(channel.id)"
-                        data-nav="sidebar"
-                        :data-channel-id="channel.id"
-                      >
-                        <Icon
-                          :name="isChannelGuideExpanded(channel.id) ? 'material-symbols:keyboard-arrow-up' : 'material-symbols:keyboard-arrow-down'"
-                          class="h-4 w-4 shrink-0 text-ink-muted transition-transform duration-fast"
-                          aria-hidden="true"
-                        />
-                        <img
-                          v-if="channel.logoUrl"
-                          :src="channel.logoUrl"
-                          alt=""
-                          class="h-7 w-7 shrink-0 object-contain rounded-sm bg-elevated"
-                          loading="lazy"
-                          aria-hidden="true"
-                        />
-                        <div v-else class="h-7 w-7 shrink-0 flex items-center justify-center rounded-sm bg-elevated" aria-hidden="true">
-                          <Icon name="material-symbols:live-tv" class="h-4 w-4 text-blue-dark" />
-                        </div>
-                        <span class="min-w-0 truncate text-sm font-medium">{{ channel.title }}</span>
-                        <Icon name="material-symbols:play-arrow-rounded" class="h-4 w-4 shrink-0 text-blue" aria-hidden="true" />
-                      </button>
-
-                      <!-- Guia/Programação do canal (expande pra baixo) -->
-                      <Transition name="slide">
-                        <div v-show="isChannelGuideExpanded(channel.id)" class="space-y-1 pl-4 border-l border-white/5 ml-1">
-                          <ChannelGuide
-                            :channel-id="channel.id"
-                            :channel="channel"
-                            @pick-channel="pickChannel"
-                          />
-                        </div>
-                      </Transition>
-                    </div>
-                  </div>
-                </Transition>
-          </div>
-
-          <div ref="sideSentinel" class="h-16" aria-hidden="true" />
-        </div>
-      </aside>
+      <LiveChannelsSidebar
+        ref="sidebar"
+        v-model:query="search.search.query.value"
+        :pool="sidebarPool"
+        :categories="tvCategories"
+        :active-slug="activeSlug"
+        :label="groupLabel"
+        :count="total"
+        :selected-id="selected?.id ?? null"
+        @clear="search.search.clear()"
+        @select="setCategory"
+        @pick="pickChannel"
+        @focus-first="focusFirstRow"
+      />
 
       <!-- Coluna 2: lista de canais -->
       <section class="live-panel flex min-h-0 flex-col p-4 sm:p-5" aria-labelledby="live-list-heading">
@@ -296,10 +195,9 @@ import { usePaginatedQuery } from '~/composables/usePaginatedQuery';
 import type { PaginatedQuery } from '~/composables/usePaginatedQuery';
 import { categoryBelongsToSection } from '~/utils/categorySections';
 import { isAdultCategory, isAdultItem } from '~/utils/adult';
-import { getCategoryVisual } from '~/utils/categoryVisuals';
 import { channelNumber } from '~/utils/live';
-import type { MediaQuery, MediaSort, MediaSummary, GuideProgram } from '~/types';
-import ChannelGuide from './ChannelGuide.vue';
+import type { MediaQuery, MediaSort, MediaSummary } from '~/types';
+import LiveChannelsSidebar from './LiveChannelsSidebar.vue';
 
 type SortKey = 'default' | 'title' | '-added';
 
@@ -315,10 +213,10 @@ useHead({ title: `Prysma — ${SECTIONS.tv.label}` });
 
 const root = ref<HTMLElement | null>(null);
 const listEl = ref<HTMLElement | null>(null);
-const sideEl = ref<HTMLElement | null>(null);
 const tabsEl = ref<HTMLElement | null>(null);
 const listSentinel = ref<HTMLElement | null>(null);
-const sideSentinel = ref<HTMLElement | null>(null);
+/** Instância da coluna 1 — superfície de rolagem e sentinela do filho. */
+const sidebar = ref<InstanceType<typeof LiveChannelsSidebar> | null>(null);
 
 /* ── Categorias / abas ─────────────────────────────────────────────────── */
 
@@ -378,31 +276,6 @@ const tabs = computed(() => [
     .map((category) => ({ slug: category.slug, label: category.name })),
 ]);
 
-/* ── Sidebar categorias expansíveis ──────────────────────────────────────── */
-const sidebarExpanded = ref<Set<string>>(new Set());
-
-/** Mapa nome → slug para filtrar ao clicar na sidebar */
-const slugByName = computed(() => {
-  const map = new Map<string, string>();
-  for (const category of tvCategories.value) {
-    map.set(category.name, category.slug);
-  }
-  // Canais com slug especial
-  map.set('Premiere', '__premiere__');
-  map.set('ESPN', '__espn__');
-  map.set('SportTV', '__sportv__');
-  return map;
-});
-
-/** Nome de categoria da sidebar — separa ESPN e SportTV das demais */
-function sidebarCatName(channel: MediaSummary): string {
-  const title = channel.title.toLowerCase();
-  if (title.includes('premiere') || title.includes('premiére')) return 'Premiere';
-  if (title.includes('espn')) return 'ESPN';
-  if (title.includes('sportv') || title.includes('spor tv')) return 'SportTV';
-  return channel.categoryName || 'Outros';
-}
-
 /** Pool da sidebar — união da listagem principal + buscas especiais (sem duplicatas).
  *  Garante que Premiere/ESPN/SportTV apareçam mesmo fora da primeira página. */
 const sidebarPool = computed<MediaSummary[]>(() => {
@@ -416,34 +289,6 @@ const sidebarPool = computed<MediaSummary[]>(() => {
   }
   const all = [...byId.values()];
   return adultUnlocked.value ? all : all.filter((item) => !isAdultItem(item));
-});
-
-const sidebarCategories = computed(() => {
-  const map = new Map<string, MediaSummary[]>();
-
-  for (const channel of sidebarPool.value) {
-    const catName = sidebarCatName(channel);
-    const existing = map.get(catName);
-    if (existing) {
-      existing.push(channel);
-    } else {
-      map.set(catName, [channel]);
-    }
-  }
-
-  const priority = ['Premiere', 'ESPN', 'SportTV', 'Aberto', 'Esportes', 'Desenhos 24h', 'Notícias', 'Variedades', 'Filmes', 'Séries', 'Infantil', 'Documentários', 'Música', 'Religioso', 'Outros'];
-  return [...map.entries()].map(([name, channels]) => ({ 
-    name, 
-    channels,
-    slug: slugByName.value.get(name) ?? '',
-  })).sort((a, b) => {
-    const idxA = priority.indexOf(a.name);
-    const idxB = priority.indexOf(b.name);
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    if (idxA !== -1) return -1;
-    if (idxB !== -1) return 1;
-    return a.name.localeCompare(b.name, 'pt-BR');
-  });
 });
 
 /** Busca fixa por termo — carrega os canais das abas especiais no servidor
@@ -461,37 +306,6 @@ const specialLists: Record<SpecialTabSlug, PaginatedQuery<MediaSummary>> = {
   __espn__: fixedLiveSearch('espn'),
   __sportv__: fixedLiveSearch('sportv'),
 };
-
-function isSidebarCategoryExpanded(name: string): boolean {
-  return sidebarExpanded.value.has(name);
-}
-
-/** Clica na categoria da sidebar: filtra a lista e expande para mostrar os canais. */
-function selectSidebarCategory(cat: { name: string; slug: string }): void {
-  // Filtra a lista principal (mesmo comportamento das abas)
-  setCategory(cat.slug);
-  // Expande para mostrar os canais da categoria
-  sidebarExpanded.value.add(cat.name);
-}
-
-/* ── Sidebar guia de canais ─────────────────────────────────────────────── */
-const expandedChannelGuides = ref<Set<string>>(new Set());
-
-function isChannelGuideExpanded(channelId: string): boolean {
-  return expandedChannelGuides.value.has(channelId);
-}
-
-function toggleChannelGuide(channelId: string): void {
-  if (expandedChannelGuides.value.has(channelId)) {
-    expandedChannelGuides.value.delete(channelId);
-  } else {
-    expandedChannelGuides.value.add(channelId);
-  }
-}
-
-function formatTime(isoString: string): string {
-  return new Date(isoString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-}
 
 function setCategory(slug: string): void {
   storedSlug.value = slug;
@@ -585,11 +399,6 @@ const countLabel = computed(() => {
   return `${countFormatter.format(count)} ${count === 1 ? 'canal' : 'canais'}`;
 });
 
-function iconFor(channel: MediaSummary): string {
-  const slug = channel.categoryId ? categoryById.value.get(channel.categoryId)?.slug : null;
-  return slug ? getCategoryVisual(slug).icon : 'material-symbols:live-tv';
-}
-
 /* ── Seleção (prévia) ──────────────────────────────────────────────────── */
 
 const selectedId = ref<string | null>(null);
@@ -602,26 +411,19 @@ function preview(channel: MediaSummary): void {
   selectedId.value = channel.id;
 }
 
-function rowFor(id: string): HTMLElement | null {
-  return listEl.value?.querySelector<HTMLElement>(`[data-nav="row"][data-channel-id="${id}"]`) ?? null;
-}
+/* ── Navegação por setas (teclado / controle remoto) ───────────────────── */
 
-function focusEl(element: HTMLElement | null | undefined): void {
-  if (!element) return;
-  element.focus({ preventScroll: true });
-  element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-}
+const { onKeydown, rowFor, focusFirstRow, focusInitialRow } = useLiveNav({
+  root,
+  listEl,
+  selectedId: () => selected.value?.id ?? null,
+});
 
 /** Clique num atalho da coluna 1: seleciona e leva a lista até o canal. */
 function pickChannel(channel: MediaSummary): void {
   preview(channel);
   const row = rowFor(channel.id);
   row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-}
-
-function focusFirstRow(): void {
-  listEl.value?.scrollTo({ top: 0, behavior: 'smooth' });
-  focusEl(listEl.value?.querySelector<HTMLElement>('[data-nav="row"]'));
 }
 
 /* ── Rolagem infinita ──────────────────────────────────────────────────── */
@@ -631,13 +433,13 @@ function loadMoreIfVisible(isIntersecting: boolean): void {
 }
 
 useIntersectionObserver(listSentinel, loadMoreIfVisible);
-useIntersectionObserver(sideSentinel, loadMoreIfVisible);
+useIntersectionObserver(() => sidebar.value?.sentinel() ?? null, loadMoreIfVisible);
 
 // Trocou filtro/ordem/busca: volta ao topo das duas listas.
 watch([activeSlug, sortKey, () => search.search.normalizedQuery.value], async () => {
   await nextTick();
   listEl.value?.scrollTo({ top: 0 });
-  sideEl.value?.scrollTo({ top: 0 });
+  sidebar.value?.resetScroll();
 });
 
 // Mantém a coluna 1 acompanhando o canal selecionado quando a seleção vem da lista.
@@ -645,8 +447,7 @@ watch(
   () => selected.value?.id,
   (id) => {
     if (!id) return;
-    const button = sideEl.value?.querySelector<HTMLElement>(`[data-channel-id="${id}"]`);
-    button?.scrollIntoView({ block: 'nearest' });
+    sidebar.value?.revealChannel(id);
   },
 );
 
@@ -668,106 +469,6 @@ watch(tabs, async () => {
   await nextTick();
   updateTabEdges();
 });
-
-/* ── Navegação por setas (teclado / controle remoto) ───────────────────── */
-
-function navList(kind: string): HTMLElement[] {
-  const nodes = Array.from(root.value?.querySelectorAll<HTMLElement>(`[data-nav="${kind}"]`) ?? []);
-  // Ignora itens ocultos via v-show (display:none), que ficam no DOM mas têm
-  // retângulo zero — isso evita que a seta "pule" para um item escondido.
-  return nodes.filter((el) => el.getClientRects().length > 0);
-}
-
-function activeTabEl(): HTMLElement | undefined {
-  const list = navList('tab');
-  return list.find((element) => element.getAttribute('aria-selected') === 'true') ?? list[0];
-}
-
-function selectedRowEl(): HTMLElement | undefined {
-  const id = selected.value?.id;
-  return (id ? (rowFor(id) ?? undefined) : undefined) ?? navList('row')[0];
-}
-
-function sidebarFor(id: string | undefined): HTMLElement | undefined {
-  const list = navList('sidebar');
-  return list.find((element) => element.dataset.channelId === id) ?? list[1] ?? list[0];
-}
-
-function onKeydown(event: KeyboardEvent): void {
-  const { key } = event;
-  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
-
-  const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-nav]');
-  const kind = target?.dataset.nav;
-  if (!target || !kind) return;
-
-  // Consome a seta mesmo sem destino (borda da lista mantém o foco no lugar).
-  // Sem preventDefault o evento vaza pro motor espacial global, que puxa o
-  // foco pra outra região — é o "salto pra o meio" ao chegar no fim da sidebar.
-  const move = (element: HTMLElement | null | undefined): void => {
-    event.preventDefault();
-    if (element) focusEl(element);
-  };
-
-  const step = (kindName: string, delta: 1 | -1): HTMLElement | undefined => {
-    const list = navList(kindName);
-    return list[list.indexOf(target) + delta];
-  };
-
-  switch (kind) {
-    case 'search':
-      // Campo de texto: só ↓ sai dele (←→ movem o cursor).
-      if (key === 'ArrowDown') move(navList('sidebar')[0]);
-      break;
-
-    case 'back':
-      if (key === 'ArrowRight') move(navList('sort')[0] ?? activeTabEl());
-      else if (key === 'ArrowDown') move(activeTabEl());
-      break;
-
-    case 'sidebar':
-      // ↓ na última categoria/canal volta pro primeiro (wrap-around).
-      if (key === 'ArrowDown') move(step('sidebar', 1) ?? navList('sidebar')[0]);
-      else if (key === 'ArrowUp') move(step('sidebar', -1) ?? navList('search')[0]);
-      else if (key === 'ArrowRight') move(rowFor(target.dataset.channelId ?? '') ?? selectedRowEl());
-      break;
-
-    case 'row':
-      if (key === 'ArrowDown') move(step('row', 1));
-      else if (key === 'ArrowUp') move(step('row', -1) ?? activeTabEl());
-      else if (key === 'ArrowLeft') move(sidebarFor(target.dataset.channelId));
-      else if (key === 'ArrowRight') move(navList('preview')[0]);
-      break;
-
-    case 'tab':
-      if (key === 'ArrowRight') move(step('tab', 1));
-      else if (key === 'ArrowLeft') move(step('tab', -1) ?? sidebarFor(selected.value?.id));
-      else if (key === 'ArrowDown') move(selectedRowEl());
-      else if (key === 'ArrowUp') move(navList('sort')[0]);
-      break;
-
-    case 'sort':
-      if (key === 'ArrowDown') move(activeTabEl());
-      else if (key === 'ArrowLeft') move(navList('back')[0] ?? navList('search')[0] ?? sidebarFor(undefined));
-      break;
-
-    case 'preview':
-      if (key === 'ArrowDown') move(step('preview', 1));
-      else if (key === 'ArrowUp') move(step('preview', -1));
-      else if (key === 'ArrowLeft') move(selectedRowEl());
-      break;
-  }
-}
-
-let focusedOnce = false;
-
-function focusInitialRow(): void {
-  if (focusedOnce) return;
-  const first = listEl.value?.querySelector<HTMLElement>('[data-nav="row"]');
-  if (!first) return;
-  focusedOnce = true;
-  first.focus({ preventScroll: true });
-}
 
 watch(
   () => channels.value.length,
@@ -795,32 +496,6 @@ onBeforeUnmount(() => {
   border-radius: 1.35rem;
   background: linear-gradient(180deg, rgba(8, 22, 52, 0.78), rgba(4, 12, 32, 0.82));
   backdrop-filter: blur(10px);
-}
-
-.search-box {
-  border: 1px solid rgba(124, 154, 255, 0.16);
-  border-radius: var(--radius-md);
-  background: rgba(3, 9, 24, 0.55);
-}
-
-/* Linha "grupo atual" — mesmo degradê da aba ativa. */
-.group-row {
-  border-radius: var(--radius-md);
-  background: linear-gradient(90deg, #1e55e6 0%, #4a43d8 100%);
-  box-shadow: 0 8px 24px rgba(30, 85, 230, 0.28);
-}
-
-.group-row:focus-visible,
-.side-btn:focus-visible {
-  border-radius: var(--radius-md);
-}
-
-.side-btn {
-  border-radius: var(--radius-md);
-}
-
-.side-item + .side-item {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sort-btn {
@@ -856,19 +531,5 @@ onBeforeUnmount(() => {
   border-color: transparent;
   background: linear-gradient(90deg, #1e55e6 0%, #3d4fe0 100%);
   box-shadow: 0 6px 20px rgba(30, 85, 230, 0.35);
-}
-
-/* Slide transition para sidebar categorias */
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.25s ease-out;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-  max-height: 0;
-  overflow: hidden;
 }
 </style>

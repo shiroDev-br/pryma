@@ -70,18 +70,31 @@
         class="flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center text-ink"
         aria-hidden="true"
       >
-        <AppIcon :name="item.icon" class="h-full w-full" />
+        <img
+          v-if="item.logoUrl"
+          :src="item.logoUrl"
+          :alt="item.title"
+          class="h-full w-full object-contain"
+        />
+        <AppIcon v-else :name="item.icon" class="h-full w-full" />
       </span>
       <span
         v-else
         class="flex h-[2.9rem] w-[2.9rem] shrink-0 items-center justify-center rounded-full border border-white/20 bg-[#050d1f]/80 text-ink backdrop-blur-sm"
         aria-hidden="true"
       >
-        <AppIcon :name="item.icon" class="h-[1.4rem] w-[1.4rem]" />
+        <img
+          v-if="item.logoUrl"
+          :src="item.logoUrl"
+          :alt="item.title"
+          class="h-[1.8rem] w-[1.8rem] object-contain"
+        />
+        <AppIcon v-else :name="item.icon" class="h-[1.4rem] w-[1.4rem]" />
       </span>
 
       <!-- Título -->
       <span
+        v-if="!item.hideTitle"
         class="block max-w-full truncate font-semibold uppercase transition-colors duration-fast"
         :class="
           isActive

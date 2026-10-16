@@ -1,21 +1,11 @@
 import { ref } from 'vue';
+import { fetchDayFixtures } from '~/services/footballApi';
+import { readErrorMessage } from '~/utils/errors';
+import type { DayFixturesResponse, NextFixture } from '~/types';
 
-export interface DayFixture {
-  id: number;
-  timestamp: number;
-  date: string;
-  status: { short: string; long: string };
-  home: { id: number; name: string; logo: string };
-  away: { id: number; name: string; logo: string };
-  league: { id: number; name: string; country: string; logo: string; round: string };
-  venue: { name: string | null; city: string | null } | null;
-}
-
-export interface DayFixturesResponse {
-  date: string;
-  fixtures: DayFixture[];
-  checkedAt: string;
-}
+/** `DayFixture` é o mesmo recorte de `NextFixture` — alias mantém os consumidores. */
+export type DayFixture = NextFixture;
+export type { DayFixturesResponse } from '~/types';
 
 const cache = new Map<string, { data: DayFixturesResponse; expiresAt: number }>();
 
@@ -27,7 +17,7 @@ export function useDayFixtures() {
   const data = ref<DayFixturesResponse | null>(null);
 
   async function fetchFixtures(date?: string): Promise<DayFixturesResponse | null> {
-    // Sem `date` o servidor calcula "hoje" no fuso do futebol (America/Sao_Paulo).
+    // Sem `date` o serviço calcula "hoje" no fuso do futebol (America/Sao_Paulo).
     // Nunca mandar `new Date().toISOString()` — isso é UTC e depois das 18h
     // (21h UTC) já é o dia seguinte, mostrando os jogos de amanhã.
     const cacheKey = `fixtures:${date ?? 'today'}`;
@@ -42,19 +32,17 @@ export function useDayFixtures() {
     error.value = null;
 
     try {
-      const response = await $fetch<DayFixturesResponse>(`/api/football/day`, {
-        query: date ? { date } : {},
-      });
+      const response = await fetchDayFixtures(date);
 
       const entry = { data: response, expiresAt: Date.now() + CACHE_TTL_MS };
       cache.set(cacheKey, entry);
-      // Guarda também pela data concreta que o servidor resolveu — se o
+      // Guarda também pela data concreta que o serviço resolveu — se o
       // chamador reabrir com a data retornada, bate no mesmo cache.
       if (response.date) cache.set(`fixtures:${response.date}`, entry);
       data.value = response;
       return response;
-    } catch (err: any) {
-      error.value = err.data?.message || 'Não foi possível carregar os jogos do dia.';
+    } catch (err) {
+      error.value = readErrorMessage(err, 'Não foi possível carregar os jogos do dia.');
       return null;
     } finally {
       isLoading.value = false;

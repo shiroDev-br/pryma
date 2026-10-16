@@ -7,13 +7,3 @@
     </NuxtLayout>
   </div>
 </template>
-
-<script setup>
-const { $socket } = useNuxtApp()
-
-onMounted(() => {
-  $socket.on('connect', () => {
-    console.log('Conectado com ID:', $socket.id)
-  })
-})
-</script>

@@ -38,6 +38,22 @@
           />
         </li>
 
+        <!-- Card "Continuar assistindo" — só filmes/séries, só se houver progresso local. -->
+        <li v-if="sectionDef.type !== 'live' && hasRecents" class="min-w-0">
+          <NuxtLink
+            data-category-card
+            :to="`/browse/${section}/${RECENTS_SLUG}`"
+            class="group relative block w-[12.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-all duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus"
+            aria-label="Continuar assistindo"
+          >
+            <div class="relative flex h-[10.5rem] flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue-dark/40 to-blue/10 p-4">
+              <Icon name="material-symbols:history-rounded" class="h-12 w-12 text-blue-light" aria-hidden="true" />
+              <p class="text-center text-sm font-semibold text-ink">Continuar assistindo</p>
+              <p class="text-center text-[0.7rem] text-ink-muted">Filmes e séries recentes</p>
+            </div>
+          </NuxtLink>
+        </li>
+
         <li v-for="category in sectionCategories" :key="category.id" class="min-w-0">
           <CategoryCard
             data-category-card
@@ -76,6 +92,7 @@ import { SECTIONS, isSectionKey } from '~/constants';
 import { categoryBelongsToSection } from '~/utils/categorySections';
 import { isAdultCategory } from '~/utils/adult';
 import { pickSpatialBest } from '~/utils/spatial';
+import { RECENTS_SLUG, hasRecentProgress } from '~/utils/recentlyWatched';
 
 const route = useRoute();
 
@@ -103,6 +120,12 @@ const sectionCategories = computed(() =>
       (adultUnlocked.value || !isAdultCategory(category.slug)),
   ),
 );
+
+/** Mostra o card "Continuar assistindo" só se houver progresso local (client-side). */
+const hasRecents = ref(false);
+onMounted(() => {
+  hasRecents.value = hasRecentProgress();
+});
 
 useHead({ title: computed(() => `Prysma — ${sectionDef.label}`) });
 

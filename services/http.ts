@@ -1,30 +1,20 @@
-import { useRequestURL, useRuntimeConfig } from '#imports';
+import { useRuntimeConfig } from '#imports';
 import { HTTP_TIMEOUT_MS, MAX_RETRIES } from '~/constants';
 import { createApiError, toApiError } from '~/utils/errors';
+import { getAccessToken } from '~/utils/tokenStorage';
 import type { ApiError, ApiRequestOptions, QueryParams } from '~/types';
 
 /**
- * No browser, caminhos relativos (`/api/v1/...`) resolvem sozinhos.
- * No SSR o `fetch` do Node exige URL absoluta — resolve contra a origem da
- * request atual (passando pelo proxy Nitro) com fallback para a URL interna
- * do FastAPI quando não há contexto de request.
+ * Resolve contra a base pública da API (`runtimeConfig.public.apiBaseUrl`).
+ * No APK não existe proxy Nitro — o browser fala direto com o FastAPI
+ * (a origem do Capacitor é localhost, por isso a base é absoluta).
  */
 function resolveUrl(path: string): string {
-  if (!import.meta.server || /^https?:\/\//.test(path)) return path;
+  if (/^https?:\/\//.test(path)) return path;
 
-  let first: unknown;
-  try {
-    return new URL(path, useRequestURL().origin).toString();
-  } catch (e) {
-    first = e;
-  }
-  try {
-    return new URL(path, useRuntimeConfig().apiBaseUrl).toString();
-  } catch (second) {
-    throw new Error(
-      `[resolveUrl] useRequestURL falhou: ${(first as Error)?.stack} ||| useRuntimeConfig falhou: ${(second as Error)?.stack}`,
-    );
-  }
+  const base = String(useRuntimeConfig().public.apiBaseUrl || '').replace(/\/+$/, '');
+  if (!base) return path;
+  return base + path;
 }
 
 export interface HttpClient {
@@ -122,20 +112,21 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
     body?: unknown,
     query?: QueryParams,
     requestOptions?: ApiRequestOptions,
-    allowRefresh = true,
   ): Promise<T> {
     let attempt = 0;
+    const allowRefresh = requestOptions?.allowRefresh ?? true;
 
     while (true) {
       const { signal, timedOut } = resolveSignal(requestOptions?.signal, timeoutMs);
 
       try {
+        const token = getAccessToken();
         const response = await fetch(resolveUrl(path) + buildQueryString(query), {
           method,
           signal,
-          credentials: 'same-origin',
           headers: {
             Accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
             ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
           },
           body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -161,7 +152,10 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
 
           if (canRefresh) {
             const refreshed = await onSessionExpired().catch(() => false);
-            if (refreshed) return send<T>(method, path, body, query, requestOptions, false);
+            if (refreshed) {
+              // Retry único sem voltar a tentar refresh (evita loop se o retry de novo expirar).
+              return send<T>(method, path, body, query, { ...requestOptions, allowRefresh: false });
+            }
           }
 
           throw error;

@@ -11,7 +11,7 @@
 
       <div class="flex items-center gap-3">
         <template v-if="auth.isAuthenticated.value">
-          <span class="text-sm text-zinc-300">Olá, {{ auth.displayName.value }}</span>
+          <span class="text-sm text-zinc-300">Olá, {{ auth.user.value?.username }}</span>
           <button class="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20" @click="auth.logout()">
             Logout
           </button>
@@ -19,10 +19,10 @@
 
         <form v-else class="flex items-center gap-2" @submit.prevent="submitLogin">
           <input
-            v-model="credentials.email"
-            type="email"
+            v-model="credentials.username"
+            type="text"
             class="px-2 py-1.5 rounded bg-white/5 border border-white/10 text-sm w-40"
-            placeholder="E-mail"
+            placeholder="Usuário"
           />
           <input
             v-model="credentials.password"
@@ -219,6 +219,6 @@ async function openMedia(media: MediaSummary): Promise<void> {
 const credentials = ref({ ...MOCK_DEMO_CREDENTIALS });
 
 async function submitLogin(): Promise<void> {
-  await auth.login({ email: credentials.value.email, password: credentials.value.password });
+  await auth.login({ username: credentials.value.username, password: credentials.value.password });
 }
 </script>

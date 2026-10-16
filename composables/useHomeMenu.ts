@@ -12,14 +12,27 @@ export interface HomeMenuItem {
   to?: string;
   /** Imagem de fundo do card (asset em `public/img/cards/`). */
   image?: string;
+  /** Logo em imagem (PNG transparente) — substitui o ícone quando presente. */
+  logoUrl?: string;
   /** Contagem exibida como badge — só quando o dado existe. */
   meta?: string;
   /** Texto mais longo mostrado quando o card está em foco (cai em `description` se ausente). */
   longDescription?: string;
+  /** Oculta o título — útil para cards só com logo (ex.: MTV). */
+  hideTitle?: boolean;
 }
 
 /** Cards extras — alguns sem rota por enquanto (entram no carrossel, mas não navegam). */
 const EXTRA_ITEMS: HomeMenuItem[] = [
+  {
+    id: 'mtv',
+    title: 'MTV',
+    description: 'Clipes e playlists em modo aleatório.',
+    icon: 'prysma:mtv',
+    logoUrl: '/img/cards/mtv-logo.png',
+    to: '/mtv',
+    hideTitle: true,
+  },
   {
     id: 'musica',
     title: 'Música',
@@ -74,9 +87,9 @@ export interface HomeMenu {
 }
 
 /**
- * Menu da home — sete cards, foco inicial no meio.
- * Ordem (esquerda → direita): Música, YouTube, Séries, TV ao Vivo, Filmes,
- * Sobre, Limpeza de cache — centro = TV ao Vivo, vizinhos = Séries e Filmes.
+ * Menu da home — oito cards, foco inicial no meio.
+ * Ordem (esquerda → direita): Música, YouTube, MTV, Séries, TV ao Vivo, Filmes,
+ * Sobre, Limpeza de cache — centro = TV ao Vivo, vizinhos = Séries/Filmes e MTV.
  * Nenhum dado é buscado: a API só é tocada ao abrir uma seção (categorias)
  * e depois ao escolher a categoria (listagem).
  */
@@ -84,6 +97,7 @@ export function useHomeMenu(): HomeMenu {
   const items = computed<HomeMenuItem[]>(() => [
     extraItem('musica'),
     extraItem('youtube'),
+    extraItem('mtv'),
     sectionItem('series'),
     sectionItem('tv'),
     sectionItem('filmes'),

@@ -1,0 +1,103 @@
+.mtv-opening {
+  background: radial-gradient(ellipse at center, #1a0a2e 0%, #000 70%);
+}
+
+.mtv-opening__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mtv-opening__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mtv-opening__logo {
+  font-size: clamp(4rem, 18vw, 12rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.06em;
+  color: #fff;
+  text-shadow:
+    3px 0 0 #ff2d95,
+    -3px 0 0 #00e5ff,
+    0 0 40px rgba(255, 45, 149, 0.6);
+  animation: mtv-logo-in 0.8s ease-out both;
+}
+
+.mtv-opening__tag {
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  animation: mtv-logo-in 0.8s 0.2s ease-out both;
+}
+
+.mtv-opening__actions {
+  position: absolute;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  display: flex;
+  gap: 0.75rem;
+  z-index: 2;
+}
+
+.mtv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.mtv-btn--ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.mtv-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.mtv-btn--primary {
+  background: #ff2d95;
+  color: #fff;
+}
+
+.mtv-btn--primary:hover {
+  background: #ff5bab;
+  box-shadow: 0 0 20px rgba(255, 45, 149, 0.5);
+}
+
+.mtv-btn:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}
+
+@keyframes mtv-logo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

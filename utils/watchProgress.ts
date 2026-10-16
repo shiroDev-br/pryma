@@ -1,9 +1,12 @@
 import { STORAGE_KEYS, RESUME_MIN_SECONDS, RESUME_MAX_RATIO } from '~/constants';
+import type { MediaType } from '~/types';
 
 interface WatchProgress {
   positionSec: number;
   durationSec: number;
   updatedAt: number;
+  /** Tipo da mídia ('vod' | 'series') — distingue filmes de séries nos recentes. */
+  type?: MediaType;
 }
 
 type ProgressMap = Record<string, WatchProgress>;
@@ -51,7 +54,12 @@ export function loadWatchPosition(mediaId: string, durationSec: number | null | 
 }
 
 /** Grava a posição atual. Conclusão (≥95%) apaga o registro. */
-export function saveWatchPosition(mediaId: string, positionSec: number, durationSec: number): void {
+export function saveWatchPosition(
+  mediaId: string,
+  positionSec: number,
+  durationSec: number,
+  type?: MediaType,
+): void {
   if (!mediaId || !durationSec) return;
 
   const map = readMap();
@@ -68,6 +76,8 @@ export function saveWatchPosition(mediaId: string, positionSec: number, duration
     positionSec: Math.floor(positionSec),
     durationSec,
     updatedAt: Date.now(),
+    // `type: undefined` some no JSON.stringify — entradas legadas ficam sem o campo.
+    type,
   };
   writeMap(map);
 }
