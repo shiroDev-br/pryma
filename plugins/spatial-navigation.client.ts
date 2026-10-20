@@ -25,6 +25,12 @@
 export default defineNuxtPlugin(() => {
   window.addEventListener('keydown', onKeydown);
 
+  // Modo D-pad: primeira seta/Enter liga `body.dpad-mode` (anel de foco em
+  // WebViews sem :focus-visible); mouse/toque desliga (anel some no clique).
+  window.addEventListener('pointerdown', leaveDpadMode);
+  window.addEventListener('touchstart', leaveDpadMode, { passive: true });
+  window.addEventListener('mousemove', leaveDpadMode, { passive: true });
+
   // O DOM muda (listas virtuais, v-show, modais): marca candidatos para refez.
   const observer = new MutationObserver(invalidateCandidates);
   observer.observe(document.documentElement, {
@@ -37,6 +43,16 @@ export default defineNuxtPlugin(() => {
   // CSS responsivo pode esconder/mostrar regiões inteiras sem mutação de DOM.
   window.addEventListener('resize', invalidateCandidates);
 });
+
+function leaveDpadMode(): void {
+  document.body.classList.remove('dpad-mode');
+}
+
+function enterDpadMode(): void {
+  if (!document.body.classList.contains('dpad-mode')) {
+    document.body.classList.add('dpad-mode');
+  }
+}
 
 import { pickSpatialBest } from '~/utils/spatial';
 
@@ -199,6 +215,11 @@ function focusNext(current: HTMLElement | null, direction: Direction, repeat = f
 }
 
 function onKeydown(event: KeyboardEvent): void {
+  // Seta ou OK/Enter = remoto em uso → anel de foco ativo (dpad-mode).
+  if (event.key === 'Enter' || KEY_TO_DIRECTION[event.key] || KEYCODE_TO_DIRECTION[event.keyCode ?? 0]) {
+    enterDpadMode();
+  }
+
   const direction =
     KEY_TO_DIRECTION[event.key] ?? KEYCODE_TO_DIRECTION[event.keyCode ?? 0] ?? null;
   if (!direction) return;

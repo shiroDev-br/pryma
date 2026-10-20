@@ -6,8 +6,6 @@
     :class="[
       depthClass,
       { 'max-sm:hidden': !isActive },
-      // Cards distantes só em telas largas — em phone/tablet estouravam a borda.
-      { 'max-lg:hidden': depth === 'far' },
     ]"
     :style="cardStyle"
     :aria-current="isActive ? 'true' : undefined"
@@ -213,9 +211,6 @@ const cardStyle = computed<CSSProperties>(() => {
   const abs = Math.abs(props.offset);
   const sign = Math.sign(props.offset);
 
-  const z = abs === 0 ? 0 : abs === 1 ? -40 : -110;
-  // Borda voltada ao centro fica mais perto do olhar; a de fora recua (como na referência).
-  const rotateY = abs === 0 ? 0 : sign * (abs === 1 ? 13 : 17);
   const brightness = abs === 0 ? 1 : abs === 1 ? 0.82 : 0.66;
   const shift = abs === 0 ? '0px' : `calc(${sign} * ${SHIFT[depth.value]})`;
 
@@ -223,12 +218,15 @@ const cardStyle = computed<CSSProperties>(() => {
   // ignora a propriedade e o card colapsa para a altura do conteúdo).
   const RATIO: Record<string, string> = { active: '1.14', near: '0.78', far: '0.72' };
 
+  // Faixa lateral plana (sem rotateY/translateZ): em TV em modo compat a
+  // perspectiva 3D distorcia os cards — a referência dos notebooks é o
+  // coverflow reto, deslizando no eixo X com wrap-around infinito.
   return {
     width: `var(--card-w-${depth.value})`,
     height: `calc(var(--card-w-${depth.value}) / ${RATIO[depth.value]})`,
-    transform: `translate(-50%, -50%) translateX(${shift}) translateZ(${z}px) rotateY(${rotateY}deg)`,
+    transform: `translate(-50%, -50%) translateX(${shift})`,
     // Opacity (não filter:brightness): filtro por card re-rasteriza o conteúdo
-    // a cada frame da transição 3D — em chip fraco a home travava ao trocar.
+    // a cada frame da transição — em chip fraco a home travava ao trocar.
     opacity: brightness,
     willChange: 'transform',
   };
@@ -254,13 +252,12 @@ function onClick(event: MouseEvent): void {
 
 <style scoped>
 .nav-card {
-  transform-style: preserve-3d;
-  /* Em CSS (não inline) para o media query de TV poder ajustar. */
+  /* Faixa plana — só translateX/width/height/opacity (sem preserve-3d). */
   transition:
     transform var(--transition-slow),
     width var(--transition-slow),
     height var(--transition-slow),
-    filter var(--transition-slow);
+    opacity var(--transition-slow);
 }
 
 /* Celular deitado — card enxuto: padding e título menores pra não truncar. */

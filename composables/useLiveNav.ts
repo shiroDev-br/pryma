@@ -46,7 +46,9 @@ export function useLiveNav(options: UseLiveNavOptions): UseLiveNavReturn {
 
   function sidebarFor(id: string | undefined): HTMLElement | undefined {
     const list = navList('sidebar');
-    return list.find((element) => element.dataset.channelId === id) ?? list[1] ?? list[0];
+    // Sem correspondência exata, volta pro topo da barra (determinístico —
+    // o fallback antigo pousava num item arbitrário do meio da lista).
+    return list.find((element) => element.dataset.channelId === id) ?? list[0];
   }
 
   function rowFor(id: string): HTMLElement | null {

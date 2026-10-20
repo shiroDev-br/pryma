@@ -32,13 +32,9 @@
       <!-- Piso iluminado — a lâmina azul sob os cards, como na referência. -->
       <div class="stage-floor pointer-events-none absolute inset-x-0 -bottom-4" aria-hidden="true" />
 
-      <!-- Palco com perspectiva: os cards distribuem-se em profundidade. -->
+      <!-- Palco plano: os cards distribuem-se lateralmente (coverflow reto). -->
       <div class="stage__viewport relative w-full overflow-x-clip">
-        <div
-          class="absolute inset-0"
-          style="transform-style: preserve-3d"
-          role="list"
-        >
+        <div class="absolute inset-0" role="list">
           <NavigationCard
             v-for="entry in visibleEntries"
             :key="entry.item.id"
@@ -212,7 +208,6 @@ onMounted(() => {
 
 .stage__viewport {
   height: clamp(19rem, 44vh, 28rem);
-  perspective: var(--carousel-perspective);
 }
 
 .stage__indicators {

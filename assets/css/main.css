@@ -16,7 +16,9 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
-  --focus-ring: 0 0 0 3px rgba(11, 92, 255, 0.55);
+  /* Anel de foco D-pad — brilho forte o bastante pra TV em compat (760px). */
+  --focus-ring:
+    0 0 0 3px rgba(77, 157, 255, 0.95), 0 0 22px rgba(22, 136, 255, 0.5);
   --transition-fast: 160ms ease;
   --transition-normal: 260ms ease;
   --transition-slow: 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -27,7 +29,6 @@
   --card-w-near: clamp(9.5rem, 15vw, 16rem);
   --card-w-far: clamp(8.5rem, 12.5vw, 13.5rem);
   --card-gap: clamp(0.5rem, 1.2vw, 1.5rem);
-  --carousel-perspective: 1200px;
 }
 
 html {
@@ -66,10 +67,19 @@ body {
   border-radius: var(--radius-sm);
 }
 
-/* WebViews antigas de TV não implementam `:focus-visible` (< Chromium 86) nem
-   `:where()` (< 88): o UA pinta contorno dourado e as regras acima são
-   descartadas. No breakpoint de TV o anel vale para qualquer foco (remoto não
-   tem mouse); abaixo de 1600px o comportamento moderno fica intacto. */
+/* WebViews antigas de TV não implementam `:focus-visible` (< Chromium 86):
+   o UA pinta contorno dourado e as regras acima são descartadas. Duas
+   coberturas pro mesmo fallback:
+   - `body.dpad-mode` é ligado pelo motor espacial na primeira seta/Enter e
+     desligado no primeiro mouse/toque — vale em QUALQUER largura (a TV em
+     modo compat roda com viewport de 760px, abaixo do breakpoint de TV);
+   - o breakpoint ≥1600 cobre o foco inicial programático (home/carrossel),
+     que acontece antes da primeira tecla. */
+body.dpad-mode :focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 @media (min-width: 1600px) {
   :focus {
     outline: none;
