@@ -241,9 +241,10 @@ onMounted(() => {
   justify-content: center;
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(3, 9, 24, 0.45);
+  /* Sem backdrop-filter: o header fixo repintava o blur a cada frame da
+     rolagem/lista atrás — em chip fraco (celular/TV compat) derrubava o fps. */
+  background: rgba(3, 9, 24, 0.82);
   color: var(--color-text-muted);
-  backdrop-filter: blur(8px);
   transition:
     border-color var(--transition-fast),
     color var(--transition-fast);
@@ -258,13 +259,6 @@ onMounted(() => {
 @media (max-height: 500px) {
   .app-header .tv-safe {
     height: 3.5rem;
-  }
-}
-
-/* TV — blur por frame em chip fraco não compensa; o fundo do botão já é sólido. */
-@media (min-width: 1600px) {
-  .header-btn {
-    backdrop-filter: none;
   }
 }
 </style>

@@ -506,21 +506,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Painéis — vidro azul-marinho com contorno discreto. */
+/* Painéis — fundo opaco. Sem backdrop-filter: em colunas de altura inteira,
+   o blur era recalculado com a lista rolando atrás (travava D-pad e rolagem). */
 .live-panel {
   border: 1px solid rgba(124, 154, 255, 0.14);
   border-radius: 1.35rem;
-  background: linear-gradient(180deg, rgba(8, 22, 52, 0.78), rgba(4, 12, 32, 0.82));
-  backdrop-filter: blur(10px);
-}
-
-/* TV (≥1600): painel de coluna inteira com blur força repaint a cada linha
-   que rola atrás dele — fundo fica opaco e o blur sai. */
-@media (min-width: 1600px) {
-  .live-panel {
-    backdrop-filter: none;
-    background: linear-gradient(180deg, rgba(8, 22, 52, 0.94), rgba(4, 12, 32, 0.96));
-  }
+  background: linear-gradient(180deg, rgba(8, 22, 52, 0.96), rgba(4, 12, 32, 0.98));
 }
 
 .sort-btn {

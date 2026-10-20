@@ -91,6 +91,10 @@ const initials = computed(() => channelInitials(props.media.title));
 <style scoped>
 .live-row {
   border-radius: var(--radius-md);
+  /* Linhas fora da viewport não são pintadas (Chrome 85+; WebViews antigas
+     ignoram). Lista longa de canais rola muito mais leve. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 5rem;
 }
 
 .live-row:focus-visible {
@@ -115,28 +119,10 @@ const initials = computed(() => channelInitials(props.media.title));
 .row-glow {
   inset: 0;
   border-radius: var(--radius-md);
-  animation: row-glow-breathe 3.2s ease-in-out infinite;
-}
-
-/* TV (≥1600): respirar do halo repinta box-shadow em loop — na TV vira luz fixa
-   (chip gráfico fraco; a lista tem dezenas de linhas rolando). */
-@media (min-width: 1600px) {
-  .row-glow {
-    animation: none;
-  }
-}
-
-@keyframes row-glow-breathe {
-  0%,
-  100% {
-    box-shadow:
-      0 0 22px rgba(22, 136, 255, 0.5),
-      0 0 60px rgba(11, 92, 255, 0.28);
-  }
-  50% {
-    box-shadow:
-      0 0 34px rgba(22, 136, 255, 0.72),
-      0 0 90px rgba(11, 92, 255, 0.4);
-  }
+  /* Sem "respirar": animar box-shadow em loop repinta a lista inteira em chip
+     fraco (rolagem e D-pad travavam). Luz fixa — visual quase idêntico. */
+  box-shadow:
+    0 0 26px rgba(22, 136, 255, 0.55),
+    0 0 70px rgba(11, 92, 255, 0.3);
 }
 </style>

@@ -78,12 +78,11 @@
   gap: 0.35rem;
   padding: 0.3rem 0.7rem;
   border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.78);
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.7rem;
   text-decoration: none;
   z-index: 2;
-  backdrop-filter: blur(4px);
 }
 
 .mtv-player__yt-badge:hover {

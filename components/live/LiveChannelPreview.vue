@@ -229,8 +229,7 @@ function toggleFavorite(): void {
 .pv-card {
   border: 1px solid rgba(124, 154, 255, 0.14);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(8, 22, 52, 0.78), rgba(4, 12, 32, 0.82));
-  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(8, 22, 52, 0.96), rgba(4, 12, 32, 0.98));
 }
 
 .pv-thumb {

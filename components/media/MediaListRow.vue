@@ -2,7 +2,7 @@
   <NuxtLink
     :ref="setRoot"
     :to="mediaHref(media)"
-    class="group relative flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus sm:gap-4 sm:p-3.5"
+    class="media-row group relative flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus sm:gap-4 sm:p-3.5"
     :class="
       selected
         ? 'border-transparent bg-[#081a42]/85'
@@ -160,24 +160,20 @@ const metaLabel = computed(() => {
     linear-gradient(#000 0 0);
 }
 
-/* Halo azul difuso atrás da linha — respira devagar, como o card da home. */
+/* Linhas fora da viewport não são pintadas (Chrome 85+; WebViews antigas
+   ignoram) — listas longas de VOD/séries/busca rodam mais leves. */
+.media-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 7rem;
+}
+
+/* Halo azul difuso atrás da linha — luz fixa (box-shadow animado em loop
+   repintava a lista inteira em chip fraco). */
 .row-glow {
   inset: 0;
   border-radius: var(--radius-md);
-  animation: row-glow-breathe 3.2s ease-in-out infinite;
-}
-
-@keyframes row-glow-breathe {
-  0%,
-  100% {
-    box-shadow:
-      0 0 22px rgba(22, 136, 255, 0.5),
-      0 0 60px rgba(11, 92, 255, 0.28);
-  }
-  50% {
-    box-shadow:
-      0 0 34px rgba(22, 136, 255, 0.72),
-      0 0 90px rgba(11, 92, 255, 0.4);
-  }
+  box-shadow:
+    0 0 26px rgba(22, 136, 255, 0.55),
+    0 0 70px rgba(11, 92, 255, 0.3);
 }
 </style>

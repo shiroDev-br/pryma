@@ -142,8 +142,7 @@ function isActive(link: SidebarLink): boolean {
 .sidebar {
   background:
     radial-gradient(120% 40% at 0% 0%, rgba(22, 136, 255, 0.07), transparent 60%),
-    linear-gradient(180deg, rgba(2, 8, 23, 0.9) 0%, rgba(1, 4, 12, 0.96) 100%);
-  backdrop-filter: blur(18px);
+    linear-gradient(180deg, rgba(2, 8, 23, 0.97) 0%, rgba(1, 4, 12, 0.99) 100%);
   box-shadow: 1px 0 0 rgba(22, 136, 255, 0.08), 12px 0 40px rgba(0, 0, 0, 0.35);
 }
 

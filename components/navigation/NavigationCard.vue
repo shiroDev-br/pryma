@@ -227,7 +227,9 @@ const cardStyle = computed<CSSProperties>(() => {
     width: `var(--card-w-${depth.value})`,
     height: `calc(var(--card-w-${depth.value}) / ${RATIO[depth.value]})`,
     transform: `translate(-50%, -50%) translateX(${shift}) translateZ(${z}px) rotateY(${rotateY}deg)`,
-    filter: `brightness(${brightness})`,
+    // Opacity (não filter:brightness): filtro por card re-rasteriza o conteúdo
+    // a cada frame da transição 3D — em chip fraco a home travava ao trocar.
+    opacity: brightness,
     willChange: 'transform',
   };
 });
@@ -288,14 +290,22 @@ function onClick(event: MouseEvent): void {
     linear-gradient(#000 0 0);
 }
 
-/* Halo azul difuso atrás do card — respira devagar. */
+/* Halo azul difuso atrás do card — luz fixa. Animar box-shadow em loop
+   repinta o palco inteiro em chip fraco (celular/TV compat travavam). */
 .nav-card__glow {
   inset: 0;
   border-radius: var(--radius-lg);
   box-shadow:
-    0 0 34px rgba(22, 136, 255, 0.6),
-    0 0 100px rgba(11, 92, 255, 0.34);
-  animation: glow-breathe 3.2s ease-in-out infinite;
+    0 0 34px rgba(22, 136, 255, 0.45),
+    0 0 100px rgba(11, 92, 255, 0.22);
+}
+
+/* Cards do carrossel giram em 3D — backdrop-filter e filter:blur re-rasterizam
+   o fundo a cada frame da animação. Vidro vira fundo sólido em todos os
+   tamanhos (não só na TV: o modo compat da TV tem viewport estreito). */
+.nav-card .backdrop-blur-md {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Reflexo azul no piso, logo abaixo do card. */
@@ -311,45 +321,5 @@ function onClick(event: MouseEvent): void {
     rgba(22, 80, 220, 0.12) 45%,
     transparent 100%
   );
-  filter: blur(7px);
-}
-
-@keyframes glow-breathe {
-  0%,
-  100% {
-    box-shadow:
-      0 0 30px rgba(22, 136, 255, 0.5),
-      0 0 90px rgba(11, 92, 255, 0.28);
-  }
-  50% {
-    box-shadow:
-      0 0 44px rgba(22, 136, 255, 0.72),
-      0 0 120px rgba(11, 92, 255, 0.42);
-  }
-}
-
-/* TV (≥1600) — DEPOIS das regras base: mesma especificidade, senão a ordem
-   do compilador mantém as regras base vencendo (foi assim que o
-   animation:none da TV virou código morto). */
-@media (min-width: 1600px) {
-  /* backdrop-filter por card custa releitura do fundo a cada frame do carrossel. */
-  .nav-card .backdrop-blur-md {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  /* Respirar do halo repinta box-shadow infinitamente — na TV vira luz fixa,
-     e com intensidade menor: o azul saturado estourava o padrão da marca. */
-  .nav-card__glow {
-    animation: none;
-    box-shadow:
-      0 0 34px rgba(22, 136, 255, 0.45),
-      0 0 100px rgba(11, 92, 255, 0.22);
-  }
-
-  /* filter:blur no reflexo re-rasteriza quando o card rotaciona em 3D. */
-  .nav-card__reflection {
-    filter: none;
-  }
 }
 </style>

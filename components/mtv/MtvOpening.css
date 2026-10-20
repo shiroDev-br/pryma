@@ -67,9 +67,8 @@
 }
 
 .mtv-btn--ghost {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.45);
   color: #fff;
-  backdrop-filter: blur(8px);
 }
 
 .mtv-btn--ghost:hover {

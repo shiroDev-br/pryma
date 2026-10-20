@@ -321,9 +321,8 @@ onBeforeUnmount(() => {
   justify-content: center;
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(2, 8, 23, 0.8);
+  background: rgba(2, 8, 23, 0.92);
   color: #fff;
-  backdrop-filter: blur(8px);
   transition: background-color 160ms ease, border-color 160ms ease;
 }
 

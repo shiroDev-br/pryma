@@ -108,8 +108,19 @@ function isFocusable(element: HTMLElement): boolean {
 /** Lista de elementos focáveis — não a geometria (que muda a cada rolagem). */
 let cachedElements: HTMLElement[] | null = null;
 
+/**
+ * Mutations em rajada (Vue re-render, hover, relógio, listas) — coalesce
+ * num refetch só. Sem isso, cada tecla refazia querySelectorAll no documento
+ * inteiro e a navegação ficava lenta em chip fraco.
+ */
+let invalidateTimer: ReturnType<typeof setTimeout> | null = null;
+
 function invalidateCandidates(): void {
-  cachedElements = null;
+  if (invalidateTimer !== null) return;
+  invalidateTimer = setTimeout(() => {
+    invalidateTimer = null;
+    cachedElements = null;
+  }, 150);
 }
 
 function collectElements(): HTMLElement[] {

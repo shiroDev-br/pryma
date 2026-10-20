@@ -257,9 +257,10 @@ watch(showDayFixtures, (open) => {
 
 <style scoped>
 .featured {
+  /* Fundo opaco — backdrop-filter + mix-blend em faixa da home repaintavam
+     em chip fraco (celular/TV compat) sem ganho visual que compense. */
   background:
-    linear-gradient(180deg, rgba(10, 24, 54, 0.78) 0%, rgba(3, 9, 24, 0.9) 100%);
-  backdrop-filter: blur(14px);
+    linear-gradient(180deg, rgba(10, 24, 54, 0.94) 0%, rgba(3, 9, 24, 0.97) 100%);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
 }
 
@@ -269,22 +270,8 @@ watch(showDayFixtures, (open) => {
     url('/img/mountain.jpg');
   background-size: cover;
   background-position: 70% 28%;
-  opacity: 0.55;
-  mix-blend-mode: screen;
+  opacity: 0.45;
   filter: saturate(0.8) brightness(0.7);
-}
-
-/* TV (≥1600): faixa de largura inteira com blur + mix-blend-mode screen é um
-   dos efeitos mais caros num chip de TV — vira fundo sólido sem blend. */
-@media (min-width: 1600px) {
-  .featured {
-    backdrop-filter: none;
-  }
-
-  .featured__scene {
-    mix-blend-mode: normal;
-    opacity: 0.35;
-  }
 }
 
 .team-card {
