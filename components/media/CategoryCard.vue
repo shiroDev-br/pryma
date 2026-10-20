@@ -1,22 +1,21 @@
 <template>
   <NuxtLink
     :to="to"
-    class="category-card group relative block aspect-[3/2] overflow-hidden rounded-lg border border-white/10 bg-surface transition-[transform,border-color,box-shadow] duration-normal [container-type:inline-size] hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card focus:outline-none focus-visible:border-accent focus-visible:shadow-focus"
+    class="category-card group relative block aspect-[3/2] min-h-[8.5rem] overflow-hidden rounded-lg border border-white/10 bg-surface transition-[transform,border-color,box-shadow] duration-normal [container-type:inline-size] hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card focus:outline-none focus-visible:border-accent focus-visible:shadow-focus"
   >
-    <!-- Arte de fundo: imagem própria ou degradê gerado -->
-    <img
-      v-if="visual.art"
-      :src="visual.art"
-      alt=""
-      loading="lazy"
-      decoding="async"
-      aria-hidden="true"
-      class="absolute inset-0 h-full w-full object-cover transition-transform duration-slow ease-stage group-hover:scale-[1.06]"
-    />
+    <!-- Degradê da categoria — base permanente (sobrevive se a arte falhar no WebView). -->
     <div
-      v-else
       class="absolute inset-0 transition-transform duration-slow ease-stage group-hover:scale-[1.06]"
       :style="{ background: gradient }"
+      aria-hidden="true"
+    />
+
+    <!-- Arte de fundo — background-image (não <img>): não depende de aspect-ratio
+         nem de lazy-load, que quebram em WebViews antigos de celular. -->
+    <div
+      v-if="visual.art"
+      class="absolute inset-0 bg-cover bg-center transition-transform duration-slow ease-stage group-hover:scale-[1.06]"
+      :style="{ backgroundImage: `url(${visual.art})` }"
       aria-hidden="true"
     />
 
@@ -74,14 +73,16 @@ const countLabel = computed(() => {
 </script>
 
 <style scoped>
+/* Fallbacks em rem primeiro: WebViews antigos (sem cqw/container queries)
+   caem neles; os navegadores modernos sobrescrevem com o clamp() seguinte. */
 .card-body {
-  gap: clamp(0.5rem, 4.5cqw, 0.9rem);
-  padding: clamp(0.7rem, 6cqw, 1.25rem);
+  gap: 0.4rem;
+  padding: 0.65rem;
 }
 
 .card-tile {
-  width: clamp(2.4rem, 16cqw, 3.6rem);
-  height: clamp(2.4rem, 16cqw, 3.6rem);
+  width: 2.1rem;
+  height: 2.1rem;
 }
 
 .card-icon {
@@ -90,17 +91,40 @@ const countLabel = computed(() => {
 }
 
 .card-name {
-  font-size: clamp(0.95rem, 6cqw, 1.25rem);
+  font-size: 0.9rem;
   line-height: 1.2;
 }
 
 .card-count {
-  font-size: clamp(0.74rem, 4.4cqw, 0.92rem);
+  font-size: 0.68rem;
 }
 
 .card-chevron {
-  width: clamp(1.25rem, 7cqw, 1.75rem);
-  height: clamp(1.25rem, 7cqw, 1.75rem);
+  width: 1.15rem;
+  height: 1.15rem;
   margin-bottom: 0.15rem;
+}
+
+.card-body {
+  gap: clamp(0.35rem, 4.5cqw, 0.9rem);
+  padding: clamp(0.55rem, 6cqw, 1.25rem);
+}
+
+.card-tile {
+  width: clamp(1.9rem, 16cqw, 3.6rem);
+  height: clamp(1.9rem, 16cqw, 3.6rem);
+}
+
+.card-name {
+  font-size: clamp(0.8rem, 6cqw, 1.25rem);
+}
+
+.card-count {
+  font-size: clamp(0.66rem, 4.4cqw, 0.92rem);
+}
+
+.card-chevron {
+  width: clamp(1rem, 7cqw, 1.75rem);
+  height: clamp(1rem, 7cqw, 1.75rem);
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
-  <div class="tv-safe pb-28 pt-24">
-    <header class="mb-8 space-y-6">
+  <div class="search-page tv-safe pb-28 pt-24">
+    <header class="search-page__header mb-8">
       <NuxtLink
         :to="filteredSection ? `/browse/${filteredSection.key}` : '/'"
         class="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors duration-fast hover:text-ink"
@@ -83,30 +83,36 @@
       </div>
     </header>
 
-    <EmptyState
-      v-if="!search.search.isReady.value"
-      title="Digite para buscar"
-      :description="
-        filteredSection
-          ? `Busca limitada a ${filteredSection.def.label} — use ao menos 2 letras.`
-          : 'Use ao menos 2 letras — a busca varre títulos, atores e gêneros.'
-      "
-    />
+    <!-- Estados de status alinhados à largura do input (max-w-2xl). -->
+    <div v-if="!search.search.isReady.value" class="max-w-2xl">
+      <EmptyState
+        title="Digite para buscar"
+        :description="
+          filteredSection
+            ? `Busca limitada a ${filteredSection.def.label} — use ao menos 2 letras.`
+            : 'Use ao menos 2 letras — a busca varre títulos, atores e gêneros.'
+        "
+      />
+    </div>
 
-    <LoadingState v-else-if="search.isPending.value" message="Buscando…" />
+    <div v-else-if="search.isPending.value" class="max-w-2xl">
+      <LoadingState message="Buscando…" />
+    </div>
 
-    <ErrorState
-      v-else-if="search.error.value"
-      title="Não foi possível buscar"
-      :message="search.error.value.message"
-      :on-retry="search.refresh"
-    />
+    <div v-else-if="search.error.value" class="max-w-2xl">
+      <ErrorState
+        title="Não foi possível buscar"
+        :message="search.error.value.message"
+        :on-retry="search.refresh"
+      />
+    </div>
 
-    <EmptyState
-      v-else-if="search.items.value.length === 0"
-      title="Nenhum resultado encontrado"
-      :description="`Não encontramos títulos para “${search.search.normalizedQuery.value}”.`"
-    />
+    <div v-else-if="search.items.value.length === 0" class="max-w-2xl">
+      <EmptyState
+        title="Nenhum resultado encontrado"
+        :description="`Não encontramos títulos para “${search.search.normalizedQuery.value}”.`"
+      />
+    </div>
 
     <template v-else>
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
@@ -136,12 +142,35 @@
   </div>
 </template>
 
+<style scoped>
+.search-page__header > * + * {
+  margin-top: 1.5rem;
+}
+
+/* Celular deitado — a bottom bar fixa fica logo abaixo; enxuta o topo
+   pra input + estado viverem entre o header e a barra sem rolagem. */
+@media (max-height: 500px) {
+  .search-page {
+    padding-top: 2.5rem;
+    padding-bottom: 4.25rem;
+  }
+
+  .search-page__header {
+    margin-bottom: 0.5rem;
+  }
+
+  .search-page__header > * + * {
+    margin-top: 0.65rem;
+  }
+}
+</style>
+
 <script setup lang="ts">
 import { SECTIONS } from '~/constants';
 import { isAdultItem } from '~/utils/adult';
 import type { Suggestion, MediaType, MediaSummary } from '~/types';
 
-useHead({ title: 'Prysma — Buscar' });
+useHead({ title: 'Pryma — Buscar' });
 
 const route = useRoute();
 

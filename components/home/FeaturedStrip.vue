@@ -9,11 +9,12 @@
 
     <div class="relative flex items-center justify-center px-6 py-0.5 lg:px-8">
       <div class="team-card w-full">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-1.5 items-stretch">
+        <!-- Mobile/tablet: trilho horizontal com snap. Desktop (lg+): grade 4 colunas. -->
+        <div class="rail-scroll flex snap-x gap-1.5 overflow-x-auto pb-1 lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0">
           <!-- Próximo jogo -->
           <div
             ref="matchSection"
-            class="match-section relative rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:p-2 transition-all duration-fast"
+            class="match-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 0,
               'border-white/20': activeCard === 0,
@@ -25,7 +26,7 @@
           <!-- Time do coração -->
           <div
             ref="teamSection"
-            class="team-section relative rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:p-2 transition-all duration-fast"
+            class="team-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 1,
               'border-white/20': activeCard === 1,
@@ -85,7 +86,7 @@
           <!-- Plano de fundo -->
           <div
             ref="bgSection"
-            class="bg-section relative rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:p-2 transition-all duration-fast"
+            class="bg-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 2,
               'border-white/20': activeCard === 2,
@@ -117,7 +118,7 @@
           <!-- Jogos do dia -->
           <div
             ref="daySection"
-            class="day-section relative rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:p-2 transition-all duration-fast"
+            class="day-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 3,
               'border-white/20': activeCard === 3,
@@ -271,6 +272,19 @@ watch(showDayFixtures, (open) => {
   opacity: 0.55;
   mix-blend-mode: screen;
   filter: saturate(0.8) brightness(0.7);
+}
+
+/* TV (≥1600): faixa de largura inteira com blur + mix-blend-mode screen é um
+   dos efeitos mais caros num chip de TV — vira fundo sólido sem blend. */
+@media (min-width: 1600px) {
+  .featured {
+    backdrop-filter: none;
+  }
+
+  .featured__scene {
+    mix-blend-mode: normal;
+    opacity: 0.35;
+  }
 }
 
 .team-card {

@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { usePreferencesStore } from '~/stores/preferences';
 
-useHead({ title: 'Prysma — Plano de fundo' });
+useHead({ title: 'Pryma — Plano de fundo' });
 
 const preferences = usePreferencesStore();
 const backgrounds = useBackgrounds();

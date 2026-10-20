@@ -165,5 +165,5 @@ useIntersectionObserver(sentinel, (isIntersecting) => {
   if (isIntersecting) mediaList.loadMore();
 });
 
-useHead({ title: computed(() => `Prysma — ${heading.value}`) });
+useHead({ title: computed(() => `Pryma — ${heading.value}`) });
 </script>

@@ -38,7 +38,7 @@
     </div>
 
     <MediaDetailPanel
-      class="rail-scroll hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto"
+      class="rail-scroll hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(var(--app-vh)_-_7.5rem)] lg:overflow-y-auto"
       :media="selected"
       :similar="similarShown"
       @preview="preview"

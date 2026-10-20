@@ -7,7 +7,7 @@
     <NuxtLink
       to="/"
       class="group flex shrink-0 items-center gap-3.5 px-6 pb-2 pt-7"
-      aria-label="Prysma — início"
+      aria-label="Pryma — início"
     >
       <img
         src="/prysma-mark.svg"

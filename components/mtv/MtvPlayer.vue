@@ -2,26 +2,28 @@
   <div class="mtv-player">
     <!-- Coluna esquerda: player + controles -->
     <section class="mtv-player__stage">
-      <div class="mtv-player__frame-wrap">
-        <div ref="frameEl" class="mtv-player__frame" aria-label="Player MTV" />
+      <div class="mtv-player__frame-box">
+        <div class="mtv-player__frame-wrap">
+          <div ref="frameEl" class="mtv-player__frame" aria-label="Player MTV" />
 
-        <!-- Aviso de erro do player -->
-        <div v-if="playerError" class="mtv-player__error" role="alert">
-          <Icon name="material-symbols:error-outline-rounded" class="h-6 w-6" aria-hidden="true" />
-          <span>{{ playerError }}</span>
+          <!-- Aviso de erro do player -->
+          <div v-if="playerError" class="mtv-player__error" role="alert">
+            <Icon name="material-symbols:error-outline-rounded" class="h-6 w-6" aria-hidden="true" />
+            <span>{{ playerError }}</span>
+          </div>
+
+          <!-- Badge de atribuição YouTube (obrigatória — ToS) -->
+          <a
+            href="https://www.youtube.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mtv-player__yt-badge"
+            data-nav="yt-badge"
+          >
+            <Icon name="logos:youtube" class="h-4 w-4" aria-hidden="true" />
+            Conteúdo hospedado no YouTube
+          </a>
         </div>
-
-        <!-- Badge de atribuição YouTube (obrigatória — ToS) -->
-        <a
-          href="https://www.youtube.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="mtv-player__yt-badge"
-          data-nav="yt-badge"
-        >
-          <Icon name="logos:youtube" class="h-4 w-4" aria-hidden="true" />
-          Conteúdo hospedado no YouTube
-        </a>
       </div>
 
       <!-- Faixa de info + controles -->

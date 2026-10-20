@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-useHead({ title: 'Prysma — Termos de uso' });
+useHead({ title: 'Pryma — Termos de uso' });
 
 interface TermSection {
   number: number;

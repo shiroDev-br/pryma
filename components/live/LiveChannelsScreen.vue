@@ -1,5 +1,5 @@
 <template>
-  <div ref="root" class="tv-safe pb-6 pt-24" @keydown="onKeydown">
+  <div ref="root" class="live-screen tv-safe pb-6 pt-24" @keydown="onKeydown">
     <!-- Fundo liso (sem a montanha) — a tela de canais é densa e precisa de contraste. -->
     <div class="bg-ambient fixed inset-0 -z-[5]" aria-hidden="true" />
 
@@ -19,7 +19,7 @@
 
     <div
       v-else
-      class="grid h-[calc(100svh-7.5rem)] min-h-[30rem] grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.8fr)] xl:grid-cols-[minmax(16rem,0.54fr)_minmax(0,1fr)_minmax(19rem,0.73fr)] xl:gap-6"
+      class="grid h-[calc(var(--app-vh)_-_7.5rem)] min-h-[30rem] grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.8fr)] xl:grid-cols-[minmax(16rem,0.54fr)_minmax(0,1fr)_minmax(19rem,0.73fr)] xl:gap-6"
     >
       <!-- Coluna 1: busca + atalhos -->
       <LiveChannelsSidebar
@@ -39,7 +39,8 @@
 
       <!-- Coluna 2: lista de canais -->
       <section class="live-panel flex min-h-0 flex-col p-4 sm:p-5" aria-labelledby="live-list-heading">
-        <header class="flex shrink-0 items-center gap-4">
+        <!-- No celular o wrap evita que o título fique "T." espremido pelo seletor de ordem. -->
+        <header class="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2">
           <button
             type="button"
             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface/70 text-ink-muted transition-colors duration-fast hover:border-blue/50 hover:text-ink focus:outline-none focus-visible:shadow-focus"
@@ -54,7 +55,10 @@
             <Icon name="material-symbols:sensors-rounded" class="h-9 w-9" />
           </span>
 
-          <div class="min-w-0 flex-1">
+          <!-- min-w garante que o wrap leve a ordenação pra outra linha
+               quando a coluna fica apertada (ex.: 1280px) em vez de
+               espremer o título até "Todos os ca…". -->
+          <div class="min-w-[11rem] flex-1">
             <h2 id="live-list-heading" class="truncate text-[1.5rem] font-semibold leading-tight text-ink">
               {{ heading }}
             </h2>
@@ -62,7 +66,7 @@
           </div>
 
           <!-- Ordenação -->
-          <div class="relative shrink-0">
+          <div class="relative ml-auto shrink-0">
             <button
               type="button"
               class="sort-btn inline-flex h-11 items-center gap-2.5 px-4 text-[0.92rem] text-ink focus:outline-none focus-visible:shadow-focus"
@@ -209,7 +213,7 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 const countFormatter = new Intl.NumberFormat('pt-BR');
 
-useHead({ title: `Prysma — ${SECTIONS.tv.label}` });
+useHead({ title: `Pryma — ${SECTIONS.tv.label}` });
 
 const root = ref<HTMLElement | null>(null);
 const listEl = ref<HTMLElement | null>(null);
@@ -407,9 +411,21 @@ const selected = computed<MediaSummary | null>(
   () => channels.value.find((channel) => channel.id === selectedId.value) ?? channels.value[0] ?? null,
 );
 
+/** Atraso curto antes de trocar a prévia: segurar a seta passa por muitas
+ *  linhas por segundo e cada troca remonta a arte do canal (img com :key) —
+ *  sem debounce a coluna da direita re-renderiza a cada linha e a TV trava. */
+let previewTimer: ReturnType<typeof setTimeout> | undefined;
+
 function preview(channel: MediaSummary): void {
-  selectedId.value = channel.id;
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    selectedId.value = channel.id;
+  }, 80);
 }
+
+onBeforeUnmount(() => {
+  if (previewTimer) clearTimeout(previewTimer);
+});
 
 /* ── Navegação por setas (teclado / controle remoto) ───────────────────── */
 
@@ -496,6 +512,15 @@ onBeforeUnmount(() => {
   border-radius: 1.35rem;
   background: linear-gradient(180deg, rgba(8, 22, 52, 0.78), rgba(4, 12, 32, 0.82));
   backdrop-filter: blur(10px);
+}
+
+/* TV (≥1600): painel de coluna inteira com blur força repaint a cada linha
+   que rola atrás dele — fundo fica opaco e o blur sai. */
+@media (min-width: 1600px) {
+  .live-panel {
+    backdrop-filter: none;
+    background: linear-gradient(180deg, rgba(8, 22, 52, 0.94), rgba(4, 12, 32, 0.96));
+  }
 }
 
 .sort-btn {

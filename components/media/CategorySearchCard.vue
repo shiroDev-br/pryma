@@ -55,13 +55,13 @@ const gradient = gradientForHue(215);
 
 <style scoped>
 .card-body {
-  gap: clamp(0.5rem, 4.5cqw, 0.9rem);
-  padding: clamp(0.7rem, 6cqw, 1.25rem);
+  gap: clamp(0.35rem, 4.5cqw, 0.9rem);
+  padding: clamp(0.55rem, 6cqw, 1.25rem);
 }
 
 .card-tile {
-  width: clamp(2.4rem, 16cqw, 3.6rem);
-  height: clamp(2.4rem, 16cqw, 3.6rem);
+  width: clamp(1.9rem, 16cqw, 3.6rem);
+  height: clamp(1.9rem, 16cqw, 3.6rem);
 }
 
 .card-icon {
@@ -70,17 +70,17 @@ const gradient = gradientForHue(215);
 }
 
 .card-name {
-  font-size: clamp(0.95rem, 6cqw, 1.25rem);
+  font-size: clamp(0.8rem, 6cqw, 1.25rem);
   line-height: 1.2;
 }
 
 .card-count {
-  font-size: clamp(0.74rem, 4.4cqw, 0.92rem);
+  font-size: clamp(0.66rem, 4.4cqw, 0.92rem);
 }
 
 .card-chevron {
-  width: clamp(1.25rem, 7cqw, 1.75rem);
-  height: clamp(1.25rem, 7cqw, 1.75rem);
+  width: clamp(1rem, 7cqw, 1.75rem);
+  height: clamp(1rem, 7cqw, 1.75rem);
   margin-bottom: 0.15rem;
 }
 </style>

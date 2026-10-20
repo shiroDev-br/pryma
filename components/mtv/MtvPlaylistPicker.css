@@ -1,5 +1,23 @@
 .mtv-picker {
+  /* Rola internamente quando os cards não cabem (o layout do player é fixed). */
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-y: auto;
   background: radial-gradient(ellipse at top, #1a0a2e 0%, #0a0a1a 100%);
+}
+
+.mtv-picker__inner {
+  /* margin:auto centraliza mas não esconde o topo quando há scroll. */
+  margin: auto;
+  width: 100%;
+  padding: 1.5rem;
+}
+
+@media (max-height: 500px) {
+  .mtv-picker__inner {
+    padding: 1rem;
+  }
 }
 
 .mtv-picker__header {

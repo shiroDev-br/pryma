@@ -1,0 +1,248 @@
+/* ═══ Responsividade global — Prysma ═══════════════════════════════════════
+   Todos os ajustes de layout por breakpoint vivem aqui.
+   Breakpoints: phone ≤640 · tablet ≤1024 · desktop ≤1599 · TV ≥1600
+   Deitado (celular): max-height:500 · TV em modo compat (letterbox estreito): max-width 900
+   Regras que precisam vencer estilos scoped usam o prefixo #app. */
+
+/* ── Tipografia base: TV/desktop escalam em rem (tudo que usa rem cresce junto) ── */
+html {
+  font-size: 16px;
+}
+
+@media (min-width: 1440px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 1800px) {
+  html {
+    font-size: 18.5px;
+  }
+}
+
+/* TV é 16:9 — a largura cresce junto do rem, a altura não. Em telas largas
+   e baixas (720p, notebook largo, TV com zoom do sistema) segura a escala
+   para tudo caber na viewport sem rolagem, igual ao notebook. */
+@media (min-width: 1600px) and (max-height: 1000px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 1600px) and (max-height: 800px) {
+  html {
+    font-size: 15.5px;
+  }
+}
+
+/* ── Gutter lateral único — vira o padding padrão de todas as telas ── */
+:root {
+  --page-gutter: clamp(1rem, 2.5vw, 2.75rem);
+}
+
+.tv-safe {
+  padding-left: max(env(safe-area-inset-left), var(--page-gutter));
+  padding-right: max(env(safe-area-inset-right), var(--page-gutter));
+}
+
+/* ── Setas de trilho: leves; somem no phone (swipe natural) ── */
+#__nuxt .rail-arrow {
+  height: 2.4rem;
+  width: 2.4rem;
+  background: rgba(2, 8, 23, 0.7);
+}
+
+#__nuxt .rail-arrow svg {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  #__nuxt .rail-arrow {
+    display: none;
+  }
+}
+
+/* ── Login ────────────────────────────────────────────────────────────── */
+/* Desktop grande / TV: card mais largo e legível do sofá */
+@media (min-width: 1600px) {
+  #__nuxt .panel {
+    width: 640px;
+  }
+}
+
+/* Alturas apertadas (TV com zoom do sistema, 720p, notebooks): login enxuto —
+   o conteúdo precisa caber sem rolagem; a TV enquadra tudo. */
+@media (max-height: 1050px) {
+  #__nuxt .login-page {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  #__nuxt .brand-mark {
+    margin-bottom: 1.25rem;
+  }
+
+  #__nuxt .brand-mark img {
+    height: 3rem;
+    width: 3rem;
+  }
+
+  #__nuxt .mark-glow {
+    inset: -1.25rem;
+  }
+
+  #__nuxt .wordmark {
+    margin-top: 0.6rem;
+    font-size: 2rem;
+  }
+
+  #__nuxt .login-tagline {
+    margin-bottom: 1.25rem;
+  }
+
+  #__nuxt .panel {
+    margin-top: 0;
+    padding: 1.25rem 1.5rem;
+  }
+
+  #__nuxt .panel h2 {
+    margin-top: 0.75rem;
+  }
+
+  #__nuxt .panel .mt-7 {
+    margin-top: 1.25rem;
+  }
+
+  #__nuxt .panel .mt-6 {
+    margin-top: 1rem;
+  }
+}
+
+/* Deitado de celular/letterbox estreito: marca compacta à esquerda, card à
+   direita — cabe em qualquer altura. Só em telas ESTREITAS: num TV o WebView
+   pode encolher a altura com o teclado do sistema e a coluna NÃO vira linha
+   (é o bug do logo que "pula" pra esquerda ao focar um input). */
+@media (max-height: 500px) and (max-width: 900px) {
+  #__nuxt .login-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+  }
+
+  #__nuxt .brand-mark {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  #__nuxt .brand-mark img {
+    height: 2.75rem;
+    width: 2.75rem;
+  }
+
+  #__nuxt .mark-glow {
+    inset: -1rem;
+  }
+
+  #__nuxt .wordmark {
+    margin-top: 0.35rem;
+    font-size: 1.35rem;
+    letter-spacing: 0.22em;
+    margin-right: -0.22em;
+  }
+
+  #__nuxt .login-tagline {
+    display: none;
+  }
+
+  #__nuxt .panel {
+    margin-top: 0;
+    width: 26rem;
+    max-width: calc(100vw - 12rem);
+    padding: 0.95rem 1.3rem;
+  }
+
+  #__nuxt .login-page {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+  }
+
+  #__nuxt .panel .mt-7 {
+    margin-top: 0.8rem;
+  }
+
+  #__nuxt .panel .mt-6 {
+    margin-top: 0.7rem;
+  }
+}
+
+/* ── Browse: trilho de categorias ─────────────────────────────────────── */
+/* Em telas estreitas (TV compat / celular) o painel de destaque fica empilhado */
+#__nuxt [data-highlights] {
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  #__nuxt [data-highlights] {
+    margin-top: 0.75rem;
+  }
+}
+
+/* ── Cards do rail: altura limitada fora do desktop ──
+   O aspect-[3/2] dos componentes estoura a viewport em phone (2 fileiras)
+   e em deitado. Aqui viramos altura fixa + aspect auto — sobrescreve as
+   utilities por especificidade (#__nuxt [attr] = 1,1,0). */
+@media (max-width: 640px) {
+  #__nuxt [data-category-card] {
+    aspect-ratio: auto;
+    height: 7.5rem;
+    min-height: 7.5rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  #__nuxt [data-category-card] {
+    aspect-ratio: auto;
+    height: 8.25rem;
+    min-height: 8.25rem;
+  }
+}
+
+/* Deitado (celular): 2 fileiras precisam caber junto do header e do destaque.
+   Altura sobe 0.5rem vs o piso antigo — com a contagem de títulos escondida,
+   tile + nome (até 2 linhas) cabem sem o tile ser cortado pelo topo do card. */
+@media (max-height: 500px) {
+  #__nuxt [data-category-card] {
+    aspect-ratio: auto;
+    height: 7rem;
+    min-height: 7rem;
+  }
+
+  #__nuxt [data-category-card] .card-count {
+    display: none;
+  }
+}
+
+/* ── Enquadramento de tela (desktop/TV): igual ao notebook, sem rolagem ──
+   A página inteira ocupa exatamente a viewport; o conteúdo é dimensionado
+   pra caber. Em telas estreitas (celular) a rolagem continua liberada. */
+@media (min-width: 901px) {
+  #__nuxt .login-page {
+    height: var(--app-vh);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #__nuxt .home-page {
+    height: var(--app-vh);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #__nuxt .live-screen {
+    height: var(--app-vh);
+    overflow: hidden;
+  }
+}

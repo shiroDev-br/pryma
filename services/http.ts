@@ -48,10 +48,21 @@ export function buildQueryString(query: QueryParams = {}): string {
 }
 
 function resolveSignal(external: AbortSignal | undefined, timeoutMs: number) {
-  const timeoutSignal = AbortSignal.timeout(timeoutMs);
-  const signal = external ? AbortSignal.any([external, timeoutSignal]) : timeoutSignal;
+  // AbortController manual — WebViews antigos de TV não têm AbortSignal.timeout/any.
+  const controller = new AbortController();
+  let timedOutFlag = false;
 
-  return { signal, timedOut: () => timeoutSignal.aborted };
+  const timer = setTimeout(() => {
+    timedOutFlag = true;
+    controller.abort();
+  }, timeoutMs);
+
+  if (external) {
+    if (external.aborted) controller.abort();
+    else external.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
+  return { signal: controller.signal, timedOut: () => timedOutFlag, cleanup: () => clearTimeout(timer) };
 }
 
 function extractErrorDetail(payload: unknown): { code: string; message: string } {
@@ -117,7 +128,7 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
     const allowRefresh = requestOptions?.allowRefresh ?? true;
 
     while (true) {
-      const { signal, timedOut } = resolveSignal(requestOptions?.signal, timeoutMs);
+      const { signal, timedOut, cleanup } = resolveSignal(requestOptions?.signal, timeoutMs);
 
       try {
         const token = getAccessToken();
@@ -178,6 +189,8 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
         }
 
         throw toApiError(error);
+      } finally {
+        cleanup();
       }
     }
   }

@@ -118,6 +118,14 @@ const initials = computed(() => channelInitials(props.media.title));
   animation: row-glow-breathe 3.2s ease-in-out infinite;
 }
 
+/* TV (≥1600): respirar do halo repinta box-shadow em loop — na TV vira luz fixa
+   (chip gráfico fraco; a lista tem dezenas de linhas rolando). */
+@media (min-width: 1600px) {
+  .row-glow {
+    animation: none;
+  }
+}
+
 @keyframes row-glow-breathe {
   0%,
   100% {

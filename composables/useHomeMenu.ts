@@ -10,6 +10,8 @@ export interface HomeMenuItem {
   icon: string;
   /** Rota de destino — ausente = card sem redirecionamento (ainda em construção). */
   to?: string;
+  /** Link externo — abre no navegador do dispositivo (fora do app). */
+  externalUrl?: string;
   /** Imagem de fundo do card (asset em `public/img/cards/`). */
   image?: string;
   /** Logo em imagem (PNG transparente) — substitui o ícone quando presente. */
@@ -53,6 +55,13 @@ const EXTRA_ITEMS: HomeMenuItem[] = [
     to: '/about',
   },
   {
+    id: 'atualizacoes',
+    title: 'Atualizações',
+    description: 'Novidades e versões mais recentes do app.',
+    icon: 'material-symbols:system-update-rounded',
+    externalUrl: 'http://aftv.news/9323613',
+  },
+  {
     id: 'cache',
     title: 'Limpeza de cache',
     description: 'Libere espaço limpando dados temporários.',
@@ -87,9 +96,9 @@ export interface HomeMenu {
 }
 
 /**
- * Menu da home — oito cards, foco inicial no meio.
+ * Menu da home — nove cards, foco inicial no meio.
  * Ordem (esquerda → direita): Música, YouTube, MTV, Séries, TV ao Vivo, Filmes,
- * Sobre, Limpeza de cache — centro = TV ao Vivo, vizinhos = Séries/Filmes e MTV.
+ * Atualizações, Sobre, Limpeza de cache — centro = TV ao Vivo.
  * Nenhum dado é buscado: a API só é tocada ao abrir uma seção (categorias)
  * e depois ao escolher a categoria (listagem).
  */
@@ -101,6 +110,7 @@ export function useHomeMenu(): HomeMenu {
     sectionItem('series'),
     sectionItem('tv'),
     sectionItem('filmes'),
+    extraItem('atualizacoes'),
     extraItem('sobre'),
     extraItem('cache'),
   ]);

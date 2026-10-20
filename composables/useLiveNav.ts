@@ -53,10 +53,12 @@ export function useLiveNav(options: UseLiveNavOptions): UseLiveNavReturn {
     return listEl.value?.querySelector<HTMLElement>(`[data-nav="row"][data-channel-id="${id}"]`) ?? null;
   }
 
-  function focusEl(element: HTMLElement | null | undefined): void {
+  /** Suavidade só na primeira seta pausada — autorepeat do remote é 'auto'
+   *  (rolagem suave empilhada é o que deixa a lista "travando" no TV). */
+  function focusEl(element: HTMLElement | null | undefined, repeat = false): void {
     if (!element) return;
     element.focus({ preventScroll: true });
-    element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    element.scrollIntoView({ block: 'nearest', behavior: repeat ? 'auto' : 'smooth' });
   }
 
   function onKeydown(event: KeyboardEvent): void {
@@ -67,12 +69,14 @@ export function useLiveNav(options: UseLiveNavOptions): UseLiveNavReturn {
     const kind = target?.dataset.nav;
     if (!target || !kind) return;
 
+    const repeat = event.repeat;
+
     // Consome a seta mesmo sem destino (borda da lista mantém o foco no lugar).
     // Sem preventDefault o evento vaza pro motor espacial global, que puxa o
     // foco pra outra região — é o "salto pra o meio" ao chegar no fim da sidebar.
     const move = (element: HTMLElement | null | undefined): void => {
       event.preventDefault();
-      if (element) focusEl(element);
+      if (element) focusEl(element, repeat);
     };
 
     const step = (kindName: string, delta: 1 | -1): HTMLElement | undefined => {

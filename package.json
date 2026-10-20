@@ -10,12 +10,13 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
-    "apk": "NUXT_SSR=0 nuxt generate && cap sync android",
+    "apk": "NUXT_SSR=0 nuxt generate && node scripts/fix-legacy-html.mjs && cap sync android",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@capacitor/android": "^7.1.0",
     "@capacitor/app": "^7.1.0",
+    "@capacitor/browser": "^7.0.5",
     "@capacitor/core": "^7.1.0",
     "@nuxt/icon": "1.10.3",
     "@nuxtjs/tailwindcss": "6.13.1",
@@ -31,7 +32,10 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.1.0",
+    "@iconify/json": "^2.2.545",
     "@types/node": "^26.6.5",
+    "@vitejs/plugin-legacy": "^7.2.1",
+    "terser": "^5.51.2",
     "typescript": "5.9",
     "vue-tsc": "^3.3.13"
   }

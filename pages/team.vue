@@ -183,7 +183,7 @@ import { FOOTBALL_MIN_SEARCH_CHARS } from '~/constants';
 import { formatKickoffLabel, formatMatchup, isFixtureOver } from '~/utils/format';
 import type { FavoriteTeam } from '~/types';
 
-useHead({ title: 'Prysma — Meu time' });
+useHead({ title: 'Pryma — Meu time' });
 
 const football = useFavoriteTeam();
 // `reactive` desembrulha os refs do composable — template sem `.value`.

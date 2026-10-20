@@ -121,7 +121,7 @@ watch(
   { immediate: true },
 );
 
-useHead({ title: computed(() => (media.value ? `Prysma — ${media.value.title}` : 'Prysma — Player')) });
+useHead({ title: computed(() => (media.value ? `Pryma — ${media.value.title}` : 'Pryma — Player')) });
 
 const playback = usePlayback();
 const { playback: playbackSession, status: playbackStatus, error: playbackError } = playback;

@@ -43,13 +43,13 @@
           <NuxtLink
             data-category-card
             :to="`/browse/${section}/${RECENTS_SLUG}`"
-            class="group relative block w-[12.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-all duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus"
+            class="group relative block h-[6.5rem] w-[9.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-all duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus sm:h-[9rem] sm:w-[11rem] md:h-[10.5rem] md:w-[12.5rem]"
             aria-label="Continuar assistindo"
           >
-            <div class="relative flex h-[10.5rem] flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue-dark/40 to-blue/10 p-4">
-              <Icon name="material-symbols:history-rounded" class="h-12 w-12 text-blue-light" aria-hidden="true" />
-              <p class="text-center text-sm font-semibold text-ink">Continuar assistindo</p>
-              <p class="text-center text-[0.7rem] text-ink-muted">Filmes e séries recentes</p>
+            <div class="relative flex h-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-blue-dark/40 to-blue/10 p-3 sm:gap-2 sm:p-4">
+              <Icon name="material-symbols:history-rounded" class="h-8 w-8 text-blue-light sm:h-10 sm:w-10 md:h-12 md:w-12" aria-hidden="true" />
+              <p class="text-center text-xs font-semibold text-ink sm:text-sm">Continuar assistindo</p>
+              <p class="text-center text-[0.62rem] text-ink-muted sm:text-[0.7rem]">Filmes e séries recentes</p>
             </div>
           </NuxtLink>
         </li>
@@ -127,7 +127,7 @@ onMounted(() => {
   hasRecents.value = hasRecentProgress();
 });
 
-useHead({ title: computed(() => `Prysma — ${sectionDef.label}`) });
+useHead({ title: computed(() => `Pryma — ${sectionDef.label}`) });
 
 /* ── Trilho horizontal ─────────────────────────────────────────────────── */
 
@@ -174,12 +174,13 @@ function onWheel(event: WheelEvent): void {
   element.scrollLeft += event.deltaY;
 }
 
-function focusCard(index: number): void {
+function focusCard(index: number, repeat = false): void {
   const target = cards()[index];
   if (!target) return;
   lastIndex = index;
   target.focus({ preventScroll: true });
-  target.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+  // Autorepeat do remote: rolagem instantânea (suave empilhada trava a TV).
+  target.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: repeat ? 'auto' : 'smooth' });
 }
 
 function focusHighlights(): void {
@@ -196,11 +197,13 @@ function onKeydown(event: KeyboardEvent): void {
   const target = event.target as HTMLElement | null;
   if (!target) return;
 
+  const repeat = event.repeat;
+
   // Vindo da faixa inferior: ↑ volta para o último card focado.
   if (target.closest('[data-highlights]')) {
     if (key === 'ArrowUp') {
       event.preventDefault();
-      focusCard(lastIndex);
+      focusCard(lastIndex, repeat);
     }
     return;
   }
@@ -224,7 +227,7 @@ function onKeydown(event: KeyboardEvent): void {
 
   event.preventDefault();
   if (next < 0 || next === index) return;
-  focusCard(next);
+  focusCard(next, repeat);
 }
 
 function focusFirstCard(): void {
@@ -278,10 +281,10 @@ onBeforeUnmount(() => {
   scroll-snap-align: start;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .category-rail {
     --cols: 3;
-    --gap: 1.1rem;
+    --gap: 1rem;
   }
 }
 
@@ -295,6 +298,13 @@ onBeforeUnmount(() => {
 @media (min-width: 1280px) {
   .category-rail {
     --cols: 5;
+    --gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1800px) {
+  .category-rail {
+    --cols: 6;
     --gap: 1.5rem;
   }
 }

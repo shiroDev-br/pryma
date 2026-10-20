@@ -1,4 +1,8 @@
 .mtv-screen {
+  /* Altura real (pai é fixed inset-0) — as fases scrollam por dentro. */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   overflow: hidden;
 }
 

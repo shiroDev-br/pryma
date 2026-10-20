@@ -3,7 +3,12 @@
     :is="cardTag"
     v-bind="cardBind"
     class="nav-card group absolute left-1/2 top-1/2 block"
-    :class="[depthClass, { 'max-sm:hidden': !isActive }]"
+    :class="[
+      depthClass,
+      { 'max-sm:hidden': !isActive },
+      // Cards distantes só em telas largas — em phone/tablet estouravam a borda.
+      { 'max-lg:hidden': depth === 'far' },
+    ]"
     :style="cardStyle"
     :aria-current="isActive ? 'true' : undefined"
     :aria-label="item.title"
@@ -61,13 +66,13 @@
 
     <!-- Conteúdo -->
     <span
-      class="relative flex h-full flex-col items-center px-5 text-center"
-      :class="isActive ? 'justify-center py-6' : 'justify-end pb-5 pt-4'"
+      class="nav-card__body relative flex h-full flex-col items-center px-5 text-center"
+      :class="isActive ? 'justify-center py-5 sm:py-6' : 'justify-end pb-5 pt-4'"
     >
       <!-- Ícone: ativo = traço grande sem caixa; inativo = medalhão redondo. -->
       <span
         v-if="isActive"
-        class="flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center text-ink"
+        class="flex h-[3.6rem] w-[3.6rem] shrink-0 items-center justify-center text-ink sm:h-[4.6rem] sm:w-[4.6rem]"
         aria-hidden="true"
       >
         <img
@@ -95,10 +100,10 @@
       <!-- Título -->
       <span
         v-if="!item.hideTitle"
-        class="block max-w-full truncate font-semibold uppercase transition-colors duration-fast"
+        class="nav-card__title block max-w-full shrink-0 truncate font-semibold uppercase transition-colors duration-fast"
         :class="
           isActive
-            ? 'mt-4 text-[clamp(1.5rem,2.3vw,2.1rem)] leading-none tracking-[0.05em] text-ink'
+            ? 'mt-2.5 text-[clamp(1.35rem,2.3vw,2.1rem)] leading-none tracking-[0.05em] text-ink sm:mt-4'
             : 'mt-3 text-[clamp(0.72rem,1vw,0.92rem)] leading-none tracking-[0.1em] text-ink'
         "
       >
@@ -110,7 +115,7 @@
         class="transition-colors duration-fast"
         :class="
           isActive
-            ? 'mt-4 max-w-[30ch] text-balance text-[clamp(0.78rem,0.95vw,0.9rem)] leading-snug text-ink'
+            ? 'mt-2.5 max-w-[30ch] text-balance text-[clamp(0.78rem,0.95vw,0.9rem)] leading-snug text-ink sm:mt-4'
             : 'mt-2 line-clamp-3 max-w-[20ch] text-[clamp(0.6rem,0.75vw,0.7rem)] leading-snug text-ink-muted'
         "
       >
@@ -128,11 +133,11 @@
       <!-- Indicador de entrada. -->
       <span
         class="flex shrink-0 items-center justify-center rounded-full border transition-colors duration-fast"
-        :class="
-          isActive
-            ? 'mt-5 h-10 w-10 border-[#4d9dff]/70 bg-[#0b3a9c]/60 text-ink shadow-[0_0_16px_rgba(22,136,255,0.45)] group-hover:bg-[#0b5cff]/70'
-            : 'mt-4 h-8 w-8 border-white/30 bg-black/25 text-ink group-hover:border-[#1688ff] group-hover:text-blue-light'
-        "
+          :class="
+            isActive
+              ? 'mt-3.5 h-9 w-9 border-[#4d9dff]/70 bg-[#0b3a9c]/60 text-ink shadow-[0_0_16px_rgba(22,136,255,0.45)] group-hover:bg-[#0b5cff]/70 sm:mt-5 sm:h-10 sm:w-10'
+              : 'mt-4 h-8 w-8 border-white/30 bg-black/25 text-ink group-hover:border-[#1688ff] group-hover:text-blue-light'
+          "
         aria-hidden="true"
       >
         <Icon
@@ -148,6 +153,8 @@
 import type { CSSProperties } from 'vue';
 // NuxtLink é resolvido em compilação — import explícito pro `component :is` em runtime.
 import { NuxtLink } from '#components';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import type { HomeMenuItem } from '~/composables/useHomeMenu';
 
 const props = defineProps<{
@@ -162,11 +169,21 @@ const emit = defineEmits<{
   activate: [];
 }>();
 
-/** Com rota → link de navegação; sem rota → botão inerte (card ainda sem destino). */
-const cardTag = computed(() => (props.item.to ? NuxtLink : 'button'));
-const cardBind = computed(() =>
-  props.item.to ? { to: props.item.to } : { type: 'button' as const },
-);
+/** Link externo (ex.: Atualizações) abre no navegador do sistema. */
+const isExternal = computed(() => Boolean(props.item.externalUrl));
+
+/** Com link externo → âncora; com rota → link de navegação; sem rota → botão inerte. */
+const cardTag = computed(() => {
+  if (isExternal.value) return 'a';
+  return props.item.to ? NuxtLink : 'button';
+});
+
+const cardBind = computed(() => {
+  if (isExternal.value) {
+    return { href: props.item.externalUrl, target: '_blank', rel: 'noopener noreferrer' };
+  }
+  return props.item.to ? { to: props.item.to } : { type: 'button' as const };
+});
 
 /** Bandas de profundidade — apenas offsets até ±2 são renderizados. */
 const depth = computed(() => {
@@ -202,19 +219,32 @@ const cardStyle = computed<CSSProperties>(() => {
   const brightness = abs === 0 ? 1 : abs === 1 ? 0.82 : 0.66;
   const shift = abs === 0 ? '0px' : `calc(${sign} * ${SHIFT[depth.value]})`;
 
+  // Altura derivada da largura (no lugar de aspect-ratio — Chrome <88 da TV
+  // ignora a propriedade e o card colapsa para a altura do conteúdo).
+  const RATIO: Record<string, string> = { active: '1.14', near: '0.78', far: '0.72' };
+
   return {
     width: `var(--card-w-${depth.value})`,
-    aspectRatio: abs === 0 ? '1.14 / 1' : abs === 1 ? '0.78 / 1' : '0.72 / 1',
+    height: `calc(var(--card-w-${depth.value}) / ${RATIO[depth.value]})`,
     transform: `translate(-50%, -50%) translateX(${shift}) translateZ(${z}px) rotateY(${rotateY}deg)`,
     filter: `brightness(${brightness})`,
-    transition:
-      'transform var(--transition-slow), width var(--transition-slow), aspect-ratio var(--transition-slow), filter var(--transition-slow)',
     willChange: 'transform',
   };
 });
 
 function onClick(event: MouseEvent): void {
-  if (props.isActive) return;
+  if (props.isActive) {
+    // Link externo: abre no navegador do sistema (Fora do app).
+    if (isExternal.value && props.item.externalUrl) {
+      event.preventDefault();
+      if (Capacitor.isNativePlatform()) {
+        void Browser.open({ url: props.item.externalUrl });
+      } else {
+        window.open(props.item.externalUrl, '_blank', 'noopener');
+      }
+    }
+    return;
+  }
   event.preventDefault();
   emit('activate');
 }
@@ -223,6 +253,24 @@ function onClick(event: MouseEvent): void {
 <style scoped>
 .nav-card {
   transform-style: preserve-3d;
+  /* Em CSS (não inline) para o media query de TV poder ajustar. */
+  transition:
+    transform var(--transition-slow),
+    width var(--transition-slow),
+    height var(--transition-slow),
+    filter var(--transition-slow);
+}
+
+/* Celular deitado — card enxuto: padding e título menores pra não truncar. */
+@media (max-height: 500px) {
+  .nav-card__body {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .nav-card__title {
+    font-size: clamp(1rem, 2.7vw, 1.2rem);
+  }
 }
 
 /* Borda em gradiente (azul elétrico → violeta) — máscara recorta só o contorno. */
@@ -277,6 +325,31 @@ function onClick(event: MouseEvent): void {
     box-shadow:
       0 0 44px rgba(22, 136, 255, 0.72),
       0 0 120px rgba(11, 92, 255, 0.42);
+  }
+}
+
+/* TV (≥1600) — DEPOIS das regras base: mesma especificidade, senão a ordem
+   do compilador mantém as regras base vencendo (foi assim que o
+   animation:none da TV virou código morto). */
+@media (min-width: 1600px) {
+  /* backdrop-filter por card custa releitura do fundo a cada frame do carrossel. */
+  .nav-card .backdrop-blur-md {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Respirar do halo repinta box-shadow infinitamente — na TV vira luz fixa,
+     e com intensidade menor: o azul saturado estourava o padrão da marca. */
+  .nav-card__glow {
+    animation: none;
+    box-shadow:
+      0 0 34px rgba(22, 136, 255, 0.45),
+      0 0 100px rgba(11, 92, 255, 0.22);
+  }
+
+  /* filter:blur no reflexo re-rasteriza quando o card rotaciona em 3D. */
+  .nav-card__reflection {
+    filter: none;
   }
 }
 </style>

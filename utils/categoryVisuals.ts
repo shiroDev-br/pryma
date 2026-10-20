@@ -60,9 +60,9 @@ const RULES: Rule[] = [
   { match: ['viagem'], art: art('viagem'), icon: 'material-symbols:flight-outline' },
   { match: ['religio', 'gospel'], art: art('religioso'), icon: 'material-symbols:church-outline' },
   { match: ['drama', 'turca', 'classico'], art: art('drama'), icon: 'material-symbols:theater-comedy-outline-rounded' },
-  { match: ['cinema'], art: art('cinema'), icon: 'material-symbols:local-movies-outline-rounded' },
+  { match: ['cinema'], art: art('cinema'), icon: 'material-symbols:theaters-outline-rounded' },
   { match: ['premium'], art: art('premium'), icon: 'material-symbols:workspace-premium-outline-rounded' },
-  { match: ['lancamento'], art: art('lancamento'), icon: 'material-symbols:new-releases-outline-rounded' },
+  { match: ['lancamento'], art: art('lancamento'), icon: 'material-symbols:release-alert-outline-rounded' },
   { match: ['legenda', 'dublad'], art: art('legendado'), icon: 'material-symbols:subtitles-outline-rounded' },
   { match: ['4k', 'uhd'], art: art('quatrok'), icon: 'material-symbols:4k-outline-rounded' },
   {

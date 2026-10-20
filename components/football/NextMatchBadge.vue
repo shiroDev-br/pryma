@@ -2,32 +2,42 @@
   <div v-if="store.isReady" class="w-full">
     <template v-if="fixture">
       <p
-        class="text-[0.62rem] font-semibold uppercase tracking-[0.24em]"
+        class="text-[0.55rem] font-semibold uppercase tracking-[0.24em]"
         :class="live ? 'text-blue' : 'text-ink-muted'"
       >
         <span
           v-if="live"
-          class="live-dot mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-blue align-middle"
+          class="live-dot mr-1 inline-block h-1.5 w-1.5 rounded-full bg-blue align-middle"
           aria-hidden="true"
         />
         {{ live ? 'Ao vivo' : 'Próximo jogo' }}
       </p>
-      <p class="mt-0.5 truncate text-[0.95rem] font-bold uppercase tracking-[0.06em] text-ink">
+      <p class="truncate text-[0.78rem] font-bold uppercase tracking-[0.06em] text-ink">
         {{ matchup }}
       </p>
-      <p class="mt-0.5 truncate text-[0.62rem] tracking-wide text-blue/85">
+      <p class="truncate text-[0.55rem] tracking-wide text-blue/85">
         {{ when }}<span v-if="league"> · {{ league }}</span>
       </p>
     </template>
 
-    <template v-else-if="!store.isLoading && !store.error">
-      <p class="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-ink-muted">
+    <template v-else>
+      <p class="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-ink-muted">
         Próximo jogo
       </p>
-      <p class="mt-0.5 text-[0.62rem] tracking-wide text-ink-muted">
-        Sem jogo nas próximas 48h
+      <p class="text-[0.55rem] tracking-wide text-ink-muted">
+        {{ store.isLoading ? 'Consultando…' : 'Sem jogo nas próximas 48h' }}
       </p>
     </template>
+  </div>
+
+  <!-- Sem time escolhido (ou antes da hidratação): o tile nunca fica vazio. -->
+  <div v-else class="w-full">
+    <p class="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-ink-muted">
+      Próximo jogo
+    </p>
+    <p class="text-[0.55rem] tracking-wide text-ink-muted">
+      {{ store.hydrated ? 'Defina seu time do coração' : 'Carregando…' }}
+    </p>
   </div>
 </template>
 

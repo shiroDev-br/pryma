@@ -13,23 +13,34 @@
  * Modal scoping: se um dialog `[role="dialog"][aria-modal="true"]` estiver
  * visível, o motor só considera candidatos dentro dele.
  *
- * Primeira seta: entra na direção pressada (centro da tela como origem).
- * Repeat (autorepeat do remote): rolagem suave desabilitada, usa 'auto'.
+ * Primeira seta: entra na direção pressionada (centro da tela como origem).
+ *
+ * Desempenho (TV/WebView fraco): a *lista* de candidatos é cacheada e só é
+ * refeita quando o DOM muda (MutationObserver) ou a janela redimensiona —
+ * nunca a cada tecla. Os retângulos são relidos por tecla num único passe
+ * (um único cálculo de layout, o resto é aritmética). Autorepeat do remote
+ * e pressões rápidas usam rolagem instantânea ('auto'): rolagem suave
+ * empilhada é o que deixa a passagem de foco "travada".
  */
 export default defineNuxtPlugin(() => {
   window.addEventListener('keydown', onKeydown);
+
+  // O DOM muda (listas virtuais, v-show, modais): marca candidatos para refez.
+  const observer = new MutationObserver(invalidateCandidates);
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['hidden', 'inert', 'disabled', 'tabindex', 'style', 'class'],
+  });
+
+  // CSS responsivo pode esconder/mostrar regiões inteiras sem mutação de DOM.
+  window.addEventListener('resize', invalidateCandidates);
 });
 
 import { pickSpatialBest } from '~/utils/spatial';
 
 type Direction = 'up' | 'down' | 'left' | 'right';
-
-const VECTORS: Record<Direction, { x: number; y: number }> = {
-  up: { x: 0, y: -1 },
-  down: { x: 0, y: 1 },
-  left: { x: -1, y: 0 },
-  right: { x: 1, y: 0 },
-};
 
 const KEY_TO_DIRECTION: Record<string, Direction> = {
   ArrowUp: 'up',
@@ -51,6 +62,14 @@ const KEYCODE_TO_DIRECTION: Record<number, Direction> = {
 
 const FOCUSABLE_SELECTOR = 'a[href], button, input, select, textarea, [tabindex]';
 
+const REDUCED_MOTION =
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Janela mínima entre duas setas para considerar "pressão rápida" (sem suavidade). */
+const RAPID_PRESS_MS = 160;
+
+let lastMoveAt = 0;
+
 function isEditable(element: Element | null): boolean {
   if (!element) return false;
   if (element.closest('[contenteditable="true"]')) return true;
@@ -59,50 +78,100 @@ function isEditable(element: Element | null): boolean {
   return false;
 }
 
+/** Campos de linha única (usuário/senha/busca) não usam ↑/↓ — no remote da TV
+ *  essas setas servem pra sair do campo (não existe teclado físico). */
+function isSingleLineInput(element: Element | null): boolean {
+  if (!element || element.tagName !== 'INPUT') return false;
+  const type = (element as HTMLInputElement).type;
+  return type === 'text' || type === 'password' || type === 'search' || type === 'email' || type === 'url' || type === 'tel';
+}
+
 function isFocusable(element: HTMLElement): boolean {
   if (element.tabIndex < 0) return false;
   if (element.hasAttribute('disabled')) return false;
   if (element.closest('[data-no-spatial], [hidden], [inert]')) return false;
-  if (getComputedStyle(element).visibility === 'hidden') return false;
-  // display:none (e itens fora de rails com content-visibility) não têm retângulo.
-  if (element.getClientRects().length === 0) return false;
+  // `checkVisibility` (Chrome 105+) responde visibility/display sem estilo
+  // computado caro; WebViews de TV antigas caem no getClientRects.
+  const check = (
+    element as HTMLElement & { checkVisibility?: (options?: Record<string, boolean>) => boolean }
+  ).checkVisibility;
+  if (typeof check === 'function') {
+    if (!check.call(element, { checkOpacity: false, checkVisibilityCSS: true })) return false;
+  } else if (element.getClientRects().length === 0) {
+    return false;
+  }
   return true;
 }
 
-interface Candidate {
-  element: HTMLElement;
-  rect: DOMRect;
+/* ── Cache de candidatos ───────────────────────────────────────────────── */
+
+/** Lista de elementos focáveis — não a geometria (que muda a cada rolagem). */
+let cachedElements: HTMLElement[] | null = null;
+
+function invalidateCandidates(): void {
+  cachedElements = null;
 }
 
-function collectCandidates(): Candidate[] {
+function collectElements(): HTMLElement[] {
+  if (cachedElements) return cachedElements;
+
   // Se houver modal dialog aberto, limita candidatos a ele.
-  const modal = document.querySelector<HTMLElement>('[role="dialog"][aria-modal="true"]:not([hidden]):not([inert])');
+  const modal = document.querySelector<HTMLElement>(
+    '[role="dialog"][aria-modal="true"]:not([hidden]):not([inert])',
+  );
   const nodes: NodeListOf<HTMLElement> = modal
     ? modal.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
     : document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-  const result: Candidate[] = [];
+
+  const result: HTMLElement[] = [];
   for (const element of nodes) {
-    if (!isFocusable(element)) continue;
-    result.push({ element, rect: element.getBoundingClientRect() });
+    if (isFocusable(element)) result.push(element);
+  }
+  cachedElements = result;
+  return result;
+}
+
+function measure(elements: HTMLElement[]): { element: HTMLElement; rect: DOMRect }[] {
+  const result: { element: HTMLElement; rect: DOMRect }[] = [];
+  for (const element of elements) {
+    // display:none devolve retângulo zero — sai da rodada.
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) continue;
+    result.push({ element, rect });
   }
   return result;
 }
 
-/** Foca o próximo candidato na direção, respeitando `prefers-reduced-motion`
- * e `event.repeat` (evita scroll jank em autorepeat). */
+/* ── Movimento ─────────────────────────────────────────────────────────── */
+
+/** Suavidade só na primeira seta pausada — repeat/pressão rápida é 'auto'. */
+function scrollBehavior(repeat: boolean): ScrollBehavior {
+  if (repeat || REDUCED_MOTION) return 'auto';
+  const now = performance.now();
+  if (now - lastMoveAt < RAPID_PRESS_MS) return 'auto';
+  return 'smooth';
+}
+
+/** Foca o próximo candidato na direção. */
 function focusNext(current: HTMLElement | null, direction: Direction, repeat = false): boolean {
-  const candidates = collectCandidates();
+  const candidates = measure(collectElements());
   if (candidates.length === 0) return false;
 
-  // Sem foco ainda: entra na direção pressada (centro da tela como origem).
-  if (!current || current === document.body) {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const behavior: ScrollBehavior = reducedMotion || repeat ? 'auto' : 'smooth';
+  const behavior = scrollBehavior(repeat);
 
-    // Tenta primeiro na direção usando algoritmo espacial compartilhado.
-    const virtual = { left: window.innerWidth / 2, top: window.innerHeight / 2, right: window.innerWidth / 2, bottom: window.innerHeight / 2, width: 0, height: 0 } as DOMRect;
+  // Sem foco ainda: entra na direção pressionada (centro da tela como origem).
+  if (!current || current === document.body) {
+    const virtual = {
+      left: window.innerWidth / 2,
+      top: window.innerHeight / 2,
+      right: window.innerWidth / 2,
+      bottom: window.innerHeight / 2,
+      width: 0,
+      height: 0,
+    } as DOMRect;
     const best = pickSpatialBest(virtual, candidates, direction);
     const target = best || candidates[0].element;
+    lastMoveAt = performance.now();
     target.focus({ preventScroll: true });
     target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior });
     return true;
@@ -112,9 +181,7 @@ function focusNext(current: HTMLElement | null, direction: Direction, repeat = f
   const best = pickSpatialBest(currentRect, candidates, direction);
   if (!best) return false;
 
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const behavior: ScrollBehavior = reducedMotion || repeat ? 'auto' : 'smooth';
-
+  lastMoveAt = performance.now();
   best.focus({ preventScroll: true });
   best.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior });
   return true;
@@ -130,9 +197,11 @@ function onKeydown(event: KeyboardEvent): void {
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
   // Digitando ou dentro de controles que usam setas nativas.
-  if (isEditable(active) || active?.closest('[data-no-spatial]')) return;
+  if (isEditable(active) || active?.closest('[data-no-spatial]')) {
+    // Exceção: ↑/↓ em campo de linha única não tem função nativa — permite
+    // que o D-pad saia do input (login/search na TV, sem teclado físico).
+    if (!(direction === 'up' || direction === 'down') || !isSingleLineInput(active)) return;
+  }
 
-  const repeat = event.repeat;
-
-  if (focusNext(active, direction, repeat)) event.preventDefault();
+  if (focusNext(active, direction, event.repeat)) event.preventDefault();
 }

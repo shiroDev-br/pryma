@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto">
+  <div class="space-y-2 lg:sticky lg:top-24 lg:block lg:max-h-[calc(var(--app-vh)_-_7.5rem)] lg:overflow-y-auto">
     <div v-for="cat in categories" :key="cat.name" class="space-y-1">
       <!-- Cabeçalho da categoria - clica pra expandir/colapsar -->
       <button
@@ -54,7 +54,7 @@
 
   <!-- Painel principal: Preview do canal -->
   <MediaDetailPanel
-    class="rail-scroll hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto"
+    class="rail-scroll hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(var(--app-vh)_-_7.5rem)] lg:overflow-y-auto"
     :media="previewMedia"
     :similar="[]"
     @preview="onPreview"

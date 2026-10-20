@@ -251,5 +251,5 @@ useIntersectionObserver(sentinel, (isIntersecting) => {
   if (isIntersecting) episodes.loadMore();
 });
 
-useHead({ title: computed(() => (seriesTitle.value ? `Prysma — ${seriesTitle.value}` : 'Prysma — Série')) });
+useHead({ title: computed(() => (seriesTitle.value ? `Pryma — ${seriesTitle.value}` : 'Pryma — Série')) });
 </script>

@@ -1,8 +1,9 @@
 .mtv-player {
   display: grid;
   grid-template-columns: 1fr 340px;
+  grid-template-rows: minmax(0, 1fr);
   gap: 1.5rem;
-  height: 100%;
+  flex: 1;
   min-height: 0;
   padding: 1.5rem;
   background: radial-gradient(ellipse at top, #1a0a2e 0%, #0a0a1a 100%);
@@ -13,25 +14,37 @@
   flex-direction: column;
   gap: 1rem;
   min-width: 0;
+  min-height: 0;
 }
 
-.mtv-player__frame-wrap {
+.mtv-player__frame-box {
+  /* Largura máx. do vídeo: respeita a altura da viewport (deitado). */
   position: relative;
-  width: 640px;
-  height: 360px;
-  max-width: 100%;
+  width: 100%;
+  max-width: min(640px, calc((100vh - 16.5rem) * 16 / 9));
+  margin: 0 auto;
   border-radius: 0.75rem;
   overflow: hidden;
   background: #000;
   box-shadow:
     0 0 0 1px rgba(255, 45, 149, 0.15),
     0 8px 40px rgba(0, 0, 0, 0.6);
-  margin: 0 auto;
+}
+
+.mtv-player__frame-wrap {
+  /* Proporção 16:9 (padding % resolve contra o box pai — vale em qualquer WebView). */
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-top: 56.25%;
 }
 
 .mtv-player__frame {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   min-height: 0;
 }
 
@@ -396,10 +409,43 @@
 @media (max-width: 1024px) {
   .mtv-player {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .mtv-player__list {
+    min-height: 0;
     max-height: 40vh;
+  }
+}
+
+/* Celular: info e controles quebram em duas linhas (não colidem) */
+@media (max-width: 640px) {
+  .mtv-player__bar {
+    flex-wrap: wrap;
+  }
+
+  .mtv-player__now {
+    flex: 1 1 100%;
+  }
+
+  .mtv-player__controls {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Deitado: aperta o palco p/ a tracklist continuar acessível */
+@media (max-height: 500px) {
+  .mtv-player {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .mtv-player__stage {
+    gap: 0.5rem;
+  }
+
+  .mtv-player__bar {
+    padding: 0.5rem 0.75rem;
   }
 }

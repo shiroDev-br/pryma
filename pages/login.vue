@@ -1,6 +1,6 @@
 <template>
-  <div class="flex min-h-[100svh] items-center justify-center px-6 py-12">
-    <div class="flex w-full flex-col items-center">
+  <div class="login-page flex min-h-[var(--app-vh)] items-center justify-center px-6 py-12">
+    <div class="login-inner flex w-full flex-col items-center">
       <!-- Marca — o momento "marquee". -->
       <div class="brand-mark relative mb-7 flex flex-col items-center">
         <div class="relative flex items-center justify-center">
@@ -17,10 +17,10 @@
         <h1 class="wordmark">PRYMA</h1>
       </div>
 
-      <p class="mb-9 text-center text-sm text-ink-muted">Sua experiência em outro nível.</p>
+      <p class="login-tagline mb-9 text-center text-sm text-ink-muted">Sua experiência em outro nível.</p>
 
       <!-- Credenciais. -->
-      <div class="panel w-[500px] mt-4">
+      <div class="panel mt-4 w-[500px] max-w-full xl:w-[560px]">
         <p class="kicker">Bem-vindo de volta</p>
         <h2 class="mt-3 text-[1.5rem] font-bold leading-none tracking-tight text-ink">Entrar</h2>
 
@@ -40,14 +40,28 @@
 
           <label class="block space-y-2">
             <span class="field-label">Senha</span>
-            <input
-              v-model="password"
-              type="password"
-              required
-              autocomplete="current-password"
-              placeholder="••••••••"
-              class="field"
-            />
+            <div class="relative">
+              <input
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                required
+                autocomplete="current-password"
+                placeholder="••••••••"
+                class="field field--password"
+              />
+              <button
+                type="button"
+                class="field-eye"
+                :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                @click="showPassword = !showPassword"
+              >
+                <Icon
+                  :name="showPassword ? 'material-symbols:visibility-off-rounded' : 'material-symbols:visibility-rounded'"
+                  class="h-5 w-5"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
           </label>
 
           <p
@@ -75,12 +89,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' });
 
-useHead({ title: 'Prysma — Entrar' });
+useHead({ title: 'Pryma — Entrar' });
 
 const auth = useAuth();
 
 const username = ref('');
 const password = ref('');
+const showPassword = ref(false);
 
 async function submit(): Promise<void> {
   auth.clearError();
@@ -204,6 +219,35 @@ async function submit(): Promise<void> {
 .field:focus {
   outline: none;
   border-color: var(--color-blue-dark);
+  box-shadow: var(--focus-ring);
+}
+
+.field--password {
+  padding-right: 2.75rem;
+}
+
+.field-eye {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  color: var(--color-text-muted, #a9b9d6);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.field-eye:hover {
+  color: var(--color-text);
+}
+
+.field-eye:focus-visible {
+  outline: none;
   box-shadow: var(--focus-ring);
 }
 

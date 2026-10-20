@@ -206,10 +206,12 @@ async function upstream<T>(
 
   let response: Response;
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
     response = await fetch(url, {
       headers: { accept: 'application/json', 'x-apisports-key': footballApiKey },
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
   } catch {
     throw footballError('API-Football indisponível no momento.');
   }

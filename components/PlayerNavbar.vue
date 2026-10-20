@@ -7,14 +7,14 @@
       <NuxtLink
         to="/"
         class="flex shrink-0 items-center gap-3 rounded-sm"
-        aria-label="Prysma — início"
+        aria-label="Pryma — início"
       >
         <span
           class="flex h-8 w-8 items-center justify-center rounded-md border border-blue-dark/50 bg-elevated text-blue"
         >
           <Icon name="material-symbols:tv" class="h-4 w-4" aria-hidden="true" />
         </span>
-        <span class="hidden text-sm font-semibold tracking-[0.28em] text-ink sm:block">Prysma</span>
+        <span class="hidden text-sm font-semibold tracking-[0.28em] text-ink sm:block">Pryma</span>
       </NuxtLink>
 
       <button

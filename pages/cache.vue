@@ -113,7 +113,7 @@ import { STORAGE_KEYS } from '~/constants';
 import { usePreferencesStore } from '~/stores/preferences';
 import { useFootballStore } from '~/stores/football';
 
-useHead({ title: 'Prysma — Limpeza de cache' });
+useHead({ title: 'Pryma — Limpeza de cache' });
 
 const preferences = usePreferencesStore();
 const football = useFootballStore();

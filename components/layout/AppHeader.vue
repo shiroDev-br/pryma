@@ -1,13 +1,13 @@
 <template>
   <header
-    class="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-black/70 via-black/30 to-transparent"
+    class="app-header fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-black/70 via-black/30 to-transparent"
   >
-    <div class="tv-safe flex h-20 items-center justify-between gap-6">
+    <div class="tv-safe flex h-20 items-center justify-between gap-3 sm:gap-6">
       <!-- Identidade — à esquerda do header. -->
       <NuxtLink
         to="/"
-        class="group flex shrink-0 items-center gap-3"
-        aria-label="Prysma — início"
+        class="group flex shrink-0 items-center gap-2.5 sm:gap-3"
+        aria-label="Pryma — início"
       >
         <img
           src="/prysma-mark.svg"
@@ -21,7 +21,8 @@
           <span class="block text-[0.95rem] font-semibold tracking-[0.3em] text-ink">
             PRYMA
           </span>
-          <span class="mt-1.5 block text-[0.5rem] font-medium tracking-[0.55em] text-ink-muted">
+          <!-- Tagline só a partir de sm — no celular ela estoura o header. -->
+          <span class="mt-1.5 hidden text-[0.5rem] font-medium tracking-[0.55em] text-ink-muted sm:block">
             Sua experiência em outro nível.
           </span>
         </span>
@@ -54,21 +55,21 @@
       </div>
 
       <!-- Hora/data + ações — à direita, na ordem da referência. -->
-      <div class="ml-auto flex shrink-0 items-center gap-4 sm:gap-5">
+      <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-5">
         <div class="flex flex-col items-end text-right">
           <time
             v-if="clock"
-            class="text-[1.6rem] font-semibold leading-none tabular-nums tracking-wide text-ink"
+            class="text-[1.15rem] font-semibold leading-none tabular-nums tracking-wide text-ink sm:text-[1.6rem]"
             :datetime="clockIso"
           >
             {{ clock }}
           </time>
-          <p class="mt-1.5 text-[0.62rem] font-medium uppercase tracking-[0.2em] text-ink-muted">
+          <p class="mt-1.5 text-[0.55rem] font-medium uppercase tracking-[0.15em] text-ink-muted sm:text-[0.62rem] sm:tracking-[0.2em]">
             {{ dateLabel }}
           </p>
         </div>
 
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-1.5 sm:gap-2.5">
           <!-- Notificações — ainda sem fonte de dados; o botão já ocupa o lugar da referência. -->
           <button type="button" class="header-btn" aria-label="Notificações" title="Notificações">
             <Icon
@@ -81,25 +82,31 @@
           <!-- Menu do usuário — plano de fundo e atalhos de conta. -->
           <div class="relative">
             <button
+              ref="triggerRef"
               type="button"
               class="header-btn"
               aria-label="Menu do usuário"
               title="Usuário"
               :aria-expanded="menuOpen"
-              @click="menuOpen = !menuOpen"
+              @click="toggleMenu"
             >
               <Icon name="material-symbols:person-outline-rounded" class="h-5 w-5" aria-hidden="true" />
             </button>
 
             <template v-if="menuOpen">
+              <!-- tabindex=-1: o spatial engine ignora o backdrop, senão o foco
+                   some para um botão invisível cobrindo a tela toda. -->
               <button
                 type="button"
                 class="fixed inset-0 -z-10 cursor-default"
+                tabindex="-1"
                 aria-label="Fechar menu"
-                @click="menuOpen = false"
+                @click="closeMenu(false)"
               />
               <div
+                ref="menuRef"
                 class="absolute right-0 top-full mt-2 w-52 rounded-md border border-line bg-[#06142d]/95 p-1.5 shadow-stage backdrop-blur-md"
+                @keydown="onMenuKeydown"
               >
                 <NuxtLink
                   to="/background"
@@ -117,6 +124,14 @@
                   <Icon name="material-symbols:sports-soccer" class="h-4 w-4" aria-hidden="true" />
                   Meu time
                 </NuxtLink>
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
+                  @click="onLogout"
+                >
+                  <Icon name="material-symbols:logout-rounded" class="h-4 w-4" aria-hidden="true" />
+                  Sair
+                </button>
               </div>
             </template>
           </div>
@@ -128,8 +143,55 @@
 
 <script setup lang="ts">
 const football = useFavoriteTeam();
+const auth = useAuth();
 
 const menuOpen = ref(false);
+const triggerRef = ref<HTMLButtonElement | null>(null);
+const menuRef = ref<HTMLElement | null>(null);
+
+function menuItems(): HTMLElement[] {
+  return Array.from(menuRef.value?.querySelectorAll<HTMLElement>('a[href], button') ?? []);
+}
+
+function closeMenu(refocusTrigger = true): void {
+  menuOpen.value = false;
+  if (refocusTrigger) {
+    nextTick(() => triggerRef.value?.focus());
+  }
+}
+
+function toggleMenu(): void {
+  if (menuOpen.value) {
+    closeMenu();
+    return;
+  }
+  menuOpen.value = true;
+  // Foco no 1º item — senão o D-pad começa fora do menu e nada navega dentro.
+  nextTick(() => menuItems()[0]?.focus());
+}
+
+// Armadilha do menu: setas circulam entre os itens e fecham no ←/→/Esc.
+// preventDefault faz o spatial engine (window, bubble) ignorar a tecla.
+function onMenuKeydown(event: KeyboardEvent): void {
+  const items = menuItems();
+  if (items.length === 0) return;
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const delta = event.key === 'ArrowDown' ? 1 : -1;
+    items[(current + delta + items.length) % items.length]?.focus();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Escape') {
+    event.preventDefault();
+    closeMenu();
+  }
+}
+
+async function onLogout(): Promise<void> {
+  menuOpen.value = false;
+  await auth.logout();
+  await navigateTo('/login');
+}
 
 const clock = ref('');
 const clockIso = ref('');
@@ -190,5 +252,19 @@ onMounted(() => {
 .header-btn:hover {
   border-color: var(--color-blue-dark);
   color: var(--color-blue-light);
+}
+
+/* Celular deitado — header compacto pra não roubar altura da home. */
+@media (max-height: 500px) {
+  .app-header .tv-safe {
+    height: 3.5rem;
+  }
+}
+
+/* TV — blur por frame em chip fraco não compensa; o fundo do botão já é sólido. */
+@media (min-width: 1600px) {
+  .header-btn {
+    backdrop-filter: none;
+  }
 }
 </style>

@@ -51,5 +51,5 @@ const resultLabel = computed(() => {
   return `${total} ${total === 1 ? 'título' : 'títulos'}`;
 });
 
-useHead({ title: `Prysma — ${HEADING}` });
+useHead({ title: `Pryma — ${HEADING}` });
 </script>
