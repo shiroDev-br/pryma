@@ -110,18 +110,23 @@ export default defineComponent({
         }
       }
 
-      return [...map.entries()].map(([name, channels]) => ({
-        name,
-        channels,
-        slug: slugByName.value.get(name) ?? '',
-      })).sort((a, b) => {
-        const idxA = PRIORITY.indexOf(a.name);
-        const idxB = PRIORITY.indexOf(b.name);
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-        return a.name.localeCompare(b.name, 'pt-BR');
-      });
+      return [...map.entries()]
+        .map(([name, channels]) => ({
+          name,
+          // Ordem alfabética dentro do grupo (o pool vem em ordem do servidor
+          // + abas especiais anexadas no fim — a coluna da esquerda ficava
+          // embaralhada enquanto a lista do meio estava em A–Z).
+          channels: [...channels].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR')),
+          slug: slugByName.value.get(name) ?? '',
+        }))
+        .sort((a, b) => {
+          const idxA = PRIORITY.indexOf(a.name);
+          const idxB = PRIORITY.indexOf(b.name);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          return a.name.localeCompare(b.name, 'pt-BR');
+        });
     });
 
     function isExpanded(name: string): boolean {

@@ -19,7 +19,7 @@
 
     <div
       v-else
-      class="grid h-[calc(var(--app-vh)_-_7.5rem)] min-h-[30rem] grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.8fr)] xl:grid-cols-[minmax(16rem,0.54fr)_minmax(0,1fr)_minmax(19rem,0.73fr)] xl:gap-6"
+      class="grid h-[calc(var(--app-vh)_-_7.5rem)] min-h-[30rem] grid-cols-1 gap-5 [@media(min-width:700px)]:[@media(max-width:1023px)]:grid-cols-[minmax(9.5rem,0.55fr)_minmax(0,1fr)_minmax(10.5rem,0.6fr)] [@media(min-width:700px)]:[@media(max-width:1023px)]:gap-4 lg:grid-cols-[minmax(13rem,0.5fr)_minmax(0,1fr)_minmax(16rem,0.72fr)] lg:gap-5 xl:grid-cols-[minmax(16rem,0.54fr)_minmax(0,1fr)_minmax(19rem,0.73fr)] xl:gap-6"
     >
       <!-- Coluna 1: busca + atalhos -->
       <LiveChannelsSidebar
@@ -38,7 +38,7 @@
       />
 
       <!-- Coluna 2: lista de canais -->
-      <section class="live-panel flex min-h-0 flex-col p-4 sm:p-5" aria-labelledby="live-list-heading">
+      <section class="live-panel flex min-h-0 flex-col p-4 lg:p-5" aria-labelledby="live-list-heading">
         <!-- No celular o wrap evita que o título fique "T." espremido pelo seletor de ordem. -->
         <header class="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2">
           <button
@@ -183,7 +183,7 @@
 
       <!-- Coluna 3: prévia + programação -->
       <LiveChannelPreview
-        class="hidden lg:flex"
+        class="hidden [@media(min-width:700px)]:flex"
         :media="selected"
         :category-slug="selected?.categoryId ? (categoryById.get(selected.categoryId)?.slug ?? null) : null"
       />

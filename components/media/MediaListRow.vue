@@ -50,10 +50,11 @@
         {{ displayTitle }}
       </p>
       <p v-if="metaLabel" class="mt-1 truncate text-[0.78rem] transition-colors duration-fast" :class="selected ? 'text-blue' : 'text-ink-muted'">{{ metaLabel }}</p>
-      <!-- Sinopse só em telas sem painel de detalhe (mobile). Em desktop/TV o
-           painel lateral já mostra a sinopse — na row ela só engordava a linha
-           (3 linhas de texto = "cards imensos" na listagem da TV). -->
-      <p v-if="synopsis" class="mt-1.5 line-clamp-3 hidden text-[0.82rem] leading-relaxed text-ink-muted lg:block">
+      <!-- Sinopse só no celular (<640) — lá não existe painel de detalhe. Em
+           TV compat (760) e desktops/TVs grandes o `hidden` evita a linha de
+           3 linhas que virava "card gigante" na listagem (o painel lateral
+           mostra a descrição quando existe). -->
+      <p v-if="synopsis" class="mt-1.5 line-clamp-3 text-[0.82rem] leading-relaxed text-ink-muted sm:hidden">
         {{ synopsis }}
       </p>
     </div>

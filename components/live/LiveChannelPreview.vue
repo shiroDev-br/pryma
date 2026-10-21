@@ -66,9 +66,9 @@
       </NuxtLink>
 
       <!-- Canal + programa atual -->
-      <section class="pv-card shrink-0 p-4 sm:p-5">
+      <section class="pv-card shrink-0 p-4 lg:p-5">
         <div class="flex items-center gap-4">
-          <span class="flex h-12 w-[4.5rem] shrink-0 items-center justify-center" aria-hidden="true">
+          <span class="hidden h-12 w-[4.5rem] shrink-0 items-center justify-center lg:flex" aria-hidden="true">
             <img
               v-if="media.logoUrl && !logoFailed"
               :src="media.logoUrl"
@@ -78,9 +78,9 @@
             />
             <span v-else class="text-xl font-bold text-ink">{{ initials }}</span>
           </span>
-          <span class="h-9 w-px shrink-0 bg-white/12" aria-hidden="true" />
+          <span class="hidden h-9 w-px shrink-0 bg-white/12 lg:block" aria-hidden="true" />
           <div class="min-w-0">
-            <p class="truncate text-[1.15rem] font-semibold uppercase leading-tight text-ink">
+            <p class="truncate text-[1.05rem] font-semibold uppercase leading-tight text-ink lg:text-[1.15rem]">
               {{ media.title }}
             </p>
             <p class="mt-0.5 truncate text-[0.9rem] text-ink-muted">
@@ -117,7 +117,7 @@
         <div class="mt-4 flex flex-wrap gap-3">
           <NuxtLink
             :to="mediaHref(media)"
-            class="inline-flex h-11 items-center gap-2 rounded-full bg-blue-dark px-6 text-sm font-semibold text-ink shadow-[0_0_18px_rgba(22,136,255,0.45)] transition-colors duration-fast hover:bg-blue focus:outline-none focus-visible:shadow-focus"
+            class="inline-flex h-11 items-center gap-2 rounded-full bg-blue-dark px-3 text-sm font-semibold text-ink shadow-[0_0_18px_rgba(22,136,255,0.45)] transition-colors duration-fast hover:bg-blue focus:outline-none focus-visible:shadow-focus lg:px-6"
             data-nav="preview"
           >
             <Icon name="material-symbols:play-arrow-rounded" class="h-5 w-5" aria-hidden="true" />
@@ -143,7 +143,7 @@
       </section>
 
       <!-- Programação -->
-      <section class="pv-card flex min-h-0 flex-1 flex-col p-4 sm:p-5" aria-labelledby="live-guide-heading">
+      <section class="pv-card flex min-h-0 flex-1 flex-col p-4 lg:p-5" aria-labelledby="live-guide-heading">
         <div class="flex shrink-0 items-center gap-3">
           <Icon name="material-symbols:calendar-month-outline-rounded" class="h-6 w-6 text-ink-muted" aria-hidden="true" />
           <h2 id="live-guide-heading" class="flex-1 text-[1.05rem] font-medium text-ink">Programação</h2>

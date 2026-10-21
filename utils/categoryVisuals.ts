@@ -29,7 +29,9 @@ interface Rule {
   hideIcon?: boolean;
 }
 
-const art = (name: string) => `/img/categories/${name}.jpg`;
+// WebP: 43% menor que o JPG no mesmo visual — a TV/carregava ~1.5 MB de
+// artes de categoria; agora ~1 MB (Android WebView suporta WebP desde 4.0).
+const art = (name: string) => `/img/categories/${name}.webp`;
 /** Arte vetorial das plataformas — SVG escala para qualquer resolução (4K+). */
 const artSvg = (name: string) => `/img/categories/${name}.svg`;
 const PLAY = 'material-symbols:play-circle-outline-rounded';

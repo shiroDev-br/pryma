@@ -267,7 +267,7 @@ watch(showDayFixtures, (open) => {
 .featured__scene {
   background-image:
     linear-gradient(90deg, rgba(3, 9, 24, 0.96) 0%, rgba(3, 9, 24, 0.55) 55%, rgba(3, 9, 24, 0.2) 100%),
-    url('/img/mountain.jpg');
+    url('/img/mountain.webp');
   background-size: cover;
   background-position: 70% 28%;
   opacity: 0.45;

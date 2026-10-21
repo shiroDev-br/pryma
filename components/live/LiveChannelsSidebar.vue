@@ -1,7 +1,10 @@
 <template>
   <!-- Coluna 1: busca + atalhos -->
-  <aside class="live-panel hidden min-h-0 flex-col p-4 xl:flex" aria-label="Atalhos de canais">
-    <label class="search-box flex h-12 shrink-0 items-center gap-3 px-4 focus-within:shadow-focus">
+  <aside
+    class="live-panel hidden min-h-0 flex-col p-3 [@media(min-width:700px)]:flex xl:p-4"
+    aria-label="Atalhos de canais"
+  >
+    <label class="search-box flex h-12 shrink-0 items-center gap-2 px-3 focus-within:shadow-focus xl:gap-3 xl:px-4">
       <Icon name="material-symbols:search-rounded" class="h-5 w-5 shrink-0 text-ink-muted" aria-hidden="true" />
       <input
         :value="query"
@@ -30,14 +33,14 @@
     <!-- Grupo atual (reflete a aba ativa) -->
     <button
       type="button"
-      class="group-row mt-4 flex h-[3.4rem] w-full shrink-0 items-center gap-3.5 px-4 text-left text-ink focus:outline-none focus-visible:shadow-focus"
+      class="group-row mt-4 flex h-[3.4rem] w-full shrink-0 items-center gap-2.5 px-3 text-left text-ink focus:outline-none focus-visible:shadow-focus xl:gap-3.5 xl:px-4"
       data-nav="sidebar"
       @click="emit('focus-first')"
     >
       <Icon name="material-symbols:tv-gen-outline-rounded" class="h-6 w-6 shrink-0" aria-hidden="true" />
       <span class="min-w-0 flex-1 truncate text-[1rem] font-semibold">{{ label }}</span>
-      <span class="shrink-0 text-[0.95rem] font-medium tabular-nums">{{ countFormatter.format(count) }}</span>
-      <Icon name="material-symbols:chevron-right-rounded" class="h-6 w-6 shrink-0" aria-hidden="true" />
+      <span class="hidden shrink-0 text-[0.95rem] font-medium tabular-nums xl:inline">{{ countFormatter.format(count) }}</span>
+      <Icon name="material-symbols:chevron-right-rounded" class="hidden h-6 w-6 shrink-0 xl:block" aria-hidden="true" />
     </button>
 
     <div ref="sideEl" class="rail-scroll mt-1 min-h-0 flex-1 overflow-y-auto pr-1" role="list">
@@ -45,7 +48,7 @@
       <div v-for="group in groups" :key="group.name" class="space-y-1">
         <button
           type="button"
-          class="w-full flex items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors duration-fast border-line bg-surface/70 hover:border-blue-dark/60 hover:bg-elevated/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue/50"
+          class="w-full flex items-center gap-2 rounded-md border px-2 py-2.5 text-left transition-colors duration-fast border-line bg-surface/70 hover:border-blue-dark/60 hover:bg-elevated/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 xl:gap-3 xl:px-3"
           :class="{ 'bg-blue/15 border-blue/50': activeSlug === group.slug }"
           @click="selectGroup(group)"
           :aria-expanded="isExpanded(group.name)"
@@ -56,9 +59,9 @@
             class="h-5 w-5 shrink-0 text-ink-muted transition-transform duration-fast"
             aria-hidden="true"
           />
-          <Icon name="material-symbols:live-tv" class="h-5 w-5 shrink-0" :class="activeSlug === group.slug ? 'text-blue-light' : 'text-blue'" aria-hidden="true" />
+          <Icon name="material-symbols:live-tv" class="hidden h-5 w-5 shrink-0 xl:block" :class="activeSlug === group.slug ? 'text-blue-light' : 'text-blue'" aria-hidden="true" />
           <span class="min-w-0 truncate text-sm font-semibold" :class="activeSlug === group.slug ? 'text-blue-light' : ''">{{ group.name }}</span>
-          <span class="shrink-0 text-[0.7rem] text-ink-muted/70 flex items-center gap-1.5">
+          <span class="hidden shrink-0 text-[0.7rem] text-ink-muted/70 items-center gap-1.5 xl:flex">
             <span class="px-2 py-0.5 rounded-full text-[0.65rem] font-medium" :class="activeSlug === group.slug ? 'bg-blue/25 text-blue-light' : 'bg-blue/10 text-blue'">
               {{ group.channels.length }}
             </span>

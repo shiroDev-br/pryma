@@ -15,11 +15,9 @@ html {
   }
 }
 
-@media (min-width: 1800px) {
-  html {
-    font-size: 18.5px;
-  }
-}
+/* Tira o salto de 18.5px em ≥1800: na TV grande tudo (cards, rows, tiles)
+   ficava ~16% maior que no notebook — "cards enormes". 17px segue maior que
+   o desktop (16px), legível do sofá, com densidade equivalente. */
 
 /* TV é 16:9 — a largura cresce junto do rem, a altura não. Em telas largas
    e baixas (720p, notebook largo, TV com zoom do sistema) segura a escala

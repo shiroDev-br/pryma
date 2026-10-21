@@ -43,14 +43,14 @@ function labelFor(id: string): string {
 }
 
 /**
- * Opção fixa — fundo padrão: montanha ao amanhecer (`public/img/mountain.jpg`).
+ * Opção fixa — fundo padrão: montanha ao amanhecer (`public/img/mountain.webp`).
  * O AppBackground não a estica na tela inteira: compõe a imagem no canto
  * superior direito, escurecida e dissolvendo no azul-marinho (ver AppBackground).
  */
 const AMBIENT_OPTION: BackgroundOption = {
   id: 'none',
   label: 'Padrão',
-  url: '/img/mountain.jpg',
+  url: '/img/mountain.webp',
 };
 
 const FILE_OPTIONS: BackgroundOption[] = Object.entries(modules)

@@ -27,6 +27,10 @@ for (const file of walkHtml(root)) {
     /<script type="module"([^>]*?)-legacy\.js([^>]*?)><\/script>/g,
     '<script nomodule$1-legacy.js$2></script>',
   );
+  // Nuxt emite <link modulepreload/prefetch> pros bundles legacy também —
+  // navegador moderno baixava ~1.3 MB de código morto por sessão (o legado
+  // recebe os arquivos via <script nomodule> e pelo próprio runtime).
+  html = html.replace(/\s*<link[^>]*-legacy\.js[^>]*>/g, '');
   // WebView de TV cacheava o index.html e servia bundles antigos mesmo com
   // APK novo instalado — no-store no HTML garante asset fresco.
   if (!html.includes('http-equiv="Cache-Control"')) {
