@@ -21,15 +21,18 @@ function* walkHtml(dir) {
 
 let fixed = 0;
 for (const file of walkHtml(root)) {
-  const html = readFileSync(file, 'utf8');
+  let html = readFileSync(file, 'utf8');
   // <script type="module" src="...-legacy.js"> -> <script nomodule ...>
-  const next = html.replace(
+  html = html.replace(
     /<script type="module"([^>]*?)-legacy\.js([^>]*?)><\/script>/g,
     '<script nomodule$1-legacy.js$2></script>',
   );
-  if (next !== html) {
-    writeFileSync(file, next);
-    fixed++;
+  // WebView de TV cacheava o index.html e servia bundles antigos mesmo com
+  // APK novo instalado — no-store no HTML garante asset fresco.
+  if (!html.includes('http-equiv="Cache-Control"')) {
+    html = html.replace('<head>', '<head>\n    <meta http-equiv="Cache-Control" content="no-store" />');
   }
+  writeFileSync(file, html);
+  fixed++;
 }
 console.log(`[fix-legacy-html] ${fixed} HTML(s) corrigido(s)`);
