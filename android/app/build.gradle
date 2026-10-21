@@ -7,8 +7,13 @@ android {
         applicationId "com.prysma.iptv"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Carimbo de build (BUILD_ID/BUILD_VC exportados pelo script de build):
+        // versionCode em epoch garante atualização aceita pelo Android;
+        // versionName (Ajustes → app) mostra o stamp do build.
+        def buildVc = (System.getenv("BUILD_VC") ?: "1").toInteger()
+        def buildStamp = System.getenv("BUILD_ID") ?: "1.0"
+        versionCode buildVc
+        versionName buildStamp
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

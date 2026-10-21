@@ -70,6 +70,9 @@ export default defineNuxtConfig({
       // API-Football — no APK a chave vive no bundle (aceito para o app mobile).
       footballApiKey: process.env.FOOTBALL_API_KEY || '',
       footballTimezone: process.env.FOOTBALL_TIMEZONE || 'America/Sao_Paulo',
+      // Carimbo do build (injetado pelo script de APK) — exibido no login/About
+      // pra saber na TV qual build está rodando.
+      buildId: process.env.BUILD_ID || 'dev',
     },
   },
 });

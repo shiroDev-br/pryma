@@ -18,6 +18,7 @@
           Aplicativo de reprodução de conteúdo IPTV — leia atentamente antes de instalar ou
           utilizar o app.
         </p>
+        <p class="text-[0.7rem] tabular-nums text-ink-muted/50">Build {{ buildId }}</p>
       </div>
     </header>
 
@@ -74,6 +75,8 @@
 
 <script setup lang="ts">
 useHead({ title: 'Pryma — Termos de uso' });
+
+const { buildId } = useRuntimeConfig().public;
 
 interface TermSection {
   number: number;

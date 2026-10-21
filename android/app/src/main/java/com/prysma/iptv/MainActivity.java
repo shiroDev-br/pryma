@@ -12,8 +12,10 @@ public class MainActivity extends BridgeActivity {
         // O WebView (scheme http://localhost) cacheava o index.html e servia
         // bundles ANTIGOS mesmo depois de instalar APK novo — o app "não
         // mudava". Desliga o cache e limpa no boot; assets são locais.
-        WebView webView = getBridge().getWebView();
-        webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
-        webView.clearCache(true);
+        WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+        if (webView != null) {
+            webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+            webView.clearCache(true);
+        }
     }
 }

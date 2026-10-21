@@ -81,6 +81,10 @@
         <p class="mt-6 text-center text-[0.75rem] text-ink-muted/80">
           Acesso concedido pelo administrador.
         </p>
+
+        <p class="mt-2 text-center text-[0.68rem] tabular-nums text-ink-muted/50">
+          Build {{ buildId }}
+        </p>
       </div>
     </div>
   </div>
@@ -92,6 +96,8 @@ definePageMeta({ layout: 'auth' });
 useHead({ title: 'Pryma — Entrar' });
 
 const auth = useAuth();
+
+const { buildId } = useRuntimeConfig().public;
 
 const username = ref('');
 const password = ref('');
