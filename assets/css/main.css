@@ -21,7 +21,9 @@
     0 0 0 3px rgba(77, 157, 255, 0.95), 0 0 22px rgba(22, 136, 255, 0.5);
   --transition-fast: 160ms ease;
   --transition-normal: 260ms ease;
-  --transition-slow: 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* 320ms (era 420): width/height do card animam layout a cada frame — menos
+     frames = menos repaint em chip fraco, e o carrossel fica mais responsivo. */
+  --transition-slow: 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
 
   /* Larguras/gaps do carrossel da home são calculados em px no JS
      (HomeCarousel → NavigationCard) — WebView antiga não resolve clamp. */
@@ -102,8 +104,13 @@ input[type='submit'] {
   display: none;
 }
 
-/* Áreas seguras para bordas de TV. */
+/* Áreas seguras para bordas de TV.
+   Fallback px ANTES: WebView antiga não resolve max()/clamp() e derruba a
+   declaração inteira — padding 0 deixa logo e relógio colados na borda,
+   cortados pelo overscan da TV. Navegador moderno ignora o fallback. */
 .tv-safe {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
   padding-left: max(env(safe-area-inset-left), clamp(1rem, 3vw, 3rem));
   padding-right: max(env(safe-area-inset-right), clamp(1rem, 3vw, 3rem));
 }

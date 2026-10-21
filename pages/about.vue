@@ -18,7 +18,9 @@
           Aplicativo de reprodução de conteúdo IPTV — leia atentamente antes de instalar ou
           utilizar o app.
         </p>
-        <p class="text-[0.7rem] tabular-nums text-ink-muted/50">Build {{ buildId }}</p>
+        <p class="text-[0.7rem] tabular-nums text-ink-muted/50">
+          Build {{ buildId }}<template v-if="deviceLabel"> · {{ deviceLabel }}</template>
+        </p>
       </div>
     </header>
 
@@ -77,6 +79,14 @@
 useHead({ title: 'Pryma — Termos de uso' });
 
 const { buildId } = useRuntimeConfig().public;
+
+// Diagnóstico de TV: viewport real + versão do Chromium — se o header chegar
+// mal enquadrado de novo, essa linha diz qual engine a WebView está rodando.
+const deviceLabel = ref('');
+onMounted(() => {
+  const chrome = navigator.userAgent.match(/Chrom(?:e|ium)\/([\d.]+)/);
+  deviceLabel.value = `${window.innerWidth}×${window.innerHeight} · Chrome ${chrome?.[1] ?? '?'}`;
+});
 
 interface TermSection {
   number: number;

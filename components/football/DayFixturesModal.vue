@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center" @click.self="close">
-      <div class="day-fixtures-overlay absolute inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" />
+      <div class="day-fixtures-overlay absolute inset-0 bg-black/95" aria-hidden="true" />
 
       <div
         class="day-fixtures-modal relative w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 bg-elevated/95 shadow-[0_24px_60px_rgba(0,0,0,0.6)] flex flex-col"

@@ -30,7 +30,7 @@
       <!-- Tile some quando a arte já traz o logo da plataforma (Netflix, HBO…) -->
       <span
         v-if="!visual.hideIcon"
-        class="card-tile flex shrink-0 items-center justify-center rounded-xl border border-white/15 bg-[#050b1c]/70 text-ink shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-md"
+        class="card-tile flex shrink-0 items-center justify-center rounded-xl border border-white/15 bg-[#050b1c]/90 text-ink shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
         aria-hidden="true"
       >
         <Icon :name="visual.icon" class="card-icon" />

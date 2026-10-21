@@ -1,6 +1,17 @@
-import Hls from 'hls.js';
+// hls.js só entra na tela de player — import estático puxava ~600 KB pro
+// entry e travava o boot em chip fraco. Type-only aqui, runtime é dinâmico.
+import type Hls from 'hls.js';
 // mpegts.js toca `self` no escopo do módulo — quebra SSR. Import dinâmico só no cliente.
 import type mpegts from 'mpegts.js';
+
+type HlsCtor = typeof import('hls.js').default;
+
+/** Chunk do hls.js — cacheado por módulo, baixado uma vez por sessão. */
+let hlsChunk: Promise<HlsCtor> | null = null;
+function loadHls(): Promise<HlsCtor> {
+  if (!hlsChunk) hlsChunk = import('hls.js').then((m) => m.default);
+  return hlsChunk;
+}
 
 export interface StreamEngine {
   /** Anexa stream ao <video> — detecta HLS, MPEG-TS ou arquivo direto. */
@@ -42,7 +53,7 @@ export function useStreamEngine(): StreamEngine {
     const hasM3u8 = url.includes('.m3u8') || url.includes('m3u8');
     const hasVideoExt = /\.(mp4|webm|mkv|ogv)(\?|#|$)/i.test(url);
 
-    console.log('[Player] attachStream:', { url, protocol, hasM3u8, hasVideoExt, hlsSupported: Hls.isSupported() });
+    console.log('[Player] attachStream:', { url, protocol, hasM3u8, hasVideoExt });
 
     // Arquivo direto (mp4, webm) → src direto
     if (hasVideoExt || protocol === 'file') {
@@ -52,11 +63,15 @@ export function useStreamEngine(): StreamEngine {
       return;
     }
 
-    // URL com .m3u8 → HLS
+    // URL com .m3u8 → HLS (chunk do hls.js baixado só aqui)
     if (hasM3u8) {
+      const generation = streamGeneration;
+      const Hls = await loadHls();
+      if (generation !== streamGeneration) return; // tela trocou durante o import
+
       if (Hls.isSupported()) {
         console.log('[Player] Using hls.js');
-        attachHls(video, url);
+        attachHls(video, url, Hls);
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         console.log('[Player] Using native HLS (Safari)');
         video.src = url;
@@ -73,7 +88,7 @@ export function useStreamEngine(): StreamEngine {
     await attachMpegTs(video, url);
   }
 
-  function attachHls(video: HTMLVideoElement, url: string): void {
+  function attachHls(video: HTMLVideoElement, url: string, Hls: HlsCtor): void {
     hlsInstance = new Hls({
       enableWorker: true,
       lowLatencyMode: true,

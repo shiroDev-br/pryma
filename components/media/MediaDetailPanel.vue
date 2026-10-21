@@ -1,5 +1,5 @@
 <template>
-  <aside v-if="media" class="overflow-hidden rounded-lg border border-line/70 bg-surface/80 backdrop-blur-md" aria-label="Detalhe do título">
+  <aside v-if="media" class="overflow-hidden rounded-lg border border-line/70 bg-surface/95" aria-label="Detalhe do título">
     <!-- Hero: arte do título com fade para a superfície do painel -->
     <div class="relative aspect-video w-full overflow-hidden bg-elevated">
       <img
@@ -23,7 +23,7 @@
 
       <span
         v-if="media.quality"
-        class="absolute right-3 top-3 rounded-sm bg-black/70 px-2 py-1 text-[0.65rem] font-semibold tracking-wide text-blue backdrop-blur-sm"
+        class="absolute right-3 top-3 rounded-sm bg-black/85 px-2 py-1 text-[0.65rem] font-semibold tracking-wide text-blue"
       >
         {{ media.quality }}
       </span>

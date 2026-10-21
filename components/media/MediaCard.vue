@@ -1,7 +1,7 @@
 <template>
   <NuxtLink
     :to="mediaHref(media)"
-    class="group relative block w-full overflow-hidden rounded-md border border-line/70 bg-surface transition-all duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus"
+    class="group relative block w-full overflow-hidden rounded-md border border-line/70 bg-surface transition duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus"
     :aria-label="media.title"
   >
     <div class="relative aspect-[2/3] w-full overflow-hidden bg-elevated">
@@ -26,7 +26,7 @@
 
       <span
         v-if="media.isLive"
-        class="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-sm bg-black/70 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-danger backdrop-blur-sm"
+        class="absolute left-2 top-2 inline-flex items-center gap-1.5 rounded-sm bg-black/85 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-danger"
       >
         <span class="live-dot h-1.5 w-1.5 rounded-full bg-danger" aria-hidden="true" />
         Ao vivo
@@ -34,7 +34,7 @@
 
       <span
         v-if="media.quality"
-        class="absolute right-2 top-2 rounded-sm bg-black/70 px-2 py-1 text-[0.65rem] font-semibold tracking-wide text-blue backdrop-blur-sm"
+        class="absolute right-2 top-2 rounded-sm bg-black/85 px-2 py-1 text-[0.65rem] font-semibold tracking-wide text-blue"
       >
         {{ media.quality }}
       </span>

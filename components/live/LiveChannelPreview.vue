@@ -52,14 +52,14 @@
 
         <span
           v-if="media.isLive"
-          class="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/65 px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-wide text-ink backdrop-blur-sm"
+          class="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/85 px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-wide text-ink"
         >
           <span class="live-dot h-2 w-2 rounded-full bg-[#ff4d4d]" aria-hidden="true" />
           Ao vivo
         </span>
         <span
           v-if="badge"
-          class="absolute bottom-3 right-3 rounded-md border border-white/15 bg-black/65 px-2.5 py-1 text-[0.72rem] font-semibold tracking-wide text-ink backdrop-blur-sm"
+          class="absolute bottom-3 right-3 rounded-md border border-white/15 bg-black/85 px-2.5 py-1 text-[0.72rem] font-semibold tracking-wide text-ink"
         >
           {{ badge }}
         </span>

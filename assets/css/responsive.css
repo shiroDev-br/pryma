@@ -41,7 +41,11 @@ html {
   --page-gutter: clamp(1rem, 2.5vw, 2.75rem);
 }
 
+/* Mesmo fallback px do main.css: se max()/var não resolverem na WebView
+   antiga, o gutter de 1.5rem ainda enquadra o header. */
 .tv-safe {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
   padding-left: max(env(safe-area-inset-left), var(--page-gutter));
   padding-right: max(env(safe-area-inset-right), var(--page-gutter));
 }

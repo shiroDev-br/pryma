@@ -9,7 +9,7 @@
       :key="dot"
       type="button"
       role="tab"
-      class="rounded-full transition-all duration-normal"
+      class="rounded-full transition-[width,background-color] duration-normal"
       :class="
         index === activeIndex
           ? 'h-1.5 w-6 bg-blue shadow-[0_0_10px_rgba(11,92,255,0.5)]'

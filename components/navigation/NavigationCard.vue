@@ -24,7 +24,7 @@
 
     <!-- Superfície em vidro com imagem de fundo. -->
     <span
-      class="absolute inset-0 overflow-hidden rounded-[var(--radius-lg)] border backdrop-blur-md transition-colors duration-normal"
+      class="absolute inset-0 overflow-hidden rounded-[var(--radius-lg)] border transition-colors duration-normal"
       :class="
         isActive
           ? 'border-transparent bg-[linear-gradient(168deg,rgba(8,26,66,0.85)_0%,rgba(2,8,28,0.82)_100%)]'
@@ -83,7 +83,7 @@
       </span>
       <span
         v-else
-        class="flex h-[2.9rem] w-[2.9rem] shrink-0 items-center justify-center rounded-full border border-white/20 bg-[#050d1f]/80 text-ink backdrop-blur-sm"
+        class="flex h-[2.9rem] w-[2.9rem] shrink-0 items-center justify-center rounded-full border border-white/20 bg-[#050d1f]/80 text-ink"
         aria-hidden="true"
       >
         <img
@@ -302,14 +302,6 @@ function onClick(event: MouseEvent): void {
   box-shadow:
     0 0 34px rgba(22, 136, 255, 0.45),
     0 0 100px rgba(11, 92, 255, 0.22);
-}
-
-/* Cards do carrossel giram em 3D — backdrop-filter e filter:blur re-rasterizam
-   o fundo a cada frame da animação. Vidro vira fundo sólido em todos os
-   tamanhos (não só na TV: o modo compat da TV tem viewport estreito). */
-.nav-card .backdrop-blur-md {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 /* Reflexo azul no piso, logo abaixo do card. */

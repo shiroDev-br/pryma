@@ -12,7 +12,7 @@
         @click="handleBackClick"
       >
         <span
-          class="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-black/40 backdrop-blur transition group-hover:border-white/40 group-hover:bg-white/10"
+          class="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-black/75 transition group-hover:border-white/40 group-hover:bg-white/10"
         >
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -24,7 +24,7 @@
       <div class="flex items-center gap-2">
         <span
           v-if="quality"
-          class="rounded-md border border-white/20 bg-black/50 px-2.5 py-1.5 text-xs font-bold tracking-wide text-white/90 backdrop-blur"
+          class="rounded-md border border-white/20 bg-black/80 px-2.5 py-1.5 text-xs font-bold tracking-wide text-white/90"
         >
           {{ quality }}
         </span>
@@ -32,8 +32,8 @@
         <button
           v-if="hasCaptions"
           type="button"
-          class="h-9 rounded-md border px-2.5 text-xs font-bold backdrop-blur transition"
-          :class="captionsOn ? 'border-blue/70 bg-blue/25 text-white' : 'border-white/20 bg-black/50 text-white/85 hover:border-white/40'"
+          class="h-9 rounded-md border px-2.5 text-xs font-bold transition"
+          :class="captionsOn ? 'border-blue/70 bg-blue/25 text-white' : 'border-white/20 bg-black/80 text-white/85 hover:border-white/40'"
           :aria-pressed="captionsOn"
           aria-label="Legendas"
           @click="$emit('toggle-captions')"
@@ -44,7 +44,7 @@
         <div ref="speedWrap" class="relative">
           <button
             type="button"
-            class="h-9 min-w-11 rounded-md border border-white/20 bg-black/50 px-2.5 text-xs font-semibold text-white/85 backdrop-blur transition hover:border-white/40"
+            class="h-9 min-w-11 rounded-md border border-white/20 bg-black/80 px-2.5 text-xs font-semibold text-white/85 transition hover:border-white/40"
             :aria-expanded="speedOpen"
             aria-label="Velocidade de reprodução"
             @click="speedOpen = !speedOpen"
@@ -53,7 +53,7 @@
           </button>
           <ul
             v-if="speedOpen"
-            class="absolute right-0 top-full z-10 mt-2 w-24 overflow-hidden rounded-lg border border-white/15 bg-[#06142d]/95 py-1 shadow-card backdrop-blur-xl"
+            class="absolute right-0 top-full z-10 mt-2 w-24 overflow-hidden rounded-lg border border-white/15 bg-[#06142d]/95 py-1 shadow-card"
             role="menu"
           >
             <li v-for="rate in SPEED_OPTIONS" :key="rate">
@@ -75,7 +75,7 @@
 
         <button
           type="button"
-          class="grid h-9 w-9 place-items-center rounded-md border border-white/20 bg-black/50 text-white/85 backdrop-blur transition hover:border-white/40"
+          class="grid h-9 w-9 place-items-center rounded-md border border-white/20 bg-black/80 text-white/85 transition hover:border-white/40"
           :aria-label="isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'"
           @click="$emit('toggle-fullscreen')"
         >
@@ -111,7 +111,7 @@
             <div class="absolute inset-y-0 left-0 rounded-full bg-white/35" :style="{ width: `${bufferedRatio * 100}%` }" />
           </div>
           <div
-            class="absolute inset-y-0 left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-blue transition-all group-hover:h-2"
+            class="absolute inset-y-0 left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-blue transition-[height] group-hover:h-2"
             :style="{ width: `${progressRatio * 100}%` }"
           />
           <div
@@ -141,7 +141,7 @@
 
           <button
             type="button"
-            class="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/45 text-white/90 backdrop-blur transition hover:border-white/45 hover:bg-white/10"
+            class="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/75 text-white/90 transition hover:border-white/45 hover:bg-white/10"
             aria-label="Voltar 10 segundos"
             @click="$emit('skip', -10)"
           >
@@ -154,7 +154,7 @@
 
           <button
             type="button"
-            class="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/45 text-white/90 backdrop-blur transition hover:border-white/45 hover:bg-white/10"
+            class="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/75 text-white/90 transition hover:border-white/45 hover:bg-white/10"
             aria-label="Avançar 10 segundos"
             @click="$emit('skip', 10)"
           >
@@ -170,7 +170,7 @@
         <div v-if="qualityOptions.length > 1" ref="qualityWrap" class="relative">
           <button
             type="button"
-            class="flex h-10 min-w-14 items-center justify-center gap-1.5 rounded-md border border-white/20 bg-black/50 px-3 text-xs font-bold tracking-wide text-white/90 backdrop-blur transition hover:border-white/40"
+            class="flex h-10 min-w-14 items-center justify-center gap-1.5 rounded-md border border-white/20 bg-black/80 px-3 text-xs font-bold tracking-wide text-white/90 transition hover:border-white/40"
             :aria-expanded="qualityOpen"
             aria-label="Qualidade da transmissão"
             @click="qualityOpen = !qualityOpen"
@@ -192,7 +192,7 @@
           </button>
           <ul
             v-if="qualityOpen"
-            class="absolute bottom-full left-1/2 z-10 mb-2 w-28 -translate-x-1/2 overflow-hidden rounded-lg border border-white/15 bg-[#06142d]/95 py-1 shadow-card backdrop-blur-xl"
+            class="absolute bottom-full left-1/2 z-10 mb-2 w-28 -translate-x-1/2 overflow-hidden rounded-lg border border-white/15 bg-[#06142d]/95 py-1 shadow-card"
             role="menu"
             aria-label="Qualidades disponíveis"
           >

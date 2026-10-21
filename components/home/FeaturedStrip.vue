@@ -14,7 +14,7 @@
           <!-- Próximo jogo -->
           <div
             ref="matchSection"
-            class="match-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
+            class="match-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 0,
               'border-white/20': activeCard === 0,
@@ -26,7 +26,7 @@
           <!-- Time do coração -->
           <div
             ref="teamSection"
-            class="team-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
+            class="team-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 1,
               'border-white/20': activeCard === 1,
@@ -86,7 +86,7 @@
           <!-- Plano de fundo -->
           <div
             ref="bgSection"
-            class="bg-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
+            class="bg-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 2,
               'border-white/20': activeCard === 2,
@@ -118,7 +118,7 @@
           <!-- Jogos do dia -->
           <div
             ref="daySection"
-            class="day-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition-all duration-fast"
+            class="day-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
             :class="{
               'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 3,
               'border-white/20': activeCard === 3,

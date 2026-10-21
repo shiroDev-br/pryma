@@ -2,11 +2,13 @@
   <header
     class="app-header fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-black/70 via-black/30 to-transparent"
   >
-    <div class="tv-safe flex h-20 items-center justify-between gap-3 sm:gap-6">
+    <!-- Sem flex gap: WebView antiga (<84) não o resolve e os itens do
+         header ficam encostados. Espaçamento via margem nos filhos. -->
+    <div class="tv-safe flex h-20 items-center justify-between">
       <!-- Identidade — à esquerda do header. -->
       <NuxtLink
         to="/"
-        class="group flex shrink-0 items-center gap-2.5 sm:gap-3"
+        class="group flex shrink-0 items-center"
         aria-label="Pryma — início"
       >
         <img
@@ -15,7 +17,7 @@
           width="40"
           height="40"
           aria-hidden="true"
-          class="h-9 w-9 shrink-0 transition-transform duration-fast group-hover:scale-105 sm:h-10 sm:w-10"
+          class="mr-2.5 h-9 w-9 shrink-0 transition-transform duration-fast group-hover:scale-105 sm:mr-3 sm:h-10 sm:w-10"
         />
         <span class="leading-none">
           <span class="block text-[0.95rem] font-semibold tracking-[0.3em] text-ink">
@@ -31,11 +33,11 @@
       <!-- Time do coração — centro exato do header (escudo + nome). -->
       <div
         v-if="football.isReady && football.team"
-        class="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 sm:flex"
+        class="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:flex"
       >
         <NuxtLink
           to="/team"
-          class="group flex items-center gap-2.5 rounded-sm px-3 py-1.5 transition-colors duration-fast hover:bg-white/5"
+          class="group flex items-center rounded-sm px-3 py-1.5 transition-colors duration-fast hover:bg-white/5"
           :aria-label="`Time do coração: ${football.team.name}. Trocar time`"
         >
           <img
@@ -44,7 +46,7 @@
             width="28"
             height="28"
             aria-hidden="true"
-            class="h-7 w-7 shrink-0 object-contain"
+            class="mr-2.5 h-7 w-7 shrink-0 object-contain"
           />
           <span
             class="max-w-[13rem] truncate text-[0.82rem] font-bold uppercase tracking-[0.2em] text-ink transition-colors duration-fast group-hover:text-blue-light"
@@ -55,8 +57,8 @@
       </div>
 
       <!-- Hora/data + ações — à direita, na ordem da referência. -->
-      <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-5">
-        <div class="flex flex-col items-end text-right">
+      <div class="ml-auto flex shrink-0 items-center">
+        <div class="mr-2 flex flex-col items-end text-right sm:mr-5">
           <time
             v-if="clock"
             class="text-[1.15rem] font-semibold leading-none tabular-nums tracking-wide text-ink sm:text-[1.6rem]"
@@ -69,9 +71,14 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-1.5 sm:gap-2.5">
+        <div class="flex items-center">
           <!-- Notificações — ainda sem fonte de dados; o botão já ocupa o lugar da referência. -->
-          <button type="button" class="header-btn" aria-label="Notificações" title="Notificações">
+          <button
+            type="button"
+            class="header-btn mr-1.5 sm:mr-2.5"
+            aria-label="Notificações"
+            title="Notificações"
+          >
             <Icon
               name="material-symbols:notifications-outline-rounded"
               class="h-5 w-5"
@@ -110,26 +117,26 @@
               >
                 <NuxtLink
                   to="/background"
-                  class="flex items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
+                  class="flex items-center rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
                   @click="menuOpen = false"
                 >
-                  <Icon name="material-symbols:wallpaper" class="h-4 w-4" aria-hidden="true" />
+                  <Icon name="material-symbols:wallpaper" class="mr-2.5 h-4 w-4" aria-hidden="true" />
                   Plano de fundo
                 </NuxtLink>
                 <NuxtLink
                   to="/team"
-                  class="flex items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
+                  class="flex items-center rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
                   @click="menuOpen = false"
                 >
-                  <Icon name="material-symbols:sports-soccer" class="h-4 w-4" aria-hidden="true" />
+                  <Icon name="material-symbols:sports-soccer" class="mr-2.5 h-4 w-4" aria-hidden="true" />
                   Meu time
                 </NuxtLink>
                 <button
                   type="button"
-                  class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
+                  class="flex w-full items-center rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
                   @click="onLogout"
                 >
-                  <Icon name="material-symbols:logout-rounded" class="h-4 w-4" aria-hidden="true" />
+                  <Icon name="material-symbols:logout-rounded" class="mr-2.5 h-4 w-4" aria-hidden="true" />
                   Sair
                 </button>
               </div>

@@ -39,7 +39,7 @@
 
       <span
         v-if="media.quality"
-        class="absolute left-1.5 top-1.5 rounded-sm bg-black/70 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wide text-blue backdrop-blur-sm"
+        class="absolute left-1.5 top-1.5 rounded-sm bg-black/85 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wide text-blue"
       >
         {{ media.quality }}
       </span>

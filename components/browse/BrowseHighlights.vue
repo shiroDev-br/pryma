@@ -5,7 +5,7 @@
   >
     <!-- Painel: item em destaque + canais em destaque -->
     <div
-      class="grid overflow-hidden rounded-lg border border-white/10 bg-[#06142d]/70 backdrop-blur-md md:grid-cols-[minmax(0,0.78fr)_minmax(0,1fr)]"
+      class="grid overflow-hidden rounded-lg border border-white/10 bg-[#06142d]/95 md:grid-cols-[minmax(0,0.78fr)_minmax(0,1fr)]"
     >
       <!-- Item em destaque -->
       <div class="flex items-center gap-3 p-3 sm:gap-4 sm:p-4 md:p-5">
@@ -116,7 +116,7 @@
 
     <!-- Painel: qualidade / institucional -->
     <div
-      class="flex flex-col justify-between rounded-lg border border-white/10 bg-[#06142d]/70 p-3 backdrop-blur-md sm:p-4 md:p-5"
+      class="flex flex-col justify-between rounded-lg border border-white/10 bg-[#06142d]/95 p-3 sm:p-4 md:p-5"
     >
       <div class="flex items-start gap-3">
         <span
@@ -150,7 +150,7 @@
           role="tab"
           :aria-selected="position === slideIndex"
           :aria-label="item.label"
-          class="h-1.5 rounded-full transition-all duration-normal focus:outline-none focus-visible:shadow-focus"
+          class="h-1.5 rounded-full transition-[width,background-color] duration-normal focus:outline-none focus-visible:shadow-focus"
           :class="position === slideIndex ? 'w-10 bg-accent' : 'w-1.5 bg-white/30 hover:bg-white/50'"
           @click="slideIndex = position"
         />

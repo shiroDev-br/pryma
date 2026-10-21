@@ -137,7 +137,7 @@
           <button
             v-show="canScrollTabs"
             type="button"
-            class="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#06142d]/90 text-ink backdrop-blur-sm transition-colors duration-fast hover:text-blue-light focus:outline-none focus-visible:shadow-focus"
+            class="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[#06142d]/90 text-ink transition-colors duration-fast hover:text-blue-light focus:outline-none focus-visible:shadow-focus"
             aria-label="Mais categorias"
             tabindex="-1"
             @click="scrollTabs"
