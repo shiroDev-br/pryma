@@ -1,16 +1,16 @@
 <template>
   <div
-    class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,23rem)] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(19rem,27rem)] xl:gap-8"
+    class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(15rem,20rem)] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)] xl:gap-8"
   >
     <div class="min-w-0 space-y-3">
       <!-- Card "Buscar" — primeiro da listagem; entra só na busca por tipo (não na TV ao vivo). -->
       <NuxtLink
         v-if="showSearchCard"
         :to="`/search?type=${type}`"
-        class="group flex w-full items-center gap-3 rounded-md border border-line/70 bg-surface/70 p-3 text-left transition-colors duration-fast hover:border-blue-dark/60 hover:bg-surface focus:outline-none focus-visible:shadow-focus sm:gap-4 sm:p-3.5"
+        class="group flex w-full items-center gap-3 rounded-md border border-line/70 bg-surface/70 p-2.5 text-left transition-colors duration-fast hover:border-blue-dark/60 hover:bg-surface focus:outline-none focus-visible:shadow-focus sm:gap-4 sm:p-3"
       >
         <div
-          class="flex aspect-video w-28 shrink-0 items-center justify-center rounded bg-elevated text-blue-dark sm:w-40"
+          class="flex aspect-video w-24 shrink-0 items-center justify-center rounded bg-elevated text-blue-dark sm:w-32 lg:w-36"
           aria-hidden="true"
         >
           <Icon name="material-symbols:search-rounded" class="h-8 w-8" />

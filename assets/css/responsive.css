@@ -246,3 +246,22 @@ html {
     overflow: hidden;
   }
 }
+
+/* ── Listagem de categoria em telas baixas (TV 720p/768, notebooks) ──
+   Header compacto libera ~1 linha extra na listagem (mesmo enquadramento
+   do notebook: mais linhas visíveis, mesma linguagem visual). */
+@media (min-width: 901px) and (max-height: 820px) {
+  #__nuxt .browse-category-page {
+    padding-top: 4.75rem;
+    padding-bottom: 6.5rem;
+  }
+
+  #__nuxt .browse-list-header {
+    margin-bottom: 1.25rem;
+    row-gap: 0.75rem;
+  }
+
+  #__nuxt .browse-list-header h1 {
+    font-size: 1.5rem;
+  }
+}

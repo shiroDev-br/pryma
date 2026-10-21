@@ -1,5 +1,5 @@
 <template>
-  <div class="tv-safe pb-28 pt-24">
+  <div class="browse-category-page tv-safe pb-28 pt-24">
     <BrowseListHeader
       :back-to="`/browse/${section}`"
       :section-label="sectionDef.label"

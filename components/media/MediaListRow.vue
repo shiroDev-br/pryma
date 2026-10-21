@@ -2,7 +2,7 @@
   <NuxtLink
     :ref="setRoot"
     :to="mediaHref(media)"
-    class="media-row group relative flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus sm:gap-4 sm:p-3.5"
+    class="media-row group relative flex w-full items-center gap-3 rounded-md border p-2.5 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus sm:gap-4 sm:p-3"
     :class="
       selected
         ? 'border-transparent bg-[#081a42]/85'
@@ -17,7 +17,7 @@
     <span v-if="selected" class="row-ring pointer-events-none absolute" aria-hidden="true" />
     <span v-if="selected" class="row-glow pointer-events-none absolute" aria-hidden="true" />
 
-    <div class="relative aspect-video w-28 shrink-0 overflow-hidden rounded bg-elevated sm:w-40">
+    <div class="relative aspect-video w-24 shrink-0 overflow-hidden rounded bg-elevated sm:w-32 lg:w-36">
       <img
         v-if="!imageFailed && media.thumbnailUrl"
         :src="media.thumbnailUrl"
@@ -50,7 +50,10 @@
         {{ displayTitle }}
       </p>
       <p v-if="metaLabel" class="mt-1 truncate text-[0.78rem] transition-colors duration-fast" :class="selected ? 'text-blue' : 'text-ink-muted'">{{ metaLabel }}</p>
-      <p v-if="synopsis" class="mt-1.5 line-clamp-3 text-[0.82rem] leading-relaxed text-ink-muted">
+      <!-- Sinopse só em telas sem painel de detalhe (mobile). Em desktop/TV o
+           painel lateral já mostra a sinopse — na row ela só engordava a linha
+           (3 linhas de texto = "cards imensos" na listagem da TV). -->
+      <p v-if="synopsis" class="mt-1.5 line-clamp-3 hidden text-[0.82rem] leading-relaxed text-ink-muted lg:block">
         {{ synopsis }}
       </p>
     </div>
@@ -164,7 +167,7 @@ const metaLabel = computed(() => {
    ignoram) — listas longas de VOD/séries/busca rodam mais leves. */
 .media-row {
   content-visibility: auto;
-  contain-intrinsic-size: auto 7rem;
+  contain-intrinsic-size: auto 5.5rem;
 }
 
 /* Halo azul difuso atrás da linha — luz fixa (box-shadow animado em loop

@@ -1,5 +1,5 @@
 <template>
-  <header class="mb-8 space-y-6">
+  <header class="browse-list-header mb-8 space-y-6">
     <NuxtLink
       :to="backTo"
       class="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors duration-fast hover:text-ink"
