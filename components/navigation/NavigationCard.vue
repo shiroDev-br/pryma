@@ -160,6 +160,8 @@ const props = defineProps<{
   /** Distância assinada em relação ao card ativo (0 = centro, ±1 = vizinho …). */
   offset: number;
   isActive: boolean;
+  /** Geometria do palco em px (calculada no pai — WebView antiga não resolve clamp/calc+var). */
+  metrics: { activeW: number; nearW: number; farW: number; gap: number };
 }>();
 
 const emit = defineEmits<{
@@ -198,33 +200,38 @@ const depthClass = computed(() => ({
 }));
 
 /**
- * Posição horizontal do centro do card, derivada das larguras por profundidade
- * (--card-w-*) e do respiro entre cards (--card-gap) — definidas em main.css.
+ * Posição horizontal do centro do card — tudo em px, vindo do `metrics` do
+ * pai (WebView antiga de TV não resolve `clamp()` nem `calc(var() / 2)`,
+ * o que deixava os cards empilhados no centro).
  */
-const SHIFT: Record<string, string> = {
-  active: '0px',
-  near: '(var(--card-w-active) / 2 + var(--card-w-near) / 2 + var(--card-gap))',
-  far: '(var(--card-w-active) / 2 + var(--card-w-near) + var(--card-w-far) / 2 + var(--card-gap) * 2)',
-};
-
 const cardStyle = computed<CSSProperties>(() => {
   const abs = Math.abs(props.offset);
   const sign = Math.sign(props.offset);
+  const m = props.metrics;
 
-  const brightness = abs === 0 ? 1 : abs === 1 ? 0.82 : 0.66;
-  const shift = abs === 0 ? '0px' : `calc(${sign} * ${SHIFT[depth.value]})`;
+  const width = depth.value === 'active' ? m.activeW : depth.value === 'near' ? m.nearW : m.farW;
 
   // Altura derivada da largura (no lugar de aspect-ratio — Chrome <88 da TV
   // ignora a propriedade e o card colapsa para a altura do conteúdo).
-  const RATIO: Record<string, string> = { active: '1.14', near: '0.78', far: '0.72' };
+  const RATIO: Record<string, number> = { active: 1.14, near: 0.78, far: 0.72 };
+  const height = Math.round(width / RATIO[depth.value]);
+
+  // Deslocamento = metade do card ativo + respiro + (larguras dos cards
+  // intermediários + respiros) + metade deste card. Sem isso, o card de
+  // profundidade 2 ficava POR CIMA do de profundidade 1.
+  const shift =
+    abs === 0
+      ? 0
+      : sign * (m.activeW / 2 + (abs - 1) * (m.nearW + m.gap) + m.gap + width / 2);
+  const brightness = abs === 0 ? 1 : abs === 1 ? 0.82 : 0.66;
 
   // Faixa lateral plana (sem rotateY/translateZ): em TV em modo compat a
   // perspectiva 3D distorcia os cards — a referência dos notebooks é o
   // coverflow reto, deslizando no eixo X com wrap-around infinito.
   return {
-    width: `var(--card-w-${depth.value})`,
-    height: `calc(var(--card-w-${depth.value}) / ${RATIO[depth.value]})`,
-    transform: `translate(-50%, -50%) translateX(${shift})`,
+    width: `${Math.round(width)}px`,
+    height: `${height}px`,
+    transform: `translate(-50%, -50%) translateX(${Math.round(shift)}px)`,
     // Opacity (não filter:brightness): filtro por card re-rasteriza o conteúdo
     // a cada frame da transição — em chip fraco a home travava ao trocar.
     opacity: brightness,

@@ -78,14 +78,6 @@ const KEYCODE_TO_DIRECTION: Record<number, Direction> = {
 
 const FOCUSABLE_SELECTOR = 'a[href], button, input, select, textarea, [tabindex]';
 
-const REDUCED_MOTION =
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/** Janela mínima entre duas setas para considerar "pressão rápida" (sem suavidade). */
-const RAPID_PRESS_MS = 160;
-
-let lastMoveAt = 0;
-
 function isEditable(element: Element | null): boolean {
   if (!element) return false;
   if (element.closest('[contenteditable="true"]')) return true;
@@ -171,20 +163,11 @@ function measure(elements: HTMLElement[]): { element: HTMLElement; rect: DOMRect
 
 /* ── Movimento ─────────────────────────────────────────────────────────── */
 
-/** Suavidade só na primeira seta pausada — repeat/pressão rápida é 'auto'. */
-function scrollBehavior(repeat: boolean): ScrollBehavior {
-  if (repeat || REDUCED_MOTION) return 'auto';
-  const now = performance.now();
-  if (now - lastMoveAt < RAPID_PRESS_MS) return 'auto';
-  return 'smooth';
-}
-
-/** Foca o próximo candidato na direção. */
-function focusNext(current: HTMLElement | null, direction: Direction, repeat = false): boolean {
+/** Foca o próximo candidato na direção. Rolagem sempre instantânea: em chip
+ *  fraco a rolagem suave disputa repaint com o foco e parece "travada". */
+function focusNext(current: HTMLElement | null, direction: Direction): boolean {
   const candidates = measure(collectElements());
   if (candidates.length === 0) return false;
-
-  const behavior = scrollBehavior(repeat);
 
   // Sem foco ainda: entra na direção pressionada (centro da tela como origem).
   if (!current || current === document.body) {
@@ -198,9 +181,8 @@ function focusNext(current: HTMLElement | null, direction: Direction, repeat = f
     } as DOMRect;
     const best = pickSpatialBest(virtual, candidates, direction);
     const target = best || candidates[0].element;
-    lastMoveAt = performance.now();
     target.focus({ preventScroll: true });
-    target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior });
+    target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
     return true;
   }
 
@@ -208,9 +190,8 @@ function focusNext(current: HTMLElement | null, direction: Direction, repeat = f
   const best = pickSpatialBest(currentRect, candidates, direction);
   if (!best) return false;
 
-  lastMoveAt = performance.now();
   best.focus({ preventScroll: true });
-  best.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior });
+  best.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
   return true;
 }
 
@@ -235,5 +216,5 @@ function onKeydown(event: KeyboardEvent): void {
     if (!(direction === 'up' || direction === 'down') || !isSingleLineInput(active)) return;
   }
 
-  if (focusNext(active, direction, event.repeat)) event.preventDefault();
+  if (focusNext(active, direction)) event.preventDefault();
 }

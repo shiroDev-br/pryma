@@ -33,7 +33,7 @@
       <div class="stage-floor pointer-events-none absolute inset-x-0 -bottom-4" aria-hidden="true" />
 
       <!-- Palco plano: os cards distribuem-se lateralmente (coverflow reto). -->
-      <div class="stage__viewport relative w-full overflow-x-clip">
+      <div class="stage__viewport relative w-full">
         <div class="absolute inset-0" role="list">
           <NavigationCard
             v-for="entry in visibleEntries"
@@ -41,6 +41,7 @@
             :item="entry.item"
             :offset="entry.offset"
             :is-active="entry.offset === 0"
+            :metrics="metrics"
             :ref="(el) => setCardRef(entry.index, el)"
             @activate="select(entry.index)"
           />
@@ -80,6 +81,55 @@ const emit = defineEmits<{
 
 /** Distância máxima renderizada em cada lado (além do card central). */
 const OVERSCAN = 2;
+
+/**
+ * Geometria do palco em PIXELS, calculada no JS.
+ * A TV antiga (WebView <79) não resolve `clamp()` nem `calc(var(...) / 2)` —
+ * os cards ficavam empilhados no centro. Com px pronto, qualquer WebView
+ * renderiza igual ao notebook.
+ */
+interface HomeCarouselMetrics {
+  activeW: number;
+  nearW: number;
+  farW: number;
+  gap: number;
+}
+
+function clamp(v: number, min: number, max: number): number {
+  return Math.min(Math.max(v, min), max);
+}
+
+function computeMetrics(w: number, h: number): HomeCarouselMetrics {
+  // Celular deitado — palco enxuto pra faixa inferior e os dots caberem.
+  if (h <= 500 && w <= 900) {
+    return {
+      activeW: clamp(0.21 * w, 136, 164),
+      nearW: clamp(0.13 * w, 96, 112),
+      farW: clamp(0.11 * w, 88, 104),
+      gap: clamp(0.01 * w, 6, 12),
+    };
+  }
+  // TV em modo compat / tablet retrato — os 5 cards precisam caber na
+  // largura (os 4 laterais somam ~0.69w + gaps, sobrando margem nas bordas).
+  if (w <= 900) {
+    return {
+      activeW: clamp(0.31 * w, 210, 290),
+      nearW: clamp(0.16 * w, 105, 145),
+      farW: clamp(0.13 * w, 88, 118),
+      gap: clamp(0.011 * w, 6, 12),
+    };
+  }
+  return {
+    activeW: clamp(0.24 * w, 256, 416),
+    nearW: clamp(0.15 * w, 152, 256),
+    farW: clamp(0.125 * w, 136, 216),
+    gap: clamp(0.012 * w, 8, 24),
+  };
+}
+
+const metrics = ref<HomeCarouselMetrics>(
+  import.meta.client ? computeMetrics(window.innerWidth, window.innerHeight) : computeMetrics(1280, 720),
+);
 
 // Estado de seleção vive apenas no composable; o componente cuida do foco DOM.
 // Wrap-around: navegação contínua, típica de interfaces de TV.
@@ -191,23 +241,28 @@ watch(
 // Seleção inicial só pode receber foco depois da montagem dos cards.
 onMounted(() => {
   void nextTick(() => focusCard(activeIndex.value));
+
+  const updateMetrics = (): void => {
+    metrics.value = computeMetrics(window.innerWidth, window.innerHeight);
+  };
+  window.addEventListener('resize', updateMetrics);
+  onBeforeUnmount(() => window.removeEventListener('resize', updateMetrics));
 });
 </script>
 
 <style scoped>
-/* Celular deitado — cards enxutos pra faixa inferior e os dots caberem.
-   Só em telas estreitas (a altura do TV não muda o palco). */
-@media (max-height: 500px) and (max-width: 900px) {
-  .stage {
-    --card-w-active: clamp(8.5rem, 21vw, 10.25rem);
-    --card-w-near: clamp(6rem, 13vw, 7rem);
-    --card-w-far: clamp(5.5rem, 11vw, 6.5rem);
-    --card-gap: clamp(0.35rem, 1vw, 0.75rem);
-  }
+.stage__viewport {
+  /* Fallback px pra WebView antiga que ignora clamp/44vh. */
+  height: 384px;
+  height: clamp(19rem, 44vh, 28rem);
+  /* hidden como base (Chrome <90 não tem `clip`); clip onde suportado. */
+  overflow-x: hidden;
 }
 
-.stage__viewport {
-  height: clamp(19rem, 44vh, 28rem);
+@supports (overflow: clip) {
+  .stage__viewport {
+    overflow-x: clip;
+  }
 }
 
 .stage__indicators {
