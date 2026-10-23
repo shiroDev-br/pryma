@@ -33,7 +33,7 @@
       <div class="stage-floor pointer-events-none absolute inset-x-0 -bottom-4" aria-hidden="true" />
 
       <!-- Palco plano: os cards distribuem-se lateralmente (coverflow reto). -->
-      <div class="stage__viewport relative w-full">
+      <div class="stage__viewport relative w-full" :style="viewportStyle">
         <div class="absolute inset-0" role="list">
           <NavigationCard
             v-for="entry in visibleEntries"
@@ -93,43 +93,68 @@ interface HomeCarouselMetrics {
   nearW: number;
   farW: number;
   gap: number;
+  /** Altura do palco em px — usada no viewport e no limite dos cards. */
+  stageH: number;
 }
 
 function clamp(v: number, min: number, max: number): number {
   return Math.min(Math.max(v, min), max);
 }
 
+/**
+ * Altura do palco: a mesma grade fixa da home (header 11% / barra 11%),
+ * com 10% de respiro para o piso e os indicadores. Em telas baixas o
+ * header/barra viram px (iguais aos do pages/index.vue).
+ */
+function computeStageHeight(h: number): number {
+  if (h <= 500) {
+    // Mesma troca do pages/index.vue: 4.75rem (header) + 4.5rem (barra).
+    return Math.max(120, Math.round((h - 148) * 0.9));
+  }
+  return Math.round(h * (1 - 0.11 - 0.11) * 0.9);
+}
+
 function computeMetrics(w: number, h: number): HomeCarouselMetrics {
+  const stageH = computeStageHeight(h);
+  // Nenhum card pode ficar mais alto que o palco — senão vaza na barra.
+  const fit = (width: number, ratio: number): number => Math.min(width, stageH * ratio);
+
   // Celular deitado — palco enxuto pra faixa inferior e os dots caberem.
   if (h <= 500 && w <= 900) {
     return {
-      activeW: clamp(0.21 * w, 136, 164),
-      nearW: clamp(0.13 * w, 96, 112),
-      farW: clamp(0.11 * w, 88, 104),
+      activeW: fit(clamp(0.21 * w, 136, 164), 1.14),
+      nearW: fit(clamp(0.13 * w, 96, 112), 0.78),
+      farW: fit(clamp(0.11 * w, 88, 104), 0.72),
       gap: clamp(0.01 * w, 6, 12),
+      stageH,
     };
   }
   // TV em modo compat / tablet retrato — os 5 cards precisam caber na
   // largura (os 4 laterais somam ~0.69w + gaps, sobrando margem nas bordas).
   if (w <= 900) {
     return {
-      activeW: clamp(0.31 * w, 210, 290),
-      nearW: clamp(0.16 * w, 105, 145),
-      farW: clamp(0.13 * w, 88, 118),
+      activeW: fit(clamp(0.31 * w, 210, 290), 1.14),
+      nearW: fit(clamp(0.16 * w, 105, 145), 0.78),
+      farW: fit(clamp(0.13 * w, 88, 118), 0.72),
       gap: clamp(0.011 * w, 6, 12),
+      stageH,
     };
   }
   return {
-    activeW: clamp(0.24 * w, 256, 416),
-    nearW: clamp(0.15 * w, 152, 256),
-    farW: clamp(0.125 * w, 136, 216),
+    activeW: fit(clamp(0.24 * w, 256, 416), 1.14),
+    nearW: fit(clamp(0.15 * w, 152, 256), 0.78),
+    farW: fit(clamp(0.125 * w, 136, 216), 0.72),
     gap: clamp(0.012 * w, 8, 24),
+    stageH,
   };
 }
 
 const metrics = ref<HomeCarouselMetrics>(
   import.meta.client ? computeMetrics(window.innerWidth, window.innerHeight) : computeMetrics(1280, 720),
 );
+
+/** Altura aplicada no palco em px — sem `vh/clamp` na WebView antiga. */
+const viewportStyle = computed(() => ({ height: `${metrics.value.stageH}px` }));
 
 // Estado de seleção vive apenas no composable; o componente cuida do foco DOM.
 // Wrap-around: navegação contínua, típica de interfaces de TV.
@@ -252,9 +277,8 @@ onMounted(() => {
 
 <style scoped>
 .stage__viewport {
-  /* Fallback px pra WebView antiga que ignora clamp/44vh. */
-  height: 384px;
-  height: clamp(19rem, 44vh, 28rem);
+  /* A altura real vem do JS (metrics.stageH); este px é só o SSR. */
+  height: 532px;
   /* hidden como base (Chrome <90 não tem `clip`); clip onde suportado. */
   overflow-x: hidden;
 }
@@ -265,18 +289,18 @@ onMounted(() => {
   }
 }
 
+/* Dots sobrepostos ao pé do palco — não empurram mais os cards pra cima. */
 .stage__indicators {
-  margin-top: 2.5rem;
+  position: absolute;
+  left: 50%;
+  bottom: -1.1rem;
+  z-index: 40;
+  transform: translateX(-50%);
 }
 
-/* Celular deitado / telas baixas: palco enxuto pra home caber sem rolagem. */
-@media (max-height: 500px) and (max-width: 900px) {
-  .stage__viewport {
-    height: min(37vh, 9.5rem);
-  }
-
+@media (max-height: 500px) {
   .stage__indicators {
-    margin-top: 0.5rem;
+    bottom: -0.35rem;
   }
 }
 

@@ -1,154 +1,60 @@
 <template>
-  <section
-    class="featured relative overflow-hidden rounded-2xl border border-white/[0.1]"
-    aria-label="Meu time"
-    @keydown="onKeydown"
-    tabindex="0"
-  >
-    <div class="featured__scene pointer-events-none absolute inset-0" aria-hidden="true" />
+  <section class="featured" aria-label="Destaques" @keydown="onKeydown">
+    <!-- 1 · Próximo jogo -->
+    <button
+      ref="matchSection"
+      type="button"
+      class="featured__col"
+      aria-label="Próximo jogo — ver time"
+      @focus="activeCard = 0"
+      @click="navigateToTeam"
+    >
+      <NextMatchBadge class="featured__match w-full" />
+      <span class="featured__hint">OK para ver o time</span>
+    </button>
 
-    <div class="relative flex items-center justify-center px-6 py-0.5 lg:px-8">
-      <div class="team-card w-full">
-        <!-- Mobile/tablet: trilho horizontal com snap. Desktop (lg+): grade 4 colunas. -->
-        <div class="rail-scroll flex snap-x gap-1.5 overflow-x-auto pb-1 lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0">
-          <!-- Próximo jogo -->
-          <div
-            ref="matchSection"
-            class="match-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
-            :class="{
-              'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 0,
-              'border-white/20': activeCard === 0,
-            }"
-          >
-            <NextMatchBadge />
-          </div>
+    <!-- 2 · Jogos do dia -->
+    <button
+      ref="daySection"
+      type="button"
+      class="featured__col"
+      aria-label="Jogos do dia — abrir"
+      @focus="activeCard = 1"
+      @click="openDayFixtures"
+    >
+      <span class="featured__label">Jogos do dia</span>
+      <span class="featured__value">Veja quem joga hoje</span>
+      <span class="featured__hint">OK para abrir</span>
+    </button>
 
-          <!-- Time do coração -->
-          <div
-            ref="teamSection"
-            class="team-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
-            :class="{
-              'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 1,
-              'border-white/20': activeCard === 1,
-            }"
-          >
-            <div
-              v-if="football.team"
-              ref="teamSelector"
-              class="team-selector flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer transition-colors duration-fast"
-              :class="{
-                'hover:bg-elevated/70 hover:border-blue/30': football.team,
-                'bg-elevated/70 border-blue/30': activeCard === 1,
-              }"
-              @click="navigateToTeam"
-              @keydown.enter="navigateToTeam"
-              @keydown.space.prevent="navigateToTeam"
-              tabindex="0"
-              role="button"
-              aria-label="Trocar time do coração"
-            >
-              <img
-                :src="football.team.logo"
-                :alt="football.team.name"
-                width="40"
-                height="40"
-                class="h-10 w-10 shrink-0 object-contain filter drop-shadow-[0_0_8px_rgba(22,136,255,0.4)] transition-transform duration-fast hover:scale-105"
-              />
-              <p class="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-ink-muted text-center">
-                seu time
-              </p>
-              <Icon
-                name="material-symbols:arrow-forward-rounded"
-                class="h-3 w-3 text-blue/70 transition-transform duration-fast hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </div>
+    <!-- 3 · Time do coração -->
+    <button
+      ref="teamSection"
+      type="button"
+      class="featured__col"
+      aria-label="Time do coração — trocar"
+      @focus="activeCard = 2"
+      @click="navigateToTeam"
+    >
+      <span class="featured__label">Time do coração</span>
+      <template v-if="football.team">
+        <img
+          :src="football.team.logo"
+          :alt="football.team.name"
+          width="40"
+          height="40"
+          class="featured__logo"
+        />
+        <span class="featured__value">{{ football.team.name }}</span>
+        <span class="featured__hint">OK para trocar</span>
+      </template>
 
-            <div
-              v-else
-              ref="teamEmpty"
-              class="team-empty flex flex-col items-center justify-center gap-1.5 h-full text-center text-ink-muted"
-              :class="{ 'bg-elevated/70 border-blue/30': activeCard === 1 }"
-            >
-              <Icon name="material-symbols:sports-soccer" class="h-6 w-6 text-ink-muted/50" aria-hidden="true" />
-              <p class="text-[0.55rem] font-semibold uppercase tracking-[0.24em]">Nenhum time selecionado</p>
-              <p class="text-[0.5rem] max-w-[12ch]">Selecione seu time do coração</p>
-              <button
-                type="button"
-                class="mt-1 rounded-sm border border-line bg-surface px-2 py-0.5 text-[0.5rem] text-ink transition-colors duration-fast hover:border-blue-dark hover:text-blue-light"
-                @click="navigateToTeam"
-              >
-                Escolher time
-              </button>
-            </div>
-          </div>
-
-          <!-- Plano de fundo -->
-          <div
-            ref="bgSection"
-            class="bg-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
-            :class="{
-              'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 2,
-              'border-white/20': activeCard === 2,
-            }"
-          >
-            <div
-              ref="bgSelector"
-              class="bg-selector flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer transition-colors duration-fast"
-              :class="{ 'bg-elevated/70 border-blue/30': activeCard === 2 }"
-              @click="navigateToBackground"
-              @keydown.enter="navigateToBackground"
-              @keydown.space.prevent="navigateToBackground"
-              tabindex="0"
-              role="button"
-              aria-label="Trocar plano de fundo"
-            >
-              <Icon name="material-symbols:wallpaper" class="h-8 w-8 text-blue/80 transition-transform duration-fast hover:scale-110" aria-hidden="true" />
-              <p class="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-ink-muted text-center">
-                plano de fundo
-              </p>
-              <Icon
-                name="material-symbols:arrow-forward-rounded"
-                class="h-3 w-3 text-blue/70 transition-transform duration-fast hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </div>
-          </div>
-
-          <!-- Jogos do dia -->
-          <div
-            ref="daySection"
-            class="day-section relative min-w-[11.5rem] shrink-0 snap-start rounded-xl border border-white/10 bg-elevated/50 p-1.5 lg:min-w-0 lg:p-2 transition duration-fast"
-            :class="{
-              'ring-2 ring-blue/50 shadow-[0_0_24px_rgba(22,136,255,0.3)]': activeCard === 3,
-              'border-white/20': activeCard === 3,
-            }"
-          >
-            <div
-              ref="daySelector"
-              class="day-selector flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer transition-colors duration-fast"
-              :class="{ 'bg-elevated/70 border-blue/30': activeCard === 3 }"
-              @click="openDayFixtures"
-              @keydown.enter="openDayFixtures"
-              @keydown.space.prevent="openDayFixtures"
-              tabindex="0"
-              role="button"
-              aria-label="Ver jogos do dia"
-            >
-              <Icon name="material-symbols:calendar-month" class="h-8 w-8 text-blue/80 transition-transform duration-fast hover:scale-110" aria-hidden="true" />
-              <p class="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-ink-muted text-center">
-                jogos do dia
-              </p>
-              <Icon
-                name="material-symbols:arrow-forward-rounded"
-                class="h-3 w-3 text-blue/70 transition-transform duration-fast hover:translate-x-1"
-                aria-hidden="true"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <template v-else>
+        <Icon name="material-symbols:sports-soccer" class="featured__icon" aria-hidden="true" />
+        <span class="featured__value">Nenhum time</span>
+        <span class="featured__hint">OK para escolher</span>
+      </template>
+    </button>
 
     <DayFixturesModal
       :is-open="showDayFixtures"
@@ -159,62 +65,39 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { computed, ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useFavoriteTeam } from '~/composables/useFavoriteTeam';
-import { useBackgrounds } from '~/composables/useBackgrounds';
-import { useDayFixtures } from '~/composables/useDayFixtures';
 import NextMatchBadge from '~/components/football/NextMatchBadge.vue';
 import DayFixturesModal from '~/components/football/DayFixturesModal.vue';
 
 const router = useRouter();
 const football = useFavoriteTeam();
-const backgrounds = useBackgrounds();
-const dayFixtures = useDayFixtures();
 
-// 0 = match, 1 = team, 2 = background, 3 = day fixtures
 const activeCard = ref(0);
 const showDayFixtures = ref(false);
 
-const matchSection = ref<HTMLElement | null>(null);
-const teamSection = ref<HTMLElement | null>(null);
-const teamSelector = ref<HTMLElement | null>(null);
-const teamEmpty = ref<HTMLButtonElement | null>(null);
-const bgSection = ref<HTMLElement | null>(null);
-const bgSelector = ref<HTMLElement | null>(null);
-const daySection = ref<HTMLElement | null>(null);
-const daySelector = ref<HTMLElement | null>(null);
+const matchSection = ref<HTMLButtonElement | null>(null);
+const daySection = ref<HTMLButtonElement | null>(null);
+const teamSection = ref<HTMLButtonElement | null>(null);
 
-const sections = computed(() => [matchSection, teamSection, bgSection, daySection]);
-const focusables = computed(() => [null, teamSelector, bgSelector, daySelector]);
+const sections = [matchSection, daySection, teamSection];
 
 function focusCard(index: number): void {
-  activeCard.value = index;
-  const focusable = focusables.value[index];
-  if (focusable?.value) {
-    nextTick(() => {
-      focusable.value?.focus({ preventScroll: true });
-    });
-  } else if (sections.value[index]?.value) {
-    nextTick(() => {
-      sections.value[index].value?.focus({ preventScroll: true });
-    });
-  }
+  const total = sections.length;
+  const next = ((index % total) + total) % total;
+  activeCard.value = next;
+  nextTick(() => sections[next]?.value?.focus({ preventScroll: true }));
 }
 
 function onKeydown(event: KeyboardEvent): void {
-  const total = 4;
-  let nextIndex = activeCard.value;
-
   switch (event.key) {
     case 'ArrowRight':
       event.preventDefault();
-      nextIndex = (activeCard.value + 1) % total;
-      focusCard(nextIndex);
+      focusCard(activeCard.value + 1);
       break;
     case 'ArrowLeft':
       event.preventDefault();
-      nextIndex = (activeCard.value - 1 + total) % total;
-      focusCard(nextIndex);
+      focusCard(activeCard.value - 1);
       break;
     case 'ArrowDown':
     case 'ArrowUp':
@@ -223,17 +106,11 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 onMounted(() => {
-  nextTick(() => {
-    focusCard(0);
-  });
+  nextTick(() => focusCard(0));
 });
 
 function navigateToTeam(): void {
   router.push('/team');
-}
-
-function navigateToBackground(): void {
-  router.push('/background');
 }
 
 function openDayFixtures(): void {
@@ -242,66 +119,159 @@ function openDayFixtures(): void {
 
 function closeDayFixtures(): void {
   showDayFixtures.value = false;
-  focusCard(3);
+  focusCard(1);
 }
-
-watch(showDayFixtures, (open) => {
-  if (!open) {
-    // Garantir que o foco volte pro card quando fechar
-    nextTick(() => {
-      daySelector.value?.focus({ preventScroll: true });
-    });
-  }
-});
 </script>
 
 <style scoped>
+/* Barra chapada de 3 colunas — sem card, imagem de fundo, rounded ou sombra. */
 .featured {
-  /* Fundo opaco — backdrop-filter + mix-blend em faixa da home repaintavam
-     em chip fraco (celular/TV compat) sem ganho visual que compense. */
-  background:
-    linear-gradient(180deg, rgba(10, 24, 54, 0.94) 0%, rgba(3, 9, 24, 0.97) 100%);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+  height: 100%;
+  background: rgba(2, 8, 23, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.featured__scene {
-  background-image:
-    linear-gradient(90deg, rgba(3, 9, 24, 0.96) 0%, rgba(3, 9, 24, 0.55) 55%, rgba(3, 9, 24, 0.2) 100%),
-    url('/img/mountain.webp');
-  background-size: cover;
-  background-position: 70% 28%;
-  opacity: 0.45;
-  filter: saturate(0.8) brightness(0.7);
-}
-
-.team-card {
+.featured__col {
+  position: relative;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.4rem 0.9rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
 }
 
-.match-section,
-.team-section,
-.bg-section,
-.day-section {
-  min-height: 28px;
+.featured__col + .featured__col {
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.team-selector:focus-visible,
-.bg-selector:focus-visible,
-.day-selector:focus-visible,
-.match-section:focus-visible,
-.team-empty:focus-visible {
-  outline: 2px solid #4da3ff;
-  outline-offset: 2px;
-  border-color: #4da3ff;
+.featured__col:focus {
+  background: rgba(22, 136, 255, 0.14);
 }
 
-@media (max-width: 1023px) {
-  .match-section,
-  .team-section,
-  .bg-section,
-  .day-section {
-    min-height: 48px;
+.featured__match {
+  text-align: center;
+}
+
+.featured__match :deep(p) {
+  max-width: 100%;
+}
+
+.featured__icon {
+  height: 1.6rem;
+  width: 1.6rem;
+  color: var(--color-blue-light);
+}
+
+.featured__logo {
+  height: 1.9rem;
+  width: 1.9rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(22, 136, 255, 0.45));
+}
+
+.featured__label {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.featured__value {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.featured__hint {
+  display: block;
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* TV grande: um degrau de leitura do sofá. */
+@media (min-width: 1600px) {
+  .featured__value {
+    font-size: 0.9rem;
+  }
+
+  .featured__hint {
+    font-size: 0.56rem;
+  }
+
+  .featured__icon,
+  .featured__logo {
+    height: 2.1rem;
+    width: 2.1rem;
+  }
+}
+
+/* 720p / TV baixa: a barra tem 11vh — comprime o conteúdo para caber. */
+@media (max-height: 800px) {
+  .featured__col {
+    gap: 0.12rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  .featured__icon,
+  .featured__logo {
+    height: 1.35rem;
+    width: 1.35rem;
+  }
+
+  .featured__label {
+    font-size: 0.5rem;
+  }
+
+  .featured__value {
+    font-size: 0.72rem;
+  }
+
+  .featured__hint {
+    font-size: 0.48rem;
+  }
+}
+
+/* Telas baixas: mantém 3 linhas dentro dos 4.5rem da barra. */
+@media (max-height: 500px) {
+  .featured__col {
+    gap: 0.1rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .featured__icon,
+  .featured__logo {
+    height: 1.1rem;
+    width: 1.1rem;
+  }
+
+  .featured__value {
+    font-size: 0.66rem;
+  }
+
+  .featured__hint {
+    font-size: 0.46rem;
   }
 }
 </style>
