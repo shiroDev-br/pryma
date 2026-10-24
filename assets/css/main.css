@@ -1,5 +1,9 @@
 /* ── Design system — preto/azul profundo + azul elétrico ─────────────────────
-   Paleta da identidade Prysma (plano §9): base navy + acento azul elétrico. */
+
+Paleta da identidade Prysma (plano §9): base navy + acento azul elétrico.
+Tamanhos em rem (não px): o plugin viewport-scale.client.ts escala o rem pela
+viewport, então tudo aqui acompanha a TV/notebook automaticamente. */
+
 :root {
   --color-bg: #020817;
   --color-surface: #06142d;
@@ -13,29 +17,35 @@
   --color-text: #ffffff;
   --color-text-muted: #a9b9d6;
   --color-danger: #df6666;
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  /* Anel de foco D-pad — brilho forte o bastante pra TV em compat (760px). */
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.85rem;
+  --radius-lg: 1.2rem;
+
+  /* Anel de foco D-pad — brilho forte o bastante pra TV. */
   --focus-ring:
-    0 0 0 3px rgba(77, 157, 255, 0.95), 0 0 22px rgba(22, 136, 255, 0.5);
+    0 0 0 0.18rem rgba(77, 157, 255, 0.95), 0 0 1.3rem rgba(22, 136, 255, 0.5);
+
   --transition-fast: 160ms ease;
   --transition-normal: 260ms ease;
+
   /* 320ms (era 420): width/height do card animam layout a cada frame — menos
      frames = menos repaint em chip fraco, e o carrossel fica mais responsivo. */
   --transition-slow: 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  /* Larguras/gaps do carrossel da home são calculados em px no JS
-     (HomeCarousel → NavigationCard) — WebView antiga não resolve clamp. */
+  /* Gutter lateral único (rem puro — WebView antiga não resolve clamp). */
+  --page-gutter: 2.75rem;
 }
 
 html {
+  /* Fallback antes do plugin rodar. O plugin sobrescreve inline. */
+  font-size: 17px;
   background-color: var(--color-bg);
   color-scheme: dark;
 }
 
-/* Altura útil de viewport com fallback: `100svh` só existe no Chrome 108+
-   (WebView antigo de TV ignora e o layout colapsa). */
+/* Altura útil de viewport. O plugin sobrescreve com window.innerHeight (px)
+   em landscape; isto é só fallback (`100svh` só existe no Chrome 108+). */
 :root {
   --app-vh: 100vh;
 }
@@ -66,24 +76,21 @@ body {
 }
 
 /* WebViews antigas de TV não implementam `:focus-visible` (< Chromium 86):
-   o UA pinta contorno dourado e as regras acima são descartadas. Duas
-   coberturas pro mesmo fallback:
+   o UA pinta contorno dourado e a regra acima é descartada. Coberturas:
    - `body.dpad-mode` é ligado pelo motor espacial na primeira seta/Enter e
-     desligado no primeiro mouse/toque — vale em QUALQUER largura (a TV em
-     modo compat roda com viewport de 760px, abaixo do breakpoint de TV);
-   - o breakpoint ≥1600 cobre o foco inicial programático (home/carrossel),
-     que acontece antes da primeira tecla. */
+     desligado no primeiro mouse/toque;
+   - `html.tv-scale` (landscape, setado pelo plugin) cobre o foco inicial
+     programático (home/carrossel), antes da primeira tecla. Substitui o
+     antigo `@media (min-width: 1600px)`, que não identifica mais a TV. */
 body.dpad-mode :focus {
   outline: none;
   box-shadow: var(--focus-ring);
 }
 
-@media (min-width: 1600px) {
-  :focus {
-    outline: none;
-    box-shadow: var(--focus-ring);
-    border-radius: var(--radius-sm);
-  }
+html.tv-scale :focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
 }
 
 /* Preflight do Tailwind envolve `:where()` na regra de reset dos <button> —
@@ -104,15 +111,14 @@ input[type='submit'] {
   display: none;
 }
 
-/* Áreas seguras para bordas de TV.
-   Fallback px ANTES: WebView antiga não resolve max()/clamp() e derruba a
-   declaração inteira — padding 0 deixa logo e relógio colados na borda,
-   cortados pelo overscan da TV. Navegador moderno ignora o fallback. */
+/* Áreas seguras para bordas de TV (overscan).
+   Fallback ANTES: WebView antiga não resolve max() e derruba a declaração
+   inteira — o fallback mantém logo e relógio longe da borda. */
 .tv-safe {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  padding-left: max(env(safe-area-inset-left), clamp(1rem, 3vw, 3rem));
-  padding-right: max(env(safe-area-inset-right), clamp(1rem, 3vw, 3rem));
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
+  padding-left: max(env(safe-area-inset-left), var(--page-gutter));
+  padding-right: max(env(safe-area-inset-right), var(--page-gutter));
 }
 
 /* Barra de rolagem discreta em trilhos horizontais. */
@@ -122,12 +128,12 @@ input[type='submit'] {
 }
 
 .rail-scroll::-webkit-scrollbar {
-  height: 6px;
+  height: 0.35rem;
 }
 
 .rail-scroll::-webkit-scrollbar-thumb {
   background: rgba(22, 136, 255, 0.35);
-  border-radius: 3px;
+  border-radius: 0.2rem;
 }
 
 /* Kicker com traço — usado em títulos de seção. */

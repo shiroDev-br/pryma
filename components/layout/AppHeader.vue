@@ -261,11 +261,4 @@ onMounted(() => {
   border-color: var(--color-blue-dark);
   color: var(--color-blue-light);
 }
-
-/* Celular deitado — header compacto pra não roubar altura da home. */
-@media (max-height: 500px) {
-  .app-header .tv-safe {
-    height: 3.5rem;
-  }
-}
 </style>

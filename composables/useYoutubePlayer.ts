@@ -10,6 +10,8 @@ export interface YoutubePlayerOptions {
   onStateChange?: (state: number) => void;
   /** Disparado quando o vídeo dá erro (id inválido, embed bloqueado etc). */
   onError?: (code: number) => void;
+  /** Disparado quando a API do YouTube falha ao carregar. */
+  onApiError?: (error: Error) => void;
 }
 
 export interface YoutubePlayerHandle {
@@ -21,9 +23,12 @@ export interface YoutubePlayerHandle {
   play(): void;
   /** Destrói o player e limpa o script da API. */
   destroy(): void;
+  /** Indica se a API do YouTube carregou com sucesso. */
+  isApiReady: () => boolean;
 }
 
 let apiPromise: Promise<any> | null = null;
+let apiLoadError: Error | null = null;
 
 function ensureApi(): Promise<any> {
   if (import.meta.server) {
@@ -44,12 +49,16 @@ function ensureApi(): Promise<any> {
       script.async = true;
       script.onerror = () => {
         apiPromise = null;
-        reject(new Error('Falha ao carregar a IFrame API do YouTube.'));
+        apiLoadError = new Error('Falha ao carregar a IFrame API do YouTube.');
+        reject(apiLoadError);
       };
       document.head.appendChild(script);
     });
   }
-  return apiPromise;
+  return apiPromise.catch((err) => {
+    apiLoadError = err;
+    throw err;
+  });
 }
 
 /**
@@ -61,26 +70,33 @@ export function useYoutubePlayer(options: YoutubePlayerOptions): YoutubePlayerHa
   let destroyed = false;
 
   async function mount(target: HTMLElement, videoId: string): Promise<void> {
-    const YT = await ensureApi();
-    if (destroyed) return;
+    try {
+      const YT = await ensureApi();
+      if (destroyed) return;
 
-    await new Promise<void>((resolve) => {
-      player = new YT.Player(target, {
-        videoId,
-        playerVars: { autoplay: 1, rel: 0, playsinline: 1, modestbranding: 1 },
-        events: {
-          onReady: () => {
-            options.onReady?.();
-            resolve();
+      await new Promise<void>((resolve, reject) => {
+        player = new YT.Player(target, {
+          videoId,
+          playerVars: { autoplay: 1, rel: 0, playsinline: 1, modestbranding: 1 },
+          events: {
+            onReady: () => {
+              options.onReady?.();
+              resolve();
+            },
+            onStateChange: (event: any) => {
+              options.onStateChange?.(event.data as number);
+              if (event.data === YT.PlayerState.ENDED) options.onEnded?.();
+            },
+            onError: (event: any) => options.onError?.(event.data as number),
           },
-          onStateChange: (event: any) => {
-            options.onStateChange?.(event.data as number);
-            if (event.data === YT.PlayerState.ENDED) options.onEnded?.();
-          },
-          onError: (event: any) => options.onError?.(event.data as number),
-        },
+        });
       });
-    });
+    } catch (err) {
+      if (!destroyed) {
+        options.onApiError?.(err as Error);
+      }
+      throw err;
+    }
   }
 
   function load(videoId: string): void {
@@ -101,5 +117,9 @@ export function useYoutubePlayer(options: YoutubePlayerOptions): YoutubePlayerHa
     player = null;
   }
 
-  return { mount, load, pause, play, destroy };
+  function isApiReady(): boolean {
+    return apiLoadError === null && (window as any).YT?.Player != null;
+  }
+
+  return { mount, load, pause, play, destroy, isApiReady };
 }

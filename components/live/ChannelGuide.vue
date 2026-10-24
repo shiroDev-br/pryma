@@ -33,6 +33,12 @@
       <Icon name="material-symbols:play-arrow-rounded" class="h-4 w-4 shrink-0 text-blue" aria-hidden="true" />
     </button>
   </div>
+
+  <div v-else class="space-y-1 p-2 text-center text-ink-muted text-sm">
+    <div class="h-24 flex items-center justify-center">
+      Nenhuma programação disponível para este canal
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -48,7 +54,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  pickChannel: [channel: MediaSummary];
+  playChannel: [channel: MediaSummary];
 }>();
 
 const guideCache = ref<Map<string, GuideProgram[]>>(new Map());
@@ -89,8 +95,9 @@ async function load(): Promise<void> {
 }
 
 function pickChannel(): void {
-  emit('pickChannel', props.channel);
-}
+    console.log('[ChannelGuide] playChannel emit', props.channel?.title);
+    emit('playChannel', props.channel);
+  }
 
 // Auto-load when component mounts
 onMounted(() => {

@@ -19,7 +19,7 @@
 
     <div
       v-else
-      class="grid h-[calc(var(--app-vh)_-_7.5rem)] min-h-[30rem] grid-cols-1 gap-5 [@media(min-width:700px)]:[@media(max-width:1023px)]:grid-cols-[minmax(9.5rem,0.55fr)_minmax(0,1fr)_minmax(10.5rem,0.6fr)] [@media(min-width:700px)]:[@media(max-width:1023px)]:gap-4 lg:grid-cols-[minmax(13rem,0.5fr)_minmax(0,1fr)_minmax(16rem,0.72fr)] lg:gap-5 xl:grid-cols-[minmax(16rem,0.54fr)_minmax(0,1fr)_minmax(19rem,0.73fr)] xl:gap-6"
+      class="grid h-[calc(var(--app-vh)_-_7.5rem)] min-h-[30rem] grid-cols-1 gap-5 lg:grid-cols-[minmax(13rem,0.5fr)_minmax(0,1fr)_minmax(16rem,0.72fr)] lg:gap-5 xl:grid-cols-[minmax(16rem,0.54fr)_minmax(0,1fr)_minmax(19rem,0.73fr)] xl:gap-6"
     >
       <!-- Coluna 1: busca + atalhos -->
       <LiveChannelsSidebar
@@ -34,6 +34,7 @@
         @clear="search.search.clear()"
         @select="setCategory"
         @pick="pickChannel"
+        @play="playChannel"
         @focus-first="focusFirstRow"
       />
 
@@ -183,7 +184,7 @@
 
       <!-- Coluna 3: prévia + programação -->
       <LiveChannelPreview
-        class="hidden [@media(min-width:700px)]:flex"
+        class="flex"
         :media="selected"
         :category-slug="selected?.categoryId ? (categoryById.get(selected.categoryId)?.slug ?? null) : null"
       />
@@ -200,6 +201,7 @@ import type { PaginatedQuery } from '~/composables/usePaginatedQuery';
 import { categoryBelongsToSection } from '~/utils/categorySections';
 import { isAdultCategory, isAdultItem } from '~/utils/adult';
 import { channelNumber } from '~/utils/live';
+import { mediaHref } from '~/utils/media';
 import type { MediaQuery, MediaSort, MediaSummary } from '~/types';
 import LiveChannelsSidebar from './LiveChannelsSidebar.vue';
 
@@ -440,6 +442,12 @@ function pickChannel(channel: MediaSummary): void {
   preview(channel);
   const row = rowFor(channel.id);
   row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+/** Clique numa transmissão na guia da coluna 1: vai direto pro player. */
+function playChannel(channel: MediaSummary): void {
+  console.log('[LiveScreen] playChannel called', channel?.title, mediaHref(channel));
+  navigateTo(mediaHref(channel));
 }
 
 /* ── Rolagem infinita ──────────────────────────────────────────────────── */

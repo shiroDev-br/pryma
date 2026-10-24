@@ -22,7 +22,7 @@
 }
 
 .mtv-opening__logo {
-  font-size: clamp(4rem, 18vw, 12rem);
+  font-size: 12rem;
   font-weight: 900;
   font-style: italic;
   letter-spacing: -0.06em;

@@ -2,7 +2,7 @@
   <div class="home-page isolate">
     <h1 class="sr-only">Pryma — TV ao vivo, filmes e séries</h1>
 
-    <!-- Palco: ocupa o miolo entre o header (11%) e a barra inferior (15%). -->
+    <!-- Palco: ocupa o miolo entre o header (11%) e a barra inferior (11%). -->
     <div class="home-page__stage">
       <HomeCarousel class="w-full" :items="menu.items.value" />
     </div>
@@ -14,48 +14,53 @@
 
 <style scoped>
 /* Grade fixa da TV: header 11% · palco 78% · barra 11%.
-   Header e barra iguais deixam o palco exatamente no centro vertical.
-   O header é fixo (AppHeader) e sobrepõe a página — o padding-top abre o vão
-   exato dele. Fallback em rem cobre WebView antiga que ignora vh no flex. */
+   Posicionamento ABSOLUTO com alturas em px (--header-h/--footer-h vêm do
+   plugin viewport-scale): independe de flex/% e de vh na WebView antiga —
+   era aqui que o palco colapsava e a barra inferior crescia na TV.
+   Fallback em vh/rem para SSR e retrato. */
 .home-page {
   --header-h: 11vh;
   --footer-h: 11vh;
+  position: relative;
   height: var(--app-vh);
-  padding-top: var(--header-h);
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
 
 .home-page__stage {
-  flex: 1 1 auto;
-  min-height: 0;
+  position: absolute;
+  top: var(--header-h);
+  bottom: var(--footer-h);
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
 }
 
 .home-page__strip {
-  flex: 0 0 var(--footer-h);
-}
-
-/* Celular deitado / telas baixas: header e barra em px para o palco sobrar. */
-@media (max-height: 500px) {
-  .home-page {
-    --header-h: 4.75rem;
-    --footer-h: 4.5rem;
-  }
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--footer-h);
 }
 
 /* Retrato estreito: a home volta a rolar em vez de espremer os cards. */
-@media (max-width: 599px) {
+@media (max-width: 599px) and (orientation: portrait) {
   .home-page {
+    --header-h: 5rem;
     height: auto;
     min-height: var(--app-vh);
     overflow: visible;
+    padding-top: var(--header-h);
+  }
+
+  .home-page__stage {
+    position: static;
   }
 
   .home-page__strip {
-    flex: 0 0 auto;
+    position: static;
+    height: auto;
   }
 }
 </style>

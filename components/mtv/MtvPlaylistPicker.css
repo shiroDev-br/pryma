@@ -14,12 +14,6 @@
   padding: 1.5rem;
 }
 
-@media (max-height: 500px) {
-  .mtv-picker__inner {
-    padding: 1rem;
-  }
-}
-
 .mtv-picker__header {
   text-align: center;
   margin-bottom: 3rem;

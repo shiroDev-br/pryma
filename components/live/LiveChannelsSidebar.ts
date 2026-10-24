@@ -37,6 +37,8 @@ export default defineComponent({
     select: (slug: string): boolean => typeof slug === 'string',
     /** Guia escolheu um canal — o pai seleciona e rola a lista até ele. */
     pick: (channel: MediaSummary): boolean => !!channel,
+    /** Guia clicou em uma transmissão — ir direto pro player. */
+    play: (channel: MediaSummary): boolean => !!channel,
     /** Botão "grupo atual" — o pai rola a lista principal pro primeiro canal. */
     'focus-first': (): boolean => true,
   },

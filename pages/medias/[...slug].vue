@@ -106,6 +106,10 @@ if (!/^m[0-9a-z]+$/.test(mediaId)) {
   throw createError({ statusCode: 404, message: 'Mídia não encontrada' });
 }
 
+// Pre-fetch playback URL imediatamente (paralelo com media detail)
+const playback = usePlayback();
+playback.prefetch(mediaId);
+
 // Remonta a tela ao trocar de mídia (próximo episódio, card, etc).
 definePageMeta({ layout: 'player', key: (route) => route.fullPath });
 
@@ -123,7 +127,6 @@ watch(
 
 useHead({ title: computed(() => (media.value ? `Pryma — ${media.value.title}` : 'Pryma — Player')) });
 
-const playback = usePlayback();
 const { playback: playbackSession, status: playbackStatus, error: playbackError } = playback;
 
 const videoEl = ref<HTMLVideoElement | null>(null);

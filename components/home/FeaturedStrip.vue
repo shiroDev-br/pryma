@@ -210,25 +210,9 @@ function closeDayFixtures(): void {
   color: var(--color-text-muted);
 }
 
-/* TV grande: um degrau de leitura do sofá. */
-@media (min-width: 1600px) {
-  .featured__value {
-    font-size: 0.9rem;
-  }
-
-  .featured__hint {
-    font-size: 0.56rem;
-  }
-
-  .featured__icon,
-  .featured__logo {
-    height: 2.1rem;
-    width: 2.1rem;
-  }
-}
-
-/* 720p / TV baixa: a barra tem 11vh — comprime o conteúdo para caber. */
-@media (max-height: 800px) {
+/* A barra tem 11% da altura (≈5,2rem no canvas 1440×810) — conteúdo
+   compacto SEMPRE, não só em 720p. */
+@media all {
   .featured__col {
     gap: 0.12rem;
     padding: 0.25rem 0.6rem;
@@ -250,28 +234,6 @@ function closeDayFixtures(): void {
 
   .featured__hint {
     font-size: 0.48rem;
-  }
-}
-
-/* Telas baixas: mantém 3 linhas dentro dos 4.5rem da barra. */
-@media (max-height: 500px) {
-  .featured__col {
-    gap: 0.1rem;
-    padding: 0.2rem 0.6rem;
-  }
-
-  .featured__icon,
-  .featured__logo {
-    height: 1.1rem;
-    width: 1.1rem;
-  }
-
-  .featured__value {
-    font-size: 0.66rem;
-  }
-
-  .featured__hint {
-    font-size: 0.46rem;
   }
 }
 </style>

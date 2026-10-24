@@ -3,6 +3,7 @@
     :to="mediaHref(media)"
     class="group relative block w-full overflow-hidden rounded-md border border-line/70 bg-surface transition duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus"
     :aria-label="media.title"
+    data-media-card
   >
     <div class="relative aspect-[2/3] w-full overflow-hidden bg-elevated">
       <img

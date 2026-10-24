@@ -4,7 +4,7 @@
       <div class="day-fixtures-overlay absolute inset-0 bg-black/95" aria-hidden="true" />
 
       <div
-        class="day-fixtures-modal relative w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 bg-elevated/95 shadow-[0_24px_60px_rgba(0,0,0,0.6)] flex flex-col"
+        class="day-fixtures-modal relative w-full max-w-4xl max-h-[85%] overflow-hidden rounded-2xl border border-white/10 bg-elevated/95 shadow-[0_24px_60px_rgba(0,0,0,0.6)] flex flex-col"
         role="dialog"
         aria-modal="true"
         aria-labelledby="day-fixtures-title"

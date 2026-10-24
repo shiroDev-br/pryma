@@ -1,54 +1,19 @@
 /* ═══ Responsividade global — Prysma ═══════════════════════════════════════
-   Todos os ajustes de layout por breakpoint vivem aqui.
-   Breakpoints: phone ≤640 · tablet ≤1024 · desktop ≤1599 · TV ≥1600
-   Deitado (celular): max-height:500 · TV em modo compat (letterbox estreito): max-width 900
-   Regras que precisam vencer estilos scoped usam o prefixo #app. */
 
-/* ── Tipografia base: TV/desktop escalam em rem (tudo que usa rem cresce junto) ── */
-html {
-  font-size: 16px;
-}
+MODELO NOVO (substitui phone/tablet/desktop/TV/compat/deitado):
 
-@media (min-width: 1440px) {
-  html {
-    font-size: 17px;
-  }
-}
+  • LANDSCAPE (TV, notebook, qualquer tela deitada): UM layout só.
+    O plugin viewport-scale.client.ts escala o rem pela viewport
+    (canvas 1440×810). Não existe breakpoint de largura/altura aqui —
+    o que cabe no MacBook cabe igual na TV 1080p, 720p ou compat (~760px).
+  • RETRATO (celular/tablet em pé): rem normal (17px/16px) + regras abaixo.
 
-/* Tira o salto de 18.5px em ≥1800: na TV grande tudo (cards, rows, tiles)
-   ficava ~16% maior que no notebook — "cards enormes". 17px segue maior que
-   o desktop (16px), legível do sofá, com densidade equivalente. */
+Regras que precisam vencer estilos scoped usam o prefixo #__nuxt.
 
-/* TV é 16:9 — a largura cresce junto do rem, a altura não. Em telas largas
-   e baixas (720p, notebook largo, TV com zoom do sistema) segura a escala
-   para tudo caber na viewport sem rolagem, igual ao notebook. */
-@media (min-width: 1600px) and (max-height: 1000px) {
-  html {
-    font-size: 17px;
-  }
-}
+NÃO adicione @media (min/max-width|height) para landscape. Se algo não cabe,
+corrija o componente (flex-1, min-h-0, rem) ou BASE_FONT no plugin. */
 
-@media (min-width: 1600px) and (max-height: 800px) {
-  html {
-    font-size: 15.5px;
-  }
-}
-
-/* ── Gutter lateral único — vira o padding padrão de todas as telas ── */
-:root {
-  --page-gutter: clamp(1rem, 2.5vw, 2.75rem);
-}
-
-/* Mesmo fallback px do main.css: se max()/var não resolverem na WebView
-   antiga, o gutter de 1.5rem ainda enquadra o header. */
-.tv-safe {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  padding-left: max(env(safe-area-inset-left), var(--page-gutter));
-  padding-right: max(env(safe-area-inset-right), var(--page-gutter));
-}
-
-/* ── Setas de trilho: leves; somem no phone (swipe natural) ── */
+/* ── Setas de trilho ── */
 #__nuxt .rail-arrow {
   height: 2.4rem;
   width: 2.4rem;
@@ -60,23 +25,32 @@ html {
   width: 1.5rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (orientation: portrait) {
   #__nuxt .rail-arrow {
-    display: none;
+    display: none; /* swipe natural no celular */
   }
 }
 
-/* ── Login ────────────────────────────────────────────────────────────── */
-/* Desktop grande / TV: card mais largo e legível do sofá */
-@media (min-width: 1600px) {
-  #__nuxt .panel {
-    width: 640px;
+/* ── Enquadramento de tela (landscape): a página É a viewport, sem rolagem ──
+   --app-vh vem do plugin (window.innerHeight em px, vale em WebView antiga). */
+@media (orientation: landscape) {
+  #__nuxt .login-page,
+  #__nuxt .home-page {
+    height: var(--app-vh);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #__nuxt .live-screen {
+    height: var(--app-vh);
+    overflow: hidden;
   }
 }
 
-/* Alturas apertadas (TV com zoom do sistema, 720p, notebooks): login enxuto —
-   o conteúdo precisa caber sem rolagem; a TV enquadra tudo. */
-@media (max-height: 1050px) {
+/* ── Login (landscape) ──
+   Antes isto só valia em max-height:1050 — ou seja, só "no MacBook". Agora é
+   o layout único: o que você aprovou no notebook vale em toda TV. */
+@media (orientation: landscape) {
   #__nuxt .login-page {
     padding-top: 1rem;
     padding-bottom: 1rem;
@@ -122,137 +96,14 @@ html {
   }
 }
 
-/* Deitado de celular/letterbox estreito: marca compacta à esquerda, card à
-   direita — cabe em qualquer altura. Só em telas ESTREITAS: num TV o WebView
-   pode encolher a altura com o teclado do sistema e a coluna NÃO vira linha
-   (é o bug do logo que "pula" pra esquerda ao focar um input). */
-@media (max-height: 500px) and (max-width: 900px) {
-  #__nuxt .login-inner {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 2.5rem;
-  }
-
-  #__nuxt .brand-mark {
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
-
-  #__nuxt .brand-mark img {
-    height: 2.75rem;
-    width: 2.75rem;
-  }
-
-  #__nuxt .mark-glow {
-    inset: -1rem;
-  }
-
-  #__nuxt .wordmark {
-    margin-top: 0.35rem;
-    font-size: 1.35rem;
-    letter-spacing: 0.22em;
-    margin-right: -0.22em;
-  }
-
-  #__nuxt .login-tagline {
-    display: none;
-  }
-
-  #__nuxt .panel {
-    margin-top: 0;
-    width: 26rem;
-    max-width: calc(100vw - 12rem);
-    padding: 0.95rem 1.3rem;
-  }
-
-  #__nuxt .login-page {
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-  }
-
-  #__nuxt .panel .mt-7 {
-    margin-top: 0.8rem;
-  }
-
-  #__nuxt .panel .mt-6 {
-    margin-top: 0.7rem;
-  }
-}
-
-/* ── Browse: trilho de categorias ─────────────────────────────────────── */
-/* Em telas estreitas (TV compat / celular) o painel de destaque fica empilhado */
+/* ── Browse: destaque ── */
 #__nuxt [data-highlights] {
   margin-top: 1rem;
 }
 
-@media (max-width: 640px) {
-  #__nuxt [data-highlights] {
-    margin-top: 0.75rem;
-  }
-}
-
-/* ── Cards do rail: altura limitada fora do desktop ──
-   O aspect-[3/2] dos componentes estoura a viewport em phone (2 fileiras)
-   e em deitado. Aqui viramos altura fixa + aspect auto — sobrescreve as
-   utilities por especificidade (#__nuxt [attr] = 1,1,0). */
-@media (max-width: 640px) {
-  #__nuxt [data-category-card] {
-    aspect-ratio: auto;
-    height: 7.5rem;
-    min-height: 7.5rem;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  #__nuxt [data-category-card] {
-    aspect-ratio: auto;
-    height: 8.25rem;
-    min-height: 8.25rem;
-  }
-}
-
-/* Deitado (celular): 2 fileiras precisam caber junto do header e do destaque.
-   Altura sobe 0.5rem vs o piso antigo — com a contagem de títulos escondida,
-   tile + nome (até 2 linhas) cabem sem o tile ser cortado pelo topo do card. */
-@media (max-height: 500px) {
-  #__nuxt [data-category-card] {
-    aspect-ratio: auto;
-    height: 7rem;
-    min-height: 7rem;
-  }
-
-  #__nuxt [data-category-card] .card-count {
-    display: none;
-  }
-}
-
-/* ── Enquadramento de tela (desktop/TV): igual ao notebook, sem rolagem ──
-   A página inteira ocupa exatamente a viewport; o conteúdo é dimensionado
-   pra caber. Em telas estreitas (celular) a rolagem continua liberada. */
-@media (min-width: 901px) {
-  #__nuxt .login-page {
-    height: var(--app-vh);
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  #__nuxt .home-page {
-    height: var(--app-vh);
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  #__nuxt .live-screen {
-    height: var(--app-vh);
-    overflow: hidden;
-  }
-}
-
-/* ── Listagem de categoria em telas baixas (TV 720p/768, notebooks) ──
-   Header compacto libera ~1 linha extra na listagem (mesmo enquadramento
-   do notebook: mais linhas visíveis, mesma linguagem visual). */
-@media (min-width: 901px) and (max-height: 820px) {
+/* ── Browse: listagem de categoria (landscape) ──
+   Header compacto — antes só em max-height:820 (= notebook). Agora sempre. */
+@media (orientation: landscape) {
   #__nuxt .browse-category-page {
     padding-top: 4.75rem;
     padding-bottom: 6.5rem;
@@ -265,5 +116,48 @@ html {
 
   #__nuxt .browse-list-header h1 {
     font-size: 1.5rem;
+  }
+
+  /* MediaCard grids (recents, search): mais colunas + aspect-ratio menor */
+  #__nuxt .tv-safe.pb-28.pt-24 > .grid[data-media-grid] {
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+
+  #__nuxt .search-page > .grid[data-media-grid] {
+    grid-template-columns: repeat(8, 1fr) !important;
+  }
+
+  #__nuxt [data-media-card] {
+    aspect-ratio: 3/4 !important;
+  }
+}
+
+/* ═══ RETRATO (celular / tablet em pé) ═══════════════════════════════════ */
+
+@media (orientation: portrait) {
+  html {
+    font-size: 16px;
+  }
+
+  #__nuxt [data-highlights] {
+    margin-top: 0.75rem;
+  }
+}
+
+/* O aspect-[3/2] dos componentes estoura a viewport em phone (2 fileiras).
+   Altura fixa + aspect auto — vence as utilities por especificidade. */
+@media (max-width: 640px) and (orientation: portrait) {
+  #__nuxt [data-category-card] {
+    aspect-ratio: auto;
+    height: 7.5rem;
+    min-height: 7.5rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+  #__nuxt [data-category-card] {
+    aspect-ratio: auto;
+    height: 8.25rem;
+    min-height: 8.25rem;
   }
 }

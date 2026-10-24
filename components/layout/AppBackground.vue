@@ -45,7 +45,7 @@
 
     <!-- Iluminação azul difusa atrás do palco central. -->
     <div
-      class="absolute left-1/2 top-[48%] h-[52vh] w-[85vw] max-w-[1100px] -translate-x-1/2 -translate-y-1/2 opacity-70"
+      class="absolute left-1/2 top-[48%] h-[52%] w-[85%] max-w-[65rem] -translate-x-1/2 -translate-y-1/2 opacity-70"
       style="
         background: radial-gradient(
           55% 50% at 50% 50%,

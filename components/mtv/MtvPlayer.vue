@@ -26,6 +26,15 @@
         </div>
       </div>
 
+      <!-- Erro da API do YouTube (falha ao carregar o script) -->
+      <div v-if="!apiReady && apiError" class="mtv-player__api-error" role="alert">
+        <Icon name="material-symbols:wifi-off-rounded" class="h-8 w-8" aria-hidden="true" />
+        <p>{{ apiError }}</p>
+        <button type="button" class="mtv-player__retry" data-nav="api-retry" @click="startPlayback(currentClip)">
+          Tentar novamente
+        </button>
+      </div>
+
       <!-- Faixa de info + controles -->
       <div class="mtv-player__bar">
         <div class="mtv-player__now">

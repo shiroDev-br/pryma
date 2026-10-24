@@ -29,9 +29,6 @@
       @dragstart.prevent="noop"
       @click.capture="onClickCapture"
     >
-      <!-- Piso iluminado — a lâmina azul sob os cards, como na referência. -->
-      <div class="stage-floor pointer-events-none absolute inset-x-0 -bottom-4" aria-hidden="true" />
-
       <!-- Palco plano: os cards distribuem-se lateralmente (coverflow reto). -->
       <div class="stage__viewport relative w-full" :style="viewportStyle">
         <div class="absolute inset-0" role="list">
@@ -80,7 +77,7 @@ const emit = defineEmits<{
 }>();
 
 /** Distância máxima renderizada em cada lado (além do card central). */
-const OVERSCAN = 2;
+const OVERSCAN = 1;
 
 /**
  * Geometria do palco em PIXELS, calculada no JS.
@@ -102,36 +99,19 @@ function clamp(v: number, min: number, max: number): number {
 }
 
 /**
- * Altura do palco: a mesma grade fixa da home (header 11% / barra 11%),
- * com 10% de respiro para o piso e os indicadores. Em telas baixas o
- * header/barra viram px (iguais aos do pages/index.vue).
+ * Em landscape o app é o canvas 1440×810 escalado (utils/viewportScale):
+ * calculamos a geometria nas medidas "virtuais" desse canvas e multiplicamos
+ * pela escala — o carrossel acompanha o rem e fica idêntico em qualquer TV.
+ * Altura do palco = grade fixa da home (header 11% / barra 11%) × 0.9 de
+ * respiro para o piso e os indicadores.
  */
-function computeStageHeight(h: number): number {
-  if (h <= 500) {
-    // Mesma troca do pages/index.vue: 4.75rem (header) + 4.5rem (barra).
-    return Math.max(120, Math.round((h - 148) * 0.9));
-  }
-  return Math.round(h * (1 - 0.11 - 0.11) * 0.9);
-}
-
 function computeMetrics(w: number, h: number): HomeCarouselMetrics {
-  const stageH = computeStageHeight(h);
+  const stageH = Math.round(h * (1 - 0.11 - 0.11) * 0.9);
   // Nenhum card pode ficar mais alto que o palco — senão vaza na barra.
   const fit = (width: number, ratio: number): number => Math.min(width, stageH * ratio);
 
-  // Celular deitado — palco enxuto pra faixa inferior e os dots caberem.
-  if (h <= 500 && w <= 900) {
-    return {
-      activeW: fit(clamp(0.21 * w, 136, 164), 1.14),
-      nearW: fit(clamp(0.13 * w, 96, 112), 0.78),
-      farW: fit(clamp(0.11 * w, 88, 104), 0.72),
-      gap: clamp(0.01 * w, 6, 12),
-      stageH,
-    };
-  }
-  // TV em modo compat / tablet retrato — os 5 cards precisam caber na
-  // largura (os 4 laterais somam ~0.69w + gaps, sobrando margem nas bordas).
-  if (w <= 900) {
+  // Retrato (celular/tablet em pé): 5 cards precisam caber na largura.
+  if (!isLandscape(w, h)) {
     return {
       activeW: fit(clamp(0.31 * w, 210, 290), 1.14),
       nearW: fit(clamp(0.16 * w, 105, 145), 0.78),
@@ -140,11 +120,14 @@ function computeMetrics(w: number, h: number): HomeCarouselMetrics {
       stageH,
     };
   }
+
+  const s = getViewportScale(w, h);
+  const vw = w / s; // largura virtual (>= 1440; maior em telas mais largas que 16:9)
   return {
-    activeW: fit(clamp(0.24 * w, 256, 416), 1.14),
-    nearW: fit(clamp(0.15 * w, 152, 256), 0.78),
-    farW: fit(clamp(0.125 * w, 136, 216), 0.72),
-    gap: clamp(0.012 * w, 8, 24),
+    activeW: fit(clamp(0.24 * vw, 256, 416) * s, 1.14),
+    nearW: fit(clamp(0.15 * vw, 152, 256) * s, 0.78),
+    farW: fit(clamp(0.125 * vw, 136, 216) * s, 0.72),
+    gap: clamp(0.012 * vw, 8, 24) * s,
     stageH,
   };
 }
@@ -281,6 +264,8 @@ onMounted(() => {
   height: 532px;
   /* hidden como base (Chrome <90 não tem `clip`); clip onde suportado. */
   overflow-x: hidden;
+  /* Contenção para performance */
+  contain: layout paint;
 }
 
 @supports (overflow: clip) {
@@ -298,54 +283,4 @@ onMounted(() => {
   transform: translateX(-50%);
 }
 
-@media (max-height: 500px) {
-  .stage__indicators {
-    bottom: -0.35rem;
-  }
-}
-
-/* Luz refletida no chão do palco — pool azul difuso sob o card ativo. */
-.stage-floor {
-  width: min(74%, 58rem);
-  height: 5.5rem;
-  margin-inline: auto;
-  background: radial-gradient(
-    50% 62% at 50% 28%,
-    rgba(22, 136, 255, 0.38) 0%,
-    rgba(11, 92, 255, 0.13) 45%,
-    transparent 75%
-  );
-  filter: blur(14px);
-}
-
-/* Linha de brilho focal — o reflexo nítido do anel no piso. */
-.stage-floor::after {
-  content: '';
-  position: absolute;
-  left: 20%;
-  right: 20%;
-  top: 32%;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(143, 205, 255, 0.7) 50%,
-    transparent 100%
-  );
-  filter: blur(1px);
-}
-
-/* TV (≥1600) — pool azul menos saturado: no tamanho de TV o alpha 0.38
-   estourava o tom da marca (feedback de "cor fudida"). */
-@media (min-width: 1600px) {
-  .stage-floor {
-    background: radial-gradient(
-      50% 62% at 50% 28%,
-      rgba(22, 136, 255, 0.26) 0%,
-      rgba(11, 92, 255, 0.09) 45%,
-      transparent 75%
-    );
-  }
-}
 </style>

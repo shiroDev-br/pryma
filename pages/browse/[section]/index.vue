@@ -281,30 +281,10 @@ onBeforeUnmount(() => {
   scroll-snap-align: start;
 }
 
-@media (min-width: 640px) {
-  .category-rail {
-    --cols: 3;
-    --gap: 1rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .category-rail {
-    --cols: 4;
-    --gap: 1.25rem;
-  }
-}
-
-@media (min-width: 1280px) {
+/* Landscape = canvas 1440×810 escalado: 5 colunas (o estado do notebook). */
+@media (orientation: landscape) {
   .category-rail {
     --cols: 5;
-    --gap: 1.5rem;
-  }
-}
-
-@media (min-width: 1800px) {
-  .category-rail {
-    --cols: 6;
     --gap: 1.5rem;
   }
 }

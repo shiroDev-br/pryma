@@ -1,7 +1,7 @@
 <template>
   <NuxtLink
     :to="mediaHref(media)"
-    class="live-row group relative flex w-full items-center gap-4 border p-3 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus [@media(min-width:700px)]:[@media(max-width:1279px)]:gap-3 xl:gap-5 xl:px-4"
+    class="live-row group relative flex w-full items-center gap-4 border p-3 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus xl:gap-5 xl:px-4"
     :class="
       selected
         ? 'border-transparent bg-[#081a42]/85'
@@ -19,14 +19,14 @@
     <span v-if="selected" class="row-glow pointer-events-none absolute" aria-hidden="true" />
 
     <span
-      class="w-9 shrink-0 text-[0.95rem] tabular-nums text-ink-muted sm:w-10 [@media(min-width:700px)]:[@media(max-width:1279px)]:hidden"
+      class="w-9 shrink-0 text-[0.95rem] tabular-nums text-ink-muted sm:w-10"
       aria-hidden="true"
     >
       {{ number }}
     </span>
 
     <span
-      class="logo-tile relative flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#0a1736] [@media(min-width:700px)]:[@media(max-width:1279px)]:h-12 [@media(min-width:700px)]:[@media(max-width:1279px)]:w-20 xl:h-[3.75rem] xl:w-28"
+      class="logo-tile relative flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#0a1736] xl:h-[3.75rem] xl:w-28"
       aria-hidden="true"
     >
       <img
@@ -53,7 +53,7 @@
       </span>
     </span>
 
-    <span class="flex shrink-0 items-center gap-3 pr-0.5 [@media(min-width:700px)]:[@media(max-width:1279px)]:hidden">
+    <span class="flex shrink-0 items-center gap-3 pr-0.5">
       <span
         v-if="media.isLive"
         class="hidden items-center gap-1.5 text-[0.78rem] font-medium uppercase tracking-wide text-ink 2xl:inline-flex"

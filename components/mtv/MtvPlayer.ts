@@ -62,8 +62,15 @@ export default defineComponent({
       onStateChange: (state) => {
         isPlaying.value = state === 1;
       },
-      onError: () => {
-        playerError.value = 'Este clipe não está disponível. Pulando…';
+      onError: (code) => {
+        const errorMessages: Record<number, string> = {
+          2: 'Parâmetro inválido.',
+          5: 'O player HTML5 não é compatível.',
+          100: 'Vídeo não encontrado.',
+          101: 'Embed não permitido pelo proprietário.',
+          150: 'Embed não permitido pelo proprietário.',
+        };
+        playerError.value = errorMessages[code] || 'Este clipe não está disponível. Pulando…';
         // Auto-skip após 1.5s se houver próximo
         if (queue.value.length > 1) {
           setTimeout(() => {
@@ -72,10 +79,17 @@ export default defineComponent({
           }, 1500);
         }
       },
+      onApiError: (err) => {
+        apiReady = false;
+        apiError.value = 'Não foi possível carregar o player do YouTube. Verifique sua conexão.';
+      },
     });
 
     let mounted = false;
     let fullscreen = ref(false);
+    let apiReady = false;
+    let apiError = ref<string | null>(null);
+    let iframeObserver: MutationObserver | null = null;
 
     /** Remove largura/altura hardcodados que o YouTube API injeta no iframe. */
     function forceIframeFullSize(): void {
@@ -85,7 +99,29 @@ export default defineComponent({
         iframe.removeAttribute('height');
         iframe.style.width = '100%';
         iframe.style.height = '100%';
+        iframe.style.display = 'block';
+        iframe.style.position = 'absolute';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
       }
+    }
+
+    function setupIframeObserver(): void {
+      if (iframeObserver) iframeObserver.disconnect();
+      const iframe = frameEl.value?.querySelector('iframe');
+      if (!iframe) return;
+      iframeObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes' && 
+              (mutation.attributeName === 'width' || mutation.attributeName === 'height')) {
+            forceIframeFullSize();
+            break;
+          }
+        }
+      });
+      iframeObserver.observe(iframe, { attributes: true, attributeFilter: ['width', 'height'] });
     }
 
     async function startPlayback(clip: MtvClip): Promise<void> {
@@ -95,15 +131,22 @@ export default defineComponent({
       if (!mounted && frameEl.value) {
         try {
           await player.mount(frameEl.value, clip.id);
+          apiReady = true;
+          apiError.value = null;
           mounted = true;
+          await nextTick();
           forceIframeFullSize();
-        } catch {
-          playerError.value = 'Não foi possível carregar o player do YouTube.';
+          setupIframeObserver();
+        } catch (err) {
+          apiReady = false;
+          apiError.value = 'Não foi possível carregar o player do YouTube.';
         }
       } else if (mounted) {
         player.load(clip.id);
         // O YouTube pode redefinir width/height ao trocar vídeo
-        nextTick(() => forceIframeFullSize());
+        await nextTick();
+        forceIframeFullSize();
+        setupIframeObserver();
       }
     }
 
@@ -204,6 +247,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       observer?.disconnect();
+      iframeObserver?.disconnect();
       player.destroy();
     });
 
@@ -229,6 +273,9 @@ export default defineComponent({
       reshuffle,
       formatDuration,
       toggleFullscreen,
+      startPlayback,
+      apiReady: computed(() => player.isApiReady()),
+      apiError,
     };
   },
 });

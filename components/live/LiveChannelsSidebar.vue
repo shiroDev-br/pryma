@@ -1,7 +1,7 @@
 <template>
   <!-- Coluna 1: busca + atalhos -->
   <aside
-    class="live-panel hidden min-h-0 flex-col p-3 [@media(min-width:700px)]:flex xl:p-4"
+    class="live-panel flex min-h-0 flex-col p-3 xl:p-4"
     aria-label="Atalhos de canais"
   >
     <label class="search-box flex h-12 shrink-0 items-center gap-2 px-3 focus-within:shadow-focus xl:gap-3 xl:px-4">
@@ -71,13 +71,12 @@
         <Transition name="slide">
           <div v-show="isExpanded(group.name)" class="space-y-1 pl-4 border-l border-white/5 ml-2">
             <div v-for="channel in group.channels" :key="channel.id" class="space-y-1">
-              <!-- Canal -->
+<!-- Canal -->
               <button
                 type="button"
                 class="w-full flex items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-fast border-line bg-surface/50 hover:border-blue-dark/60 hover:bg-elevated/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue/50"
-                @click="toggleGuide(channel.id)"
+                @click="emit('play', channel)"
                 :class="{ 'bg-blue/10 border-blue/60': selectedId === channel.id }"
-                :aria-expanded="isGuideExpanded(channel.id)"
                 data-nav="sidebar"
                 :data-channel-id="channel.id"
               >
@@ -108,6 +107,7 @@
                     :channel-id="channel.id"
                     :channel="channel"
                     @pick-channel="emit('pick', $event)"
+                    @play-channel="emit('play', $event)"
                   />
                 </div>
               </Transition>

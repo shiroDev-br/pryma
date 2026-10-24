@@ -122,12 +122,3 @@ const hints = [
 ] as const;
 </script>
 
-<style scoped>
-/* Celular deitado — barra compacta: só "Em foco", sem dicas de teclado. */
-@media (max-height: 500px) {
-  .info-bar__meta,
-  .info-bar__nav {
-    display: none;
-  }
-}
-</style>

@@ -11,6 +11,7 @@
     :aria-current="isActive ? 'true' : undefined"
     :aria-label="item.title"
     @click="onClick"
+    data-nav-card
   >
     <!-- Halo + borda em gradiente (só card ativo): azul elétrico → violeta. -->
     <span v-if="isActive" class="nav-card__glow pointer-events-none absolute" aria-hidden="true" />
@@ -101,8 +102,8 @@
         class="nav-card__title block max-w-full shrink-0 truncate font-semibold uppercase transition-colors duration-fast"
         :class="
           isActive
-            ? 'mt-2.5 text-[clamp(1.35rem,2.3vw,2.1rem)] leading-none tracking-[0.05em] text-ink sm:mt-4'
-            : 'mt-3 text-[clamp(0.72rem,1vw,0.92rem)] leading-none tracking-[0.1em] text-ink'
+            ? 'mt-2.5 text-[1.95rem] leading-none tracking-[0.05em] text-ink sm:mt-4'
+            : 'mt-3 text-[0.85rem] leading-none tracking-[0.1em] text-ink'
         "
       >
         {{ item.title }}
@@ -113,8 +114,8 @@
         class="transition-colors duration-fast"
         :class="
           isActive
-            ? 'mt-2.5 max-w-[30ch] text-balance text-[clamp(0.78rem,0.95vw,0.9rem)] leading-snug text-ink sm:mt-4'
-            : 'mt-2 line-clamp-3 max-w-[20ch] text-[clamp(0.6rem,0.75vw,0.7rem)] leading-snug text-ink-muted'
+            ? 'mt-2.5 max-w-[30ch] text-balance text-[0.8rem] leading-snug text-ink sm:mt-4'
+            : 'mt-2 line-clamp-3 max-w-[20ch] text-[0.65rem] leading-snug text-ink-muted'
         "
       >
         {{ isActive ? (item.longDescription ?? item.description) : item.description }}
@@ -265,18 +266,15 @@ function onClick(event: MouseEvent): void {
     width var(--transition-slow),
     height var(--transition-slow),
     opacity var(--transition-slow);
+  /* Otimização: contenção de layout/pintura + visibilidade de conteúdo */
+  contain: layout paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: 300px 260px;
 }
 
-/* Celular deitado — card enxuto: padding e título menores pra não truncar. */
-@media (max-height: 500px) {
-  .nav-card__body {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
-
-  .nav-card__title {
-    font-size: clamp(1rem, 2.7vw, 1.2rem);
-  }
+.nav-card:focus-within,
+.nav-card:hover {
+  content-visibility: visible;
 }
 
 /* Borda em gradiente (azul elétrico → violeta) — máscara recorta só o contorno. */

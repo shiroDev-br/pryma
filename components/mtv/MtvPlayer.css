@@ -21,7 +21,7 @@
   /* Largura máx. do vídeo: respeita a altura da viewport (deitado). */
   position: relative;
   width: 100%;
-  max-width: min(640px, calc((100vh - 16.5rem) * 16 / 9));
+  max-width: min(38rem, calc((var(--app-vh) - 16.5rem) * 16 / 9));
   margin: 0 auto;
   border-radius: 0.75rem;
   overflow: hidden;
@@ -87,6 +87,50 @@
 
 .mtv-player__yt-badge:hover {
   background: rgba(0, 0, 0, 0.85);
+}
+
+/* Erro de API do YouTube (script não carregou) */
+.mtv-player__api-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  text-align: center;
+  z-index: 3;
+  border-radius: 0.75rem;
+}
+
+.mtv-player__api-error p {
+  max-width: 80%;
+  font-size: 1rem;
+}
+
+.mtv-player__retry {
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  background: #ff2d95;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mtv-player__retry:hover {
+  background: #ff5bab;
+  box-shadow: 0 0 16px rgba(255, 45, 149, 0.4);
+}
+
+.mtv-player__retry:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
 }
 
 .mtv-player__bar {
@@ -224,13 +268,7 @@
 }
 
 .mtv-player__ctl-label {
-  display: none;
-}
-
-@media (min-width: 1280px) {
-  .mtv-player__ctl-label {
-    display: inline;
-  }
+  display: inline;
 }
 
 /* ── Tracklist ──────────────────────────────────────────────────────── */
@@ -405,7 +443,7 @@
 }
 
 /* Responsivo: empilha em telas menores */
-@media (max-width: 1024px) {
+@media (orientation: portrait) {
   .mtv-player {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
@@ -418,7 +456,7 @@
 }
 
 /* Celular: info e controles quebram em duas linhas (não colidem) */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (orientation: portrait) {
   .mtv-player__bar {
     flex-wrap: wrap;
   }
@@ -433,18 +471,3 @@
   }
 }
 
-/* Deitado: aperta o palco p/ a tracklist continuar acessível */
-@media (max-height: 500px) {
-  .mtv-player {
-    padding: 1rem;
-    gap: 1rem;
-  }
-
-  .mtv-player__stage {
-    gap: 0.5rem;
-  }
-
-  .mtv-player__bar {
-    padding: 0.5rem 0.75rem;
-  }
-}

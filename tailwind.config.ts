@@ -26,6 +26,19 @@ const content: Partial<Config>['content'] = {
 export default <Partial<Config>>{
   content,
   theme: {
+    /**
+     * Breakpoints neutralizados: o app escala via rem (plugin
+     * viewport-scale), então TODA tela landscape é o canvas 1440×810 —
+     * o mesmo estado do `xl` no notebook. Com sm..xl em 0px as variantes
+     * `sm: md: lg: xl:` sempre valem (a última vence) e `2xl:` nunca.
+     */
+    screens: {
+      sm: '0px',
+      md: '0px',
+      lg: '0px',
+      xl: '0px',
+      '2xl': '99999px',
+    },
     extend: {
       colors: {
         bg: 'var(--color-bg)',

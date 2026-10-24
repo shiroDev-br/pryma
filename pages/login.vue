@@ -136,7 +136,7 @@ async function submit(): Promise<void> {
 /* Wordmark centrado — compensa o espaço fantasma do letter-spacing final. */
 .wordmark {
   margin-top: 1.5rem;
-  font-size: clamp(2.25rem, 8vw, 2.75rem);
+  font-size: 2.75rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.28em;
@@ -162,7 +162,7 @@ async function submit(): Promise<void> {
 /* Painel de vidro — deixa a montanha cinematográfica transparecer por trás. */
 .panel {
   position: relative;
-  padding: clamp(1.5rem, 5vw, 2rem);
+  padding: 2rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: linear-gradient(

@@ -115,7 +115,7 @@
     </div>
 
     <template v-else>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6" data-media-grid>
         <MediaCard v-for="media in filteredItems" :key="media.id" :media="media" />
       </div>
 
@@ -145,23 +145,6 @@
 <style scoped>
 .search-page__header > * + * {
   margin-top: 1.5rem;
-}
-
-/* Celular deitado — a bottom bar fixa fica logo abaixo; enxuta o topo
-   pra input + estado viverem entre o header e a barra sem rolagem. */
-@media (max-height: 500px) {
-  .search-page {
-    padding-top: 2.5rem;
-    padding-bottom: 4.25rem;
-  }
-
-  .search-page__header {
-    margin-bottom: 0.5rem;
-  }
-
-  .search-page__header > * + * {
-    margin-top: 0.65rem;
-  }
 }
 </style>
 
