@@ -69,7 +69,7 @@ export default defineComponent({
     /** Canais com jogo hoje — null até o grupo ser aberto (a busca é pesada). */
     gamesCount: { type: Number as PropType<number | null>, default: null },
     /** Totais dos grupos especiais (Premiere/ESPN/SportTV), por slug. */
-    specialTotals: { type: Object as PropType<Record<string, number>>, required: true },
+    specialTotals: { type: Object as PropType<Record<string, number | null>>, required: true },
     /** Texto da busca (v-model). */
     query: { type: String, required: true },
   },
@@ -115,7 +115,7 @@ export default defineComponent({
           name: group.name,
           slug: group.slug,
           icon: 'material-symbols:sports-soccer-rounded',
-          total: props.specialTotals[group.slug] ?? 0,
+          total: props.specialTotals[group.slug] ?? null,
         })),
         ...props.categories.map((category) => ({
           name: category.name,

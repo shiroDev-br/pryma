@@ -68,12 +68,6 @@ export default defineNuxtConfig({
       }),
     ],
   },
-  // Pacote de redesign já aplicado — mantido só como referência histórica.
-  typescript: {
-    tsConfig: {
-      exclude: ['../prysma-home-redesign/**'],
-    },
-  },
   // Painel de staff: sessão vive no localStorage — renderizar no servidor só
   // geraria uma tela sem usuário e erro de hidratação. SPA no cliente.
   routeRules: {
@@ -84,9 +78,13 @@ export default defineNuxtConfig({
     // Painel de staff (/admin) é só web: fora do build do APK (NUXT_SSR=0),
     // para não ir embutido no app que o cliente final instala.
     'pages:extend'(pages) {
-      if (process.env.NUXT_SSR !== '0') return;
+      const isApk = process.env.NUXT_SSR === '0';
       for (let i = pages.length - 1; i >= 0; i--) {
-        if (pages[i].path === '/admin' || pages[i].path.startsWith('/admin/')) pages.splice(i, 1);
+        const { path } = pages[i];
+        const staffOnly = path === '/admin' || path.startsWith('/admin/');
+        // `/dev` testa a camada de dados com credenciais de demonstração: só no `nuxt dev`.
+        const devOnly = path === '/dev' && process.env.NODE_ENV === 'production';
+        if ((isApk && staffOnly) || devOnly) pages.splice(i, 1);
       }
     },
   },

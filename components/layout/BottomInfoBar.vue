@@ -1,6 +1,6 @@
 <template>
   <div
-    class="pointer-events-none fixed inset-x-0 bottom-0 z-40 bg-black"
+    class="info-bar pointer-events-none fixed inset-x-0 bottom-0 z-40 bg-black"
     :class="compact ? 'pb-3' : 'pb-4 sm:pb-5'"
   >
     <div class="tv-safe">

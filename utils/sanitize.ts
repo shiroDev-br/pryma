@@ -23,19 +23,9 @@ export function isSearchableQuery(raw: string): boolean {
   return sanitizeQuery(raw).length >= MIN_SEARCH_CHARS;
 }
 
-/** Escapa metacaracteres de regex — usado em highlights de resultado. */
-export function escapeRegExp(raw: string): string {
-  return raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 /** Slugs seguros para URLs: "Globo News HD!" -> "globo-news-hd". */
 export function sanitizeSlug(raw: string): string {
   return normalizeText(raw)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-}
-
-/** E-mail normalizado (validação de formato é responsabilidade do backend). */
-export function sanitizeEmail(raw: string): string {
-  return raw.trim().toLowerCase();
 }

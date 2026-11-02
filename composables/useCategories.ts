@@ -14,12 +14,13 @@ export interface CategoriesResult {
 /** Categorias são poucas e estáveis — cacheadas em sessão (payload/SSR + hidratação). */
 export function useCategories(): CategoriesResult {
   const repository = getRepositories().media;
-  const adultUnlocked = useState<boolean>('adult.unlocked', () => false);
+  const adultUnlocked = useAdultUnlocked();
 
   const { data, status, error, refresh } = useAsyncData(
     'categories',
     () => repository.listCategories(),
-    { transform: (result) => result.items },
+    // `server: false`: exige login, e o token só existe no cliente (no servidor: 401).
+    { transform: (result) => result.items, server: false },
   );
 
   // Adulto fora da lista até o desbloqueio — vale pra home, abas, sidebar e cards.
@@ -27,7 +28,8 @@ export function useCategories(): CategoriesResult {
     const items = data.value ?? [];
     return adultUnlocked.value ? items : items.filter((item) => !isAdultCategory(item.slug));
   });
-  const isLoading = computed(() => status.value === 'pending');
+  // `idle` = ainda no servidor/hidratação: o pedido sai logo depois de montar.
+  const isLoading = computed(() => status.value === 'pending' || status.value === 'idle');
 
   return { categories, isLoading, error, refresh };
 }

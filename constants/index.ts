@@ -131,6 +131,8 @@ export const STORAGE_KEYS = {
   watchProgress: 'iptv.watchProgress',
   /** Último episódio assistido por seriesId — marcador nas listagens. */
   seriesProgress: 'iptv.seriesProgress',
+  /** Volume e mudo do player (nome antigo mantido: a escolha salva continua valendo). */
+  playerAudio: 'iptv-plyr',
   /** Player com a imagem esticada até preencher a tela. */
   playerFill: 'iptv.playerFill',
   /** Vinheta de abertura já tocou nesta abertura do app (sessionStorage). */

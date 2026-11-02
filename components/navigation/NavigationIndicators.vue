@@ -9,6 +9,7 @@
       :key="dot"
       type="button"
       role="tab"
+      tabindex="-1"
       class="rounded-full transition-[width,background-color] duration-normal"
       :class="
         index === activeIndex

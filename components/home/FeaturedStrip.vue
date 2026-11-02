@@ -65,7 +65,8 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, nextTick } from 'vue';
+import { directionOf } from '~/utils/remoteKeys';
 import { useFavoriteTeam } from '~/composables/useFavoriteTeam';
 import NextMatchBadge from '~/components/football/NextMatchBadge.vue';
 import DayFixturesModal from '~/components/football/DayFixturesModal.vue';
@@ -90,25 +91,11 @@ function focusCard(index: number): void {
 }
 
 function onKeydown(event: KeyboardEvent): void {
-  switch (event.key) {
-    case 'ArrowRight':
-      event.preventDefault();
-      focusCard(activeCard.value + 1);
-      break;
-    case 'ArrowLeft':
-      event.preventDefault();
-      focusCard(activeCard.value - 1);
-      break;
-    case 'ArrowDown':
-    case 'ArrowUp':
-      return;
-  }
+  const direction = directionOf(event);
+  if (direction !== 'left' && direction !== 'right') return;
+  event.preventDefault();
+  focusCard(activeCard.value + (direction === 'right' ? 1 : -1));
 }
-
-onMounted(() => {
-  // Não foca automaticamente — deixa a HomeCarousel (meio) ter o foco inicial
-  // O usuário navega pra cá com ArrowDown
-});
 
 function navigateToTeam(): void {
   router.push('/team');
@@ -141,9 +128,9 @@ function closeDayFixtures(): void {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.12rem;
   min-width: 0;
-  padding: 0.4rem 0.9rem;
+  padding: 0.25rem 0.6rem;
   border: 0;
   background: transparent;
   color: inherit;
@@ -169,20 +156,20 @@ function closeDayFixtures(): void {
 }
 
 .featured__icon {
-  height: 1.6rem;
-  width: 1.6rem;
+  height: 1.35rem;
+  width: 1.35rem;
   color: var(--color-blue-light);
 }
 
 .featured__logo {
-  height: 1.9rem;
-  width: 1.9rem;
+  height: 1.35rem;
+  width: 1.35rem;
   object-fit: contain;
   filter: drop-shadow(0 0 6px rgba(22, 136, 255, 0.45));
 }
 
 .featured__label {
-  font-size: 0.55rem;
+  font-size: 0.5rem;
   font-weight: 600;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -195,7 +182,7 @@ function closeDayFixtures(): void {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -204,37 +191,50 @@ function closeDayFixtures(): void {
 
 .featured__hint {
   display: block;
-  font-size: 0.52rem;
+  font-size: 0.48rem;
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
 
-/* A barra tem 11% da altura (≈5,2rem no canvas 1440×810) — conteúdo
-   compacto SEMPRE, não só em 720p. */
-@media all {
-  .featured__col {
-    gap: 0.12rem;
-    padding: 0.25rem 0.6rem;
+/* Celular deitado: a barra é baixa demais para a linha de dica do controle. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .featured__hint {
+    display: none;
+  }
+}
+
+/* Celular em pé: uma linha por item, e nada de falar em "OK" para quem toca na tela. */
+@media (orientation: portrait) and (max-width: 640px) {
+  .featured {
+    grid-template-columns: 1fr;
+    height: auto;
   }
 
-  .featured__icon,
-  .featured__logo {
-    height: 1.35rem;
-    width: 1.35rem;
+  .featured__col {
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: 3.25rem;
+    padding: 0.5rem var(--page-gutter);
+    text-align: left;
+  }
+
+  .featured__col + .featured__col {
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .featured__label {
-    font-size: 0.5rem;
+    font-size: 0.65rem;
   }
 
   .featured__value {
-    font-size: 0.72rem;
+    font-size: 0.85rem;
   }
 
   .featured__hint {
-    font-size: 0.48rem;
+    display: none;
   }
 }
 </style>

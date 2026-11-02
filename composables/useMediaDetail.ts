@@ -10,11 +10,13 @@ export function useMediaDetail(id: MaybeRefOrGetter<string>) {
   const { data, status, error, refresh } = useAsyncData(
     () => `media-${mediaId.value}`,
     () => repository.getMedia(mediaId.value),
-    { watch: [mediaId] },
+    // `server: false`: exige login, e o token só existe no cliente (no servidor: 401).
+    { watch: [mediaId], server: false },
   );
 
   const media = computed(() => data.value ?? null);
-  const isLoading = computed(() => status.value === 'pending');
+  // `idle` = ainda no servidor/hidratação: o pedido sai logo depois de montar.
+  const isLoading = computed(() => status.value === 'pending' || status.value === 'idle');
   const notFound = computed(() => status.value === 'error' && (error.value as { status?: number })?.status === 404);
 
   return { media, isLoading, notFound, error, refresh };

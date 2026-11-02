@@ -1,4 +1,5 @@
 import { createKeyRepeatGate } from '~/utils/keyRepeatGate';
+import { directionOf } from '~/utils/remoteKeys';
 
 export interface UseLiveNavOptions {
   /** Elemento raiz da tela — âncora das queries `[data-nav]`. */
@@ -62,8 +63,8 @@ export function useLiveNav(options: UseLiveNavOptions): UseLiveNavReturn {
   }
 
   function onKeydown(event: KeyboardEvent): void {
-    const { key } = event;
-    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
+    const direction = directionOf(event);
+    if (!direction) return;
 
     const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-nav]');
     const kind = target?.dataset.nav;
@@ -92,8 +93,8 @@ export function useLiveNav(options: UseLiveNavOptions): UseLiveNavReturn {
 
     switch (kind) {
       case 'back':
-        if (key === 'ArrowRight') move(navList('search')[0]);
-        else if (key === 'ArrowDown') move(navList('sidebar')[0]);
+        if (direction === 'right') move(navList('search')[0]);
+        else if (direction === 'down') move(navList('sidebar')[0]);
         else move(null);
         break;
 
@@ -102,32 +103,32 @@ export function useLiveNav(options: UseLiveNavOptions): UseLiveNavReturn {
         const input = target as HTMLInputElement;
         const atStart = input.selectionStart === 0 && input.selectionEnd === 0;
         const atEnd = input.selectionStart === input.value.length;
-        if (key === 'ArrowDown') move(navList('sidebar')[0]);
-        else if (key === 'ArrowUp') move(navList('back')[0]);
-        else if (key === 'ArrowLeft' && atStart) move(navList('back')[0]);
-        else if (key === 'ArrowRight' && atEnd) move(middleOrPreview());
+        if (direction === 'down') move(navList('sidebar')[0]);
+        else if (direction === 'up') move(navList('back')[0]);
+        else if (direction === 'left' && atStart) move(navList('back')[0]);
+        else if (direction === 'right' && atEnd) move(middleOrPreview());
         break;
       }
 
       case 'sidebar':
         // ↓ no último grupo volta pro primeiro (wrap-around).
-        if (key === 'ArrowDown') move(step('sidebar', 1) ?? navList('sidebar')[0]);
-        else if (key === 'ArrowUp') move(step('sidebar', -1) ?? navList('search')[0]);
-        else if (key === 'ArrowRight') move(middleOrPreview());
+        if (direction === 'down') move(step('sidebar', 1) ?? navList('sidebar')[0]);
+        else if (direction === 'up') move(step('sidebar', -1) ?? navList('search')[0]);
+        else if (direction === 'right') move(middleOrPreview());
         else move(null);
         break;
 
       case 'row':
-        if (key === 'ArrowDown') move(step('row', 1));
-        else if (key === 'ArrowUp') move(step('row', -1));
-        else if (key === 'ArrowLeft') move(groupButton());
+        if (direction === 'down') move(step('row', 1));
+        else if (direction === 'up') move(step('row', -1));
+        else if (direction === 'left') move(groupButton());
         else move(navList('preview')[0]);
         break;
 
       case 'quality':
-        if (key === 'ArrowRight') move(step('quality', 1));
-        else if (key === 'ArrowLeft') move(step('quality', -1) ?? middleOrPreview() ?? groupButton());
-        else if (key === 'ArrowUp') move(navList('preview')[0]);
+        if (direction === 'right') move(step('quality', 1));
+        else if (direction === 'left') move(step('quality', -1) ?? middleOrPreview() ?? groupButton());
+        else if (direction === 'up') move(navList('preview')[0]);
         else move(navList('preview')[1]);
         break;
 
@@ -158,12 +159,12 @@ export function useLiveNav(options: UseLiveNavOptions): UseLiveNavReturn {
             .sort((a, b) => Math.abs(a.getBoundingClientRect().left - left) - Math.abs(b.getBoundingClientRect().left - left))[0];
         };
         const first = navList('preview')[0];
-        if (key === 'ArrowDown') move(index === 0 && quality ? quality : vertical(1));
-        else if (key === 'ArrowUp') {
+        if (direction === 'down') move(index === 0 && quality ? quality : vertical(1));
+        else if (direction === 'up') {
           const up = vertical(-1);
           move(up === first && quality ? quality : up);
         }
-        else if (key === 'ArrowLeft') move(sideways(-1) ?? rowFor(selectedId()) ?? groupButton());
+        else if (direction === 'left') move(sideways(-1) ?? rowFor(selectedId()) ?? groupButton());
         else move(sideways(1));
         break;
       }

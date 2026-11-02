@@ -1,7 +1,7 @@
 <template>
   <NuxtLink
     :to="mediaHref(media)"
-    class="live-row group relative flex w-full items-center gap-4 border p-3 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus xl:gap-5 xl:px-4"
+    class="live-row group relative flex w-full items-center gap-3 border p-3 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus xl:gap-5 xl:px-4"
     :class="
       selected
         ? 'border-transparent bg-[#081a42]/85'
@@ -17,14 +17,14 @@
     <span v-if="selected" class="row-glow pointer-events-none absolute" aria-hidden="true" />
 
     <span
-      class="w-9 shrink-0 text-[0.95rem] tabular-nums text-ink-muted sm:w-10"
+      class="live-row__number w-9 shrink-0 text-[0.95rem] tabular-nums text-ink-muted sm:w-10"
       aria-hidden="true"
     >
       {{ number }}
     </span>
 
     <span
-      class="logo-tile relative flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#0a1736] xl:h-[3.75rem] xl:w-28"
+      class="live-row__logo logo-tile relative flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#0a1736] xl:h-[3.75rem] xl:w-28"
       aria-hidden="true"
     >
       <img

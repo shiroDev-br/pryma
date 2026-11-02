@@ -158,7 +158,6 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
-import 'plyr/dist/plyr.css';
 import { DEFAULT_PAGE_SIZE } from '~/constants';
 import { formatCount, formatDuration } from '~/utils/format';
 import { getRepositories } from '~/repositories';

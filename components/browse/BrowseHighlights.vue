@@ -204,7 +204,6 @@ const channelParams = { type: 'live', sort: '-added', limit: 10 } as const;
 const channelList = useMediaList(channelParams);
 const channels = computed(() => channelList.items.value);
 
-// SSR: destaque + canais no HTML (sem flash de skeleton na hidratação).
 await Promise.all([featuredList.ready, channelList.ready]);
 
 const rail = ref<HTMLElement | null>(null);

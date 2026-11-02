@@ -29,22 +29,13 @@
 </template>
 
 <script setup lang="ts">
-import { SECTIONS, isSectionKey } from '~/constants';
 
 const { onGridKeydown } = useGridNav();
 
 /** Título fixo da lista — usada no cabeçalho, no rodapé e no document.title. */
 const HEADING = 'Continuar assistindo';
 
-const route = useRoute();
-
-const sectionParam = String(route.params.section);
-if (!isSectionKey(sectionParam)) {
-  throw createError({ statusCode: 404, statusMessage: 'Seção não encontrada', fatal: true });
-}
-
-const section = sectionParam;
-const sectionDef = SECTIONS[section];
+const { section, sectionDef } = useBrowseSection();
 
 // Séries listam os episódios recentes; filmes listam títulos (TV não tem card
 // próprio e só é alcançável por URL direta — segue os filmes, como antes).

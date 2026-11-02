@@ -1,10 +1,9 @@
-// hls.js só entra na tela de player — import estático puxava ~600 KB pro
-// entry e travava o boot em chip fraco. Type-only aqui, runtime é dinâmico.
+// Só tipos — as bibliotecas entram por import dinâmico (utils/stream).
 import type Hls from 'hls.js';
-// mpegts.js toca `self` no escopo do módulo — quebra SSR. Import dinâmico só no cliente.
 import type mpegts from 'mpegts.js';
-
-type HlsCtor = typeof import('hls.js').default;
+import { canPlayNativeHls, loadHls, loadMpegts, streamKindOf } from '~/utils/stream';
+import type { HlsCtor } from '~/utils/stream';
+import { releaseVideo } from '~/utils/video';
 
 /** Log só em dev: a URL do stream leva usuário/senha do provedor (Xtream) e,
  *  no APK, console vai pro logcat — qualquer um com adb lê. */
@@ -17,13 +16,6 @@ function dbg(...args: unknown[]): void {
 const MAX_NETWORK_RETRIES = 3;
 /** Erros de mídia: `recoverMediaError` no máximo isso, depois cai pro mpegts. */
 const MAX_MEDIA_RECOVERIES = 2;
-
-/** Chunk do hls.js — cacheado por módulo, baixado uma vez por sessão. */
-let hlsChunk: Promise<HlsCtor> | null = null;
-function loadHls(): Promise<HlsCtor> {
-  if (!hlsChunk) hlsChunk = import('hls.js').then((m) => m.default);
-  return hlsChunk;
-}
 
 export interface StreamEngine {
   /** Anexa stream ao <video> — detecta HLS, MPEG-TS ou arquivo direto. */
@@ -64,12 +56,8 @@ export function useStreamEngine(options: StreamEngineOptions = {}): StreamEngine
     clearTimeout(retryTimer);
     // Arquivo direto: só tirar o <video> da tela não fecha o download — a conexão
     // (e o decoder) ficava viva até o GC e estourava o limite de conexões do provedor.
-    if (directVideo) {
-      directVideo.pause();
-      directVideo.removeAttribute('src');
-      directVideo.load();
-      directVideo = null;
-    }
+    releaseVideo(directVideo);
+    directVideo = null;
     if (hlsInstance) {
       hlsInstance.destroy();
       hlsInstance = null;
@@ -84,22 +72,15 @@ export function useStreamEngine(options: StreamEngineOptions = {}): StreamEngine
     destroyStreams();
     activeUrl = url;
 
-    const hasM3u8 = url.includes('.m3u8') || url.includes('m3u8');
-    const hasVideoExt = /\.(mp4|webm|mkv|ogv)(\?|#|$)/i.test(url);
+    const kind = streamKindOf(url, protocol);
+    dbg('[Player] attachStream:', { protocol, kind });
 
-    dbg('[Player] attachStream:', { protocol, hasM3u8, hasVideoExt });
-
-    // Arquivo direto (mp4, webm) → src direto
-    if (hasVideoExt || protocol === 'file') {
-      dbg('[Player] Using direct file src');
-      directVideo = video;
-      video.src = url;
-      video.play().catch((e: Error) => console.warn('[Player] play() blocked:', e));
+    if (kind === 'file') {
+      attachDirect(video, url);
       return;
     }
 
-    // URL com .m3u8 → HLS (chunk do hls.js baixado só aqui)
-    if (hasM3u8) {
+    if (kind === 'hls') {
       const generation = streamGeneration;
       const Hls = await loadHls();
       if (generation !== streamGeneration) return; // tela trocou durante o import
@@ -107,11 +88,9 @@ export function useStreamEngine(options: StreamEngineOptions = {}): StreamEngine
       if (Hls.isSupported()) {
         dbg('[Player] Using hls.js');
         attachHls(video, url, Hls);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      } else if (canPlayNativeHls(video)) {
         dbg('[Player] Using native HLS (Safari)');
-        directVideo = video;
-        video.src = url;
-        video.play().catch((e: Error) => console.warn('[Player] play() blocked:', e));
+        attachDirect(video, url);
       } else {
         dbg('[Player] Using mpegts.js (no HLS support)');
         await attachMpegTs(video, url);
@@ -122,6 +101,12 @@ export function useStreamEngine(options: StreamEngineOptions = {}): StreamEngine
     // Live stream sem extensão (.ts implícito) → MPEG-TS
     dbg('[Player] Live stream, using mpegts.js');
     await attachMpegTs(video, url);
+  }
+
+  function attachDirect(video: HTMLVideoElement, url: string): void {
+    directVideo = video;
+    video.src = url;
+    video.play().catch((e: Error) => console.warn('[Player] play() blocked:', e));
   }
 
   function attachHls(video: HTMLVideoElement, url: string, Hls: HlsCtor): void {
@@ -227,7 +212,7 @@ export function useStreamEngine(options: StreamEngineOptions = {}): StreamEngine
     activeUrl = url;
 
     const generation = streamGeneration;
-    const mpegts = (await import('mpegts.js')).default;
+    const mpegts = await loadMpegts();
     if (generation !== streamGeneration) return; // tela trocou durante o import
 
     mpegtsInstance = mpegts.createPlayer(
@@ -240,7 +225,7 @@ export function useStreamEngine(options: StreamEngineOptions = {}): StreamEngine
         liveSyncMaxLatency: 4,
         // Stash buffer menor pra início rápido
         stashInitialSize: 128,
-        // Auto soberwrite buffer antigo
+        // Sem isto o buffer cresce a sessão inteira e estoura a memória da TV.
         autoCleanupSourceBuffer: true,
       },
     );

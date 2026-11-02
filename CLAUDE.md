@@ -154,18 +154,24 @@ acrescentar a nova origem lá e recriar a API
   `nuxt.config.ts` quando `NUXT_SSR=0`) e roda sem SSR (`routeRules`). A
 
   autorização real é da API — o middleware `admin` é só navegação.
-- **Breakpoints do Tailwind estão neutralizados** (tudo escala por rem para TV):
+- **Breakpoints do Tailwind só existem em retrato** (`tailwind.config.ts`): em
 
-  `md:`/`lg:` sempre valem. Responsividade do painel é por media query em
+  landscape `sm:`/`md:`/`lg:`/`xl:` sempre valem (TV = canvas único escalado por
+
+  rem); em pé são os de largura de sempre, então escreva mobile-first. `max-*:`
+
+  não existe. Responsividade do painel segue por media query em
 
   `assets/css/admin.css` (tabelas viram cartões ≤ 900px; navegação em linha
 
   própria ≤ 760px).
 - **Escala de TV (`plugins/viewport-scale.client.ts`)**: em landscape o app
 
-  muda o `font-size` do `<html>` pela tela (22px em 1080p, 8px em celular
+  muda o `font-size` do `<html>` pela tela (22px em 1080p, 11px no Fire Stick;
 
-  deitado). O painel `/admin` é excluído (`isAdminPath`) e usa rem normal —
+  celular deitado tem piso de 12,5px — `isPhoneLandscape`, via `pointer: coarse`,
+
+  porque TV em modo compat tem a mesma altura). O painel `/admin` é excluído (`isAdminPath`) e usa rem normal —
 
   qualquer rota nova do painel precisa ficar sob `/admin` para herdar isso.
 
@@ -174,3 +180,10 @@ acrescentar a nova origem lá e recriar a API
 
   front — fala direto com a API em `:8001`.
 
+## Padrão de código
+
+Regras para telas, fetchs e player, com o mapa do app: **`DOC.md`**. Antes de
+
+entregar: `npx nuxt typecheck` e `scripts/qa/` (D-pad no Fire Stick, toque no
+
+celular, vídeo real). Revisão estrita: skill `thermo-nuclear-code-quality-review`.

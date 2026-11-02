@@ -1,3 +1,8 @@
+import { createKeyRepeatGate } from '~/utils/keyRepeatGate';
+import { directionOf } from '~/utils/remoteKeys';
+import { pickSpatialBest } from '~/utils/spatial';
+import type { SpatialDirection } from '~/utils/spatial';
+
 /**
  * Navegação espacial por direcional (TV / remoto / teclado).
  *
@@ -22,6 +27,9 @@
  * e pressões rápidas usam rolagem instantânea ('auto'): rolagem suave
  * empilhada é o que deixa a passagem de foco "travada".
  */
+/** Seta segurada: um passo por quadro, sem fila (ver utils/keyRepeatGate). */
+const repeatGate = createKeyRepeatGate();
+
 export default defineNuxtPlugin(() => {
   window.addEventListener('keydown', onKeydown);
 
@@ -53,29 +61,6 @@ function enterDpadMode(): void {
     document.body.classList.add('dpad-mode');
   }
 }
-
-import { pickSpatialBest } from '~/utils/spatial';
-import { createKeyRepeatGate } from '~/utils/keyRepeatGate';
-
-type Direction = 'up' | 'down' | 'left' | 'right';
-
-const KEY_TO_DIRECTION: Record<string, Direction> = {
-  ArrowUp: 'up',
-  ArrowDown: 'down',
-  ArrowLeft: 'left',
-  ArrowRight: 'right',
-  Up: 'up',
-  Down: 'down',
-  Left: 'left',
-  Right: 'right',
-};
-
-const KEYCODE_TO_DIRECTION: Record<number, Direction> = {
-  19: 'up',
-  20: 'down',
-  21: 'left',
-  22: 'right',
-};
 
 const FOCUSABLE_SELECTOR = 'a[href], button, input, select, textarea, [tabindex]';
 
@@ -183,7 +168,7 @@ function pickInDirection(
   current: HTMLElement,
   currentRect: DOMRect,
   candidates: { element: HTMLElement; rect: DOMRect }[],
-  direction: Direction,
+  direction: SpatialDirection,
 ): HTMLElement | null {
   const inChrome = (element: HTMLElement) => element.closest(CHROME_SELECTOR) !== null;
   const chrome = candidates.filter((candidate) => inChrome(candidate.element));
@@ -204,7 +189,7 @@ function pickInDirection(
 
 /** Foca o próximo candidato na direção. Rolagem sempre instantânea: em chip
  *  fraco a rolagem suave disputa repaint com o foco e parece "travada". */
-function focusNext(current: HTMLElement | null, direction: Direction): boolean {
+function focusNext(current: HTMLElement | null, direction: SpatialDirection): boolean {
   const candidates = measure(collectElements());
   if (candidates.length === 0) return false;
 
@@ -235,13 +220,10 @@ function focusNext(current: HTMLElement | null, direction: Direction): boolean {
 }
 
 function onKeydown(event: KeyboardEvent): void {
-  // Seta ou OK/Enter = remoto em uso → anel de foco ativo (dpad-mode).
-  if (event.key === 'Enter' || KEY_TO_DIRECTION[event.key] || KEYCODE_TO_DIRECTION[event.keyCode ?? 0]) {
-    enterDpadMode();
-  }
+  const direction = directionOf(event);
 
-  const direction =
-    KEY_TO_DIRECTION[event.key] ?? KEYCODE_TO_DIRECTION[event.keyCode ?? 0] ?? null;
+  // Seta ou OK/Enter = remoto em uso → anel de foco ativo (dpad-mode).
+  if (direction || event.key === 'Enter') enterDpadMode();
   if (!direction) return;
 
   if (event.defaultPrevented) return;
@@ -265,6 +247,3 @@ function onKeydown(event: KeyboardEvent): void {
     repeatGate.mark();
   }
 }
-
-/** Seta segurada: um passo por quadro, sem fila (ver utils/keyRepeatGate). */
-const repeatGate = createKeyRepeatGate();

@@ -30,8 +30,8 @@
     </template>
   </div>
 
-  <!-- Sem time escolhido (ou antes da hidratação): o tile nunca fica vazio. -->
   <div v-else class="w-full">
+    <!-- Sem time escolhido (ou antes da hidratação): o tile nunca fica vazio. -->
     <p class="text-[0.55rem] font-semibold uppercase tracking-[0.24em] text-ink-muted">
       Próximo jogo
     </p>

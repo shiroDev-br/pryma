@@ -33,11 +33,6 @@ export interface SpatialCandidate {
   rect: RectLike;
 }
 
-/** Retângulo zero centrado num ponto — usado como origem na primeira seta. */
-export function rectFromPoint(x: number, y: number): RectLike {
-  return { left: x, top: y, right: x, bottom: y, width: 0, height: 0 };
-}
-
 /**
  * Melhor candidato na direção pressionada.
  *
