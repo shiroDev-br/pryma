@@ -57,7 +57,7 @@
       </div>
 
       <div
-        class="mx-5 flex items-center gap-3.5 rounded-xl border border-white/[0.14] bg-white/[0.03] px-4 py-3 backdrop-blur-sm"
+        class="mx-5 flex items-center gap-3.5 rounded-xl border border-white/[0.14] bg-white/[0.05] px-4 py-3"
       >
         <span class="flex flex-col items-center gap-1.5">
           <AppIcon name="prysma:crown" class="h-6 w-6 text-amber-400" />

@@ -1,0 +1,27 @@
+# Front (Nuxt/Nitro) na VPS — servido direto em IP:3000, sem nginx (igual à API em :8001).
+# O build NÃO acontece aqui: scripts/deploy-vps.sh compila na máquina local e
+# envia só o `.output/`. Este compose apenas roda `node .output/server/index.mjs`.
+services:
+  front:
+    image: node:22-alpine
+    container_name: iptv-front
+    restart: unless-stopped
+    working_dir: /app
+    command: ["node", ".output/server/index.mjs"]
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      # Runtime config do Nuxt (sobrepõe o valor embutido no build).
+      NUXT_PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://187.127.38.71:8001}
+      NUXT_PUBLIC_DATA_MODE: live
+    volumes:
+      - ./.output:/app/.output:ro
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/admin/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

@@ -130,6 +130,52 @@ corrija o componente (flex-1, min-h-0, rem) ou BASE_FONT no plugin. */
   #__nuxt [data-media-card] {
     aspect-ratio: 3/4 !important;
   }
+
+  /* MediaListRow (category page): mais compacto em TV */
+  #__nuxt .media-row {
+    gap: 1rem !important;
+    padding: 1.5rem !important;
+  }
+  #__nuxt .media-row > div:first-child {
+    width: 6rem !important;
+    min-width: 6rem !important;
+  }
+  #__nuxt .media-row > div:first-child > div:first-child {
+    width: 6rem !important;
+  }
+  #__nuxt .media-row .min-w-0 {
+    min-width: 0 !important;
+  }
+  #__nuxt .media-row p.text-\[1\.02rem\] {
+    font-size: 0.95rem !important;
+  }
+  #__nuxt .media-row p.text-\[0\.78rem\] {
+    font-size: 0.7rem !important;
+  }
+  #__nuxt .media-row p.line-clamp-3 {
+    display: none !important; /* esconde sinopse na TV pra economizar espaço */
+  }
+
+  /* BrowseSplitView left column (category page list): mais linhas visíveis */
+  #__nuxt .browse-category-page .min-w-0.space-y-3 {
+    gap: 0.5rem !important;
+  }
+  #__nuxt .browse-category-page .media-row {
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+  #__nuxt .browse-category-page .media-row > div:first-child {
+    width: 5rem !important;
+    min-width: 5rem !important;
+  }
+  #__nuxt .browse-category-page .media-row > div:first-child > div:first-child {
+    width: 5rem !important;
+  }
+
+  /* Background page: preview maior na TV */
+  #__nuxt .tv-safe.pb-28.pt-24 > .grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
 }
 
 /* ═══ RETRATO (celular / tablet em pé) ═══════════════════════════════════ */

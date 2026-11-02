@@ -4,6 +4,7 @@ Paleta da identidade Prysma (plano §9): base navy + acento azul elétrico.
 Tamanhos em rem (não px): o plugin viewport-scale.client.ts escala o rem pela
 viewport, então tudo aqui acompanha a TV/notebook automaticamente. */
 
+
 :root {
   --color-bg: #020817;
   --color-surface: #06142d;
@@ -18,13 +19,32 @@ viewport, então tudo aqui acompanha a TV/notebook automaticamente. */
   --color-text-muted: #a9b9d6;
   --color-danger: #df6666;
 
+  /* Mesmas cores em "R, G, B" — o Tailwind monta rgba(var(--…-rgb), α) e assim
+     existem as variantes com opacidade (bg-surface/80, border-line/70…). Sem
+     isso a classe nem era gerada (cor var() não aceita /NN) e o elemento ficava
+     sem cor: input branco com texto branco. Vírgulas, não rgb(r g b / a): a
+     WebView da TV (< Chrome 65) não entende a sintaxe com barra.
+     MANTER EM SINCRONIA com os hex acima. */
+  --color-bg-rgb: 2, 8, 23;
+  --color-surface-rgb: 6, 20, 45;
+  --color-surface-elevated-rgb: 10, 31, 69;
+  --color-border-rgb: 169, 185, 214;
+  --color-blue-rgb: 22, 136, 255;
+  --color-blue-light-rgb: 77, 157, 255;
+  --color-blue-dark-rgb: 11, 92, 255;
+  --color-accent-rgb: 124, 92, 255;
+  --color-accent-light-rgb: 161, 139, 255;
+  --color-text-rgb: 255, 255, 255;
+  --color-text-muted-rgb: 169, 185, 214;
+  --color-danger-rgb: 223, 102, 102;
+
   --radius-sm: 0.5rem;
   --radius-md: 0.85rem;
   --radius-lg: 1.2rem;
 
-  /* Anel de foco D-pad — brilho forte o bastante pra TV. */
+  /* Anel de foco D-pad — grosso e brilhante o bastante pra ler de longe na TV. */
   --focus-ring:
-    0 0 0 0.18rem rgba(77, 157, 255, 0.95), 0 0 1.3rem rgba(22, 136, 255, 0.5);
+    0 0 0 0.5rem rgba(77, 157, 255, 1), 0 0 1.9rem rgba(22, 136, 255, 0.65);
 
   --transition-fast: 160ms ease;
   --transition-normal: 260ms ease;
@@ -42,6 +62,11 @@ html {
   font-size: 17px;
   background-color: var(--color-bg);
   color-scheme: dark;
+  /* O foco andando pela página (scrollIntoView) desconta o header fixo (5rem)
+     e a barra inferior das listagens — senão o item focado parava escondido
+     atrás deles e o D-pad parecia "pular" pro header. */
+  scroll-padding-top: 6.5rem;
+  scroll-padding-bottom: 6.5rem;
 }
 
 /* Altura útil de viewport. O plugin sobrescreve com window.innerHeight (px)
@@ -192,4 +217,307 @@ input[type='submit'] {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  /* Indicadores de carregamento continuam: são informação ("está carregando"),
+     não enfeite. Muita TV/TV box vem com "remover animações" ligado de fábrica
+     e o Android repassa como reduce — a barra e os spinners ficavam parados. */
+  .brand-loading__bar {
+    animation-duration: 1.1s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  .animate-spin {
+    animation-duration: 1s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+/* ═══ Responsividade global — Prysma ═══════════════════════════════════════
+
+MODELO NOVO (substitui phone/tablet/desktop/TV/compat/deitado):
+
+  • LANDSCAPE (TV, notebook, qualquer tela deitada): UM layout só.
+    O plugin viewport-scale.client.ts escala o rem pela viewport
+    (canvas 1440×810). Não existe breakpoint de largura/altura aqui —
+    o que cabe no MacBook cabe igual na TV 1080p, 720p ou compat (~760px).
+  • RETRATO (celular/tablet em pé): rem normal (17px/16px) + regras abaixo.
+
+Regras que precisam vencer estilos scoped usam o prefixo #__nuxt.
+
+NÃO adicione @media (min/max-width|height) para landscape. Se algo não cabe,
+corrija o componente (flex-1, min-h-0, rem) ou BASE_FONT no plugin. */
+
+/* ── Setas de trilho ── */
+#__nuxt .rail-arrow {
+  height: 2.4rem;
+  width: 2.4rem;
+  background: rgba(2, 8, 23, 0.7);
+}
+
+#__nuxt .rail-arrow svg {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  #__nuxt .rail-arrow {
+    display: none; /* swipe natural no celular */
+  }
+}
+
+/* ── Enquadramento de tela (landscape): a página É a viewport, sem rolagem ──
+   --app-vh vem do plugin (window.innerHeight em px, vale em WebView antiga). */
+@media (orientation: landscape) {
+  #__nuxt .login-page,
+  #__nuxt .home-page {
+    height: var(--app-vh);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #__nuxt .live-screen {
+    height: var(--app-vh);
+    overflow: hidden;
+  }
+}
+
+/* ── Login (landscape) ──
+   Antes isto só valia em max-height:1050 — ou seja, só "no MacBook". Agora é
+   o layout único: o que você aprovou no notebook vale em toda TV. */
+@media (orientation: landscape) {
+  #__nuxt .login-page {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  #__nuxt .brand-mark {
+    margin-bottom: 1.25rem;
+  }
+
+  #__nuxt .brand-mark img {
+    height: 3rem;
+    width: 3rem;
+  }
+
+  #__nuxt .mark-glow {
+    inset: -1.25rem;
+  }
+
+  #__nuxt .wordmark {
+    margin-top: 0.6rem;
+    font-size: 2rem;
+  }
+
+  #__nuxt .login-tagline {
+    margin-bottom: 1.25rem;
+  }
+
+  #__nuxt .panel {
+    margin-top: 0;
+    padding: 1.25rem 1.5rem;
+  }
+
+  #__nuxt .panel h2 {
+    margin-top: 0.75rem;
+  }
+
+  #__nuxt .panel .mt-7 {
+    margin-top: 1.25rem;
+  }
+
+  #__nuxt .panel .mt-6 {
+    margin-top: 1rem;
+  }
+}
+
+/* ── Proporção sem aspect-ratio (WebView de TV < Chrome 88) ──
+   Lá `aspect-video`/`aspect-[2/3]` são ignorados: caixa com filhos absolutos
+   fica com 0px (cards do plano de fundo "comprimidos") e caixa com imagem no
+   fluxo assume a altura da imagem (pôster gigante). Use junto do aspect-*
+   e com TODOS os filhos absolutos (absolute inset-0). */
+@supports not (aspect-ratio: 1 / 1) {
+  #__nuxt .ratio-16x9,
+  #__nuxt .ratio-2x3 {
+    height: 0;
+  }
+
+  #__nuxt .ratio-16x9 {
+    padding-top: 56.25%;
+  }
+
+  #__nuxt .ratio-2x3 {
+    padding-top: 150%;
+  }
+}
+
+/* ── Browse: destaque ── */
+#__nuxt [data-highlights] {
+  margin-top: 1rem;
+}
+
+/* ── Browse: listagem de categoria (landscape) ──
+   Header compacto — antes só em max-height:820 (= notebook). Agora sempre. */
+@media (orientation: landscape) {
+  #__nuxt .browse-category-page {
+    padding-top: 4.75rem;
+    padding-bottom: 6.5rem;
+  }
+
+  #__nuxt .browse-list-header {
+    margin-bottom: 1.25rem;
+  }
+
+  #__nuxt .browse-list-header h1 {
+    font-size: 1.5rem;
+  }
+
+  /* Categoria: cabeçalho enxuto pra caber ~5 títulos antes de rolar.
+     O espaçamento é space-y (margem), não gap. O kicker repete o "← Filmes". */
+  #__nuxt .browse-category-page .browse-list-header {
+    margin-bottom: 0.75rem;
+  }
+
+  #__nuxt .browse-category-page .browse-list-header > * + * {
+    margin-top: 0.4rem;
+  }
+
+  #__nuxt .browse-category-page .browse-list-header .kicker {
+    display: none;
+  }
+
+  #__nuxt .browse-category-page .browse-list-header [role='group'] {
+    padding-top: 0.35rem;
+  }
+
+  #__nuxt .browse-category-page .browse-list-header [role='group'] > button {
+    height: 2rem;
+  }
+
+  /* MediaCard grids (recents, search): mais colunas + aspect-ratio menor */
+  #__nuxt .tv-safe.pb-28.pt-24 > .grid[data-media-grid] {
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+
+  #__nuxt .search-page > .grid[data-media-grid] {
+    grid-template-columns: repeat(8, 1fr) !important;
+  }
+
+  #__nuxt [data-media-card] {
+    aspect-ratio: 3/4 !important;
+  }
+
+  /* A caixa da arte (2:3) era mais alta que o card (3:4) e o rodapé com
+     título/ano ficava cortado — ela acompanha o card. */
+  #__nuxt [data-media-card] > .ratio-2x3 {
+    aspect-ratio: 3/4 !important;
+  }
+
+  /* TV sem aspect-ratio: o 3/4 acima é ignorado — a caixa da arte (filhos
+     absolutos) segura o 3:4 por padding, e as fileiras da grade alinham. */
+  @supports not (aspect-ratio: 1 / 1) {
+    #__nuxt [data-media-card] > .ratio-2x3 {
+      padding-top: 133.333%;
+    }
+  }
+}
+
+/* ═══ RETRATO (celular / tablet em pé) ═══════════════════════════════════ */
+
+@media (orientation: portrait) {
+  html {
+    font-size: 16px;
+  }
+
+  #__nuxt [data-highlights] {
+    margin-top: 0.75rem;
+  }
+}
+
+/* O aspect-[3/2] dos componentes estoura a viewport em phone (2 fileiras).
+   Altura fixa + aspect auto — vence as utilities por especificidade. */
+@media (max-width: 640px) and (orientation: portrait) {
+  #__nuxt [data-category-card] {
+    aspect-ratio: auto;
+    height: 7.5rem;
+    min-height: 7.5rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+  #__nuxt [data-category-card] {
+    aspect-ratio: auto;
+    height: 8.25rem;
+    min-height: 8.25rem;
+  }
+}
+
+/* Capa da vinheta de abertura (classe posta por script inline no <head>, tirada
+   pelo AppIntro). Também some sozinha em 6 s se o JS nunca rodar. */
+html.intro-pending::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: #020817;
+  animation: intro-cover-timeout 0s linear 6s forwards;
+}
+
+@keyframes intro-cover-timeout {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* ── YouTube / Música em WebView antiga (Fire Stick, TV box) ──
+   Os componentes usam aspect-ratio, flex gap e :focus-visible; aqui ficam os
+   substitutos para quem não tem (ver também a seção "Proporção sem aspect-ratio"). */
+@supports not (aspect-ratio: 1 / 1) {
+  /* Sem isto a caixa assumia a altura da miniatura do YouTube (4:3, com tarja). */
+  #__nuxt .yt-card__thumb {
+    height: 0;
+    padding-top: 56.25%;
+  }
+
+  #__nuxt .yt-card__thumb img {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+/* < Chrome 86 descarta a regra inteira que tem :focus-visible. */
+body.dpad-mode .yt-card:focus .yt-card__thumb {
+  outline-color: #ff0033;
+  transform: scale(1.03);
+}
+
+/* `html.no-flex-gap` vem de plugins/legacy-flags.client.ts (< Chrome 84). */
+html.no-flex-gap .yt-screen__header > * + *:not(.yt-screen__home),
+html.no-flex-gap .yt-screen__tabs > * + *,
+html.no-flex-gap .yt-feed__search > * + *,
+html.no-flex-gap .yt-feed__chips > * + *,
+html.no-flex-gap .yt-feed__more > * + *,
+html.no-flex-gap .yt-player__bar > * + *,
+html.no-flex-gap .yt-player__controls > * + * {
+  margin-left: 0.6rem;
+}
+
+html.no-flex-gap .yt-feed > * + *,
+html.no-flex-gap .yt-feed__status > * + *,
+html.no-flex-gap .yt-player > * + *,
+html.no-flex-gap .yt-player__overlay > * + * {
+  margin-top: 0.75rem;
+}
+
+html.no-flex-gap .yt-card > * + * {
+  margin-top: 0.35rem;
+}
+
+html.no-flex-gap .yt-screen__brand > [aria-hidden='true']:first-child,
+html.no-flex-gap .yt-screen__tab > [aria-hidden='true']:first-child,
+html.no-flex-gap .yt-screen__home > [aria-hidden='true']:first-child,
+html.no-flex-gap .yt-player__pill > [aria-hidden='true']:first-child,
+html.no-flex-gap .yt-player__toast > [aria-hidden='true']:first-child,
+html.no-flex-gap .yt-card__external > [aria-hidden='true']:first-child,
+html.no-flex-gap .yt-feed__retry > [aria-hidden='true']:first-child {
+  margin-right: 0.4rem;
 }

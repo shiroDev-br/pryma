@@ -4,6 +4,7 @@
       ref="videoEl"
       class="mtv-opening__video"
       :src="openingSrc"
+      :poster="BLANK_POSTER"
       playsinline
       autoplay
       @ended="finish"

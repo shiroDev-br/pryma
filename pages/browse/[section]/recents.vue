@@ -19,6 +19,7 @@
       v-else
       class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
       data-media-grid
+      @keydown="onGridKeydown"
     >
       <MediaCard v-for="media in recents.items.value" :key="media.id" :media="media" />
     </div>
@@ -29,6 +30,8 @@
 
 <script setup lang="ts">
 import { SECTIONS, isSectionKey } from '~/constants';
+
+const { onGridKeydown } = useGridNav();
 
 /** Título fixo da lista — usada no cabeçalho, no rodapé e no document.title. */
 const HEADING = 'Continuar assistindo';

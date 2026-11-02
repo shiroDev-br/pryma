@@ -1,4 +1,5 @@
-import type { SectionKey } from '~/constants';
+import { SECTIONS, type SectionKey } from '~/constants';
+import type { Category } from '~/types';
 
 /**
  * Classifica uma categoria (slug do `group-title` do M3U) nas seções da home:
@@ -12,6 +13,9 @@ import type { SectionKey } from '~/constants';
  * (Filmes → filmes, Séries → séries, TV → canais ao vivo), com exceção das
  * plataformas de streaming, que têm catálogo misto e aparecem em Filmes e Séries.
  */
+
+/** Categoria virtual "Todos" de Filmes/Séries: lista a seção inteira, sem filtro de categoria. */
+export const ALL_CATEGORY_SLUG = 'todos';
 
 const FILMES: readonly SectionKey[] = ['filmes'];
 const SERIES: readonly SectionKey[] = ['series'];
@@ -133,7 +137,14 @@ export function categorySections(slug: string): readonly SectionKey[] {
   return rule?.sections ?? FILMES;
 }
 
-/** Se a categoria deve aparecer na seção informada. */
-export function categoryBelongsToSection(slug: string, section: SectionKey): boolean {
-  return categorySections(slug).includes(section);
+/**
+ * Se a categoria deve aparecer na seção informada. Catálogo Xtream já diz o tipo
+ * de cada categoria; o palpite por slug fica só para a lista legada (M3U).
+ */
+export function categoryBelongsToSection(
+  category: Pick<Category, 'slug' | 'type'>,
+  section: SectionKey,
+): boolean {
+  if (category.type) return SECTIONS[section].type === category.type;
+  return categorySections(category.slug).includes(section);
 }

@@ -10,6 +10,8 @@ export interface TeamSearch {
   query: Ref<string>;
   results: Ref<FavoriteTeam[]>;
   isSearching: Ref<boolean>;
+  /** Ainda dentro do debounce — os resultados na tela são da query anterior. */
+  isDebouncing: Ref<boolean>;
   error: Ref<string | null>;
   /** Query já digitada mas curta demais para virar request. */
   isTooShort: Ref<boolean>;
@@ -76,5 +78,7 @@ export function useTeamSearch(): TeamSearch {
     error.value = null;
   }
 
-  return { query, results, isSearching, error, isTooShort, refresh, clear };
+  const isDebouncing = computed(() => query.value !== debounced.value);
+
+  return { query, results, isSearching, isDebouncing, error, isTooShort, refresh, clear };
 }

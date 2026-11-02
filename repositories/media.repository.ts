@@ -1,8 +1,11 @@
 import type { HttpClient } from '~/services/http';
 import { ENDPOINTS, LIVE_ENDPOINTS } from '~/constants';
 import type { MediaRepository } from '~/repositories/contracts';
+import { tmdbSized, withListArt } from '~/utils/imageSize';
 import type {
   Category,
+  FixtureChannels,
+  FixtureQuery,
   GuideProgram,
   MediaDetail,
   MediaQuery,
@@ -40,13 +43,19 @@ function mapEpgProgram(raw: RawEpgProgram | null, isNow: boolean): GuideProgram 
 }
 
 /** Implementação HTTP do contrato — consome o proxy Nitro em /api/v1*. */
+/** Página de listagem com as artes já no tamanho de card (ver utils/imageSize). */
+function listArt<T extends { items: MediaSummary[] }>(page: T): T {
+  return { ...page, items: page.items.map(withListArt) };
+}
+
 export function createHttpMediaRepository(client: HttpClient): MediaRepository {
   return {
     listCategories: (options) =>
       client.get<{ items: Category[] }>(ENDPOINTS.categories, undefined, options),
 
     listMedia: (query: MediaQuery, options) =>
-      client.get<Paginated<MediaSummary>>(
+      client
+        .get<Paginated<MediaSummary>>(
         ENDPOINTS.media,
         {
           limit: query.limit,
@@ -58,9 +67,17 @@ export function createHttpMediaRepository(client: HttpClient): MediaRepository {
           season: query.season,
         },
         options,
-      ),
+      )
+        .then(listArt),
 
-    getMedia: (id, options) => client.get<MediaDetail>(ENDPOINTS.mediaById(id), undefined, options),
+    // Detalhe: pôster médio (a tela de detalhe e o card de pausa); o backdrop
+    // ocupa a tela inteira e fica como veio.
+    getMedia: (id, options) =>
+      client.get<MediaDetail>(ENDPOINTS.mediaById(id), undefined, options).then((media) => ({
+        ...media,
+        thumbnailUrl: tmdbSized(media.thumbnailUrl, 'w500'),
+        logoUrl: tmdbSized(media.logoUrl, 'w500'),
+      })),
 
     getPlayback: (id, options) =>
       client.get<PlaybackSession>(ENDPOINTS.playback(id), undefined, options),
@@ -73,12 +90,24 @@ export function createHttpMediaRepository(client: HttpClient): MediaRepository {
       };
     },
 
+    fixtureChannels: async (fixtures: FixtureQuery[], options) => {
+      if (fixtures.length === 0) return [];
+      const raw = await client.post<{
+        matches: { fixtureId: number; program: RawEpgProgram; channels: MediaSummary[] }[];
+      }>(LIVE_ENDPOINTS.fixtureChannels, { fixtures }, options);
+      return raw.matches.map((match) => ({
+        fixtureId: match.fixtureId,
+        program: mapEpgProgram(match.program, false)!,
+        channels: match.channels.map(withListArt),
+      }));
+    },
+
     search: (params: SearchParams, options) =>
       client.get<Paginated<MediaSummary>>(
         ENDPOINTS.search,
         { q: params.q, limit: params.limit, cursor: params.cursor, type: params.type },
         options,
-      ),
+      ).then(listArt),
 
     suggest: (q, options) =>
       client.get<{ items: Suggestion[] }>(ENDPOINTS.suggest, { q }, options).then((r) => r.items),

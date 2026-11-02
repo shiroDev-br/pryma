@@ -1,74 +1,207 @@
+
 <template>
-  <aside class="pv min-h-0 flex-col gap-4" aria-label="Canal selecionado">
+  <aside class="pv rail-scroll min-h-0 flex-col gap-4 overflow-y-auto" aria-label="Canal selecionado">
     <template v-if="media">
-      <!-- Prévia: arte do canal com selos AO VIVO / qualidade -->
-      <NuxtLink
-        :to="mediaHref(media)"
-        class="pv-card pv-thumb group relative block aspect-video w-full shrink-0 overflow-hidden focus:outline-none focus-visible:shadow-focus"
-        :aria-label="`Assistir ${media.title}`"
+      <!-- Prévia ao vivo — OK expande ESTE vídeo para a tela toda (mesma conexão,
+           sem recarregar o stream). Vive em `?full=1`: o Voltar do controle fecha.
+           <div role="button"> e não <button>: em tela cheia ele contém os botões do HUD. -->
+      <div
+        role="button"
+        tabindex="0"
+        class="pv-card pv-thumb group relative block aspect-video min-h-[6rem] w-full shrink overflow-hidden text-left focus:outline-none focus-visible:shadow-focus"
+        :class="{ 'pv-thumb--full': expanded, 'pv-thumb--fill': expanded && fillScreen }"
+        :aria-label="`Assistir ${media.title} em tela cheia`"
         data-nav="preview"
+        @click="expand"
+        @keydown.enter.prevent="expand"
+        @pointermove.passive="expanded && pokeHud()"
       >
-        <img
-          v-if="media.thumbnailUrl && !thumbFailed"
-          :key="media.id"
-          :src="media.thumbnailUrl"
-          :alt="media.title"
-          decoding="async"
-          class="absolute inset-0 h-full w-full object-cover object-[center_30%] transition-transform duration-slow ease-stage group-hover:scale-[1.03]"
-          @error="thumbFailed = true"
-        />
-        <div v-else class="absolute inset-0" :style="{ background: gradient }" aria-hidden="true" />
+        <!-- Tela cheia: HUD com botões de verdade (←/→ escolhem, OK aciona, ↑/↓ trocam de canal).
+             v-show: os botões continuam no DOM quando o HUD some — o índice do foco sobrevive. -->
+        <div v-if="expanded" v-show="hudVisible" ref="fullHud" class="pv-hud absolute inset-0 z-20">
+          <div class="absolute inset-x-0 top-0 flex items-center bg-gradient-to-b from-black/85 via-black/35 to-transparent px-10 pb-16 pt-8">
+            <button
+              type="button"
+              class="pv-ctl mr-5 grid h-12 w-12 shrink-0 place-items-center rounded-full border border-white/20 bg-black/70 text-white"
+              aria-label="Voltar para a lista"
+              data-full-ctl
+              @click.stop="collapse"
+            >
+              <Icon name="material-symbols:arrow-back-rounded" class="h-6 w-6" aria-hidden="true" />
+            </button>
+            <span class="min-w-0">
+              <span class="block truncate text-2xl font-semibold text-white">{{ media.title }}</span>
+              <span class="mt-0.5 block truncate text-sm text-white/70">
+                {{ media.categoryName ?? 'Ao vivo' }}
+                <template v-if="guide.current.value"> · {{ guide.current.value.title }}</template>
+              </span>
+            </span>
+          </div>
 
+          <div class="absolute inset-x-0 bottom-0 flex items-center bg-gradient-to-t from-black/85 via-black/40 to-transparent px-10 pb-8 pt-20">
+            <span class="mr-5 inline-flex items-center rounded-full border border-white/15 bg-black/70 px-3 py-1.5 text-[0.75rem] font-semibold uppercase tracking-wide text-white">
+              <span class="live-dot mr-2 h-2 w-2 rounded-full bg-[#ff4d4d]" aria-hidden="true" />
+              Ao vivo
+            </span>
+
+            <button
+              v-for="variant in variants"
+              :key="variant.media.id"
+              type="button"
+              class="pv-ctl mr-2.5 inline-flex h-11 min-w-[4.5rem] items-center justify-center rounded-full border px-4 text-[0.9rem] font-semibold tracking-wide"
+              :class="
+                variant.media.id === activeVariantId
+                  ? 'border-transparent bg-blue-dark text-white'
+                  : 'border-white/20 bg-black/70 text-white/80'
+              "
+              :aria-pressed="variant.media.id === activeVariantId"
+              data-full-ctl
+              @click.stop="pickVariant(variant.media)"
+            >
+              {{ variant.label }}
+            </button>
+
+            <span class="flex-1" />
+
+            <span class="mr-6 hidden items-center text-sm text-white/60 sm:inline-flex">
+              <Icon name="material-symbols:swap-vert-rounded" class="mr-1.5 h-5 w-5" aria-hidden="true" />
+              Trocar de canal
+            </span>
+
+            <button
+              type="button"
+              class="pv-ctl mr-2.5 inline-flex h-11 items-center rounded-full border border-white/20 bg-black/70 px-4 text-[0.9rem] font-medium text-white"
+              :aria-pressed="fillScreen"
+              data-full-ctl
+              @click.stop="toggleFill"
+            >
+              <Icon
+                :name="fillScreen ? 'material-symbols:fit-screen-outline-rounded' : 'material-symbols:fullscreen-rounded'"
+                class="mr-2 h-5 w-5"
+                aria-hidden="true"
+              />
+              {{ fillScreen ? 'Ajustar à tela' : 'Preencher tela' }}
+            </button>
+
+            <button
+              type="button"
+              class="pv-ctl inline-flex h-11 items-center rounded-full border border-white/20 bg-black/70 px-4 text-[0.9rem] font-medium text-white"
+              :aria-pressed="favorite"
+              data-full-ctl
+              @click.stop="toggleFavorite"
+            >
+              <Icon
+                :name="favorite ? 'material-symbols:star-rounded' : 'material-symbols:star-outline-rounded'"
+                class="mr-2 h-5 w-5"
+                :class="favorite ? 'text-[#ffc94d]' : ''"
+                aria-hidden="true"
+              />
+              {{ favorite ? 'Nos favoritos' : 'Favoritar' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Carregamento enquanto não há vídeo -->
         <div
-          class="absolute inset-0 bg-gradient-to-t from-[#020817]/70 via-transparent to-[#020817]/25"
+          v-if="!livePlaying"
+          class="absolute inset-0 flex flex-col items-center justify-center gap-3"
+          role="status"
+          aria-live="polite"
+        >
+          <span
+            v-if="liveState !== 'failed'"
+            class="h-9 w-9 animate-spin rounded-full border-[3px] border-white/15 border-t-blue"
+            aria-hidden="true"
+          />
+          <Icon
+            v-else
+            name="material-symbols:signal-disconnected-rounded"
+            class="h-9 w-9 text-ink-muted"
+            aria-hidden="true"
+          />
+          <!-- Failover: "Reconectando…" / "Trocando de fonte (2/4)…" no lugar do carregando. -->
+          <span class="text-sm font-medium text-ink-muted">
+            {{ liveState === 'failed' ? 'Sem sinal no momento' : (liveNotice ?? 'Carregando...') }}
+          </span>
+        </div>
+
+        <!-- Prévia do canal -->
+        <video
+          ref="videoEl"
+          :poster="BLANK_POSTER"
+          class="pointer-events-none absolute inset-0 h-full w-full transition-opacity duration-slow"
+          :class="livePlaying ? 'opacity-100' : 'opacity-0'"
+          muted
+          playsinline
+          disablepictureinpicture
+          tabindex="-1"
           aria-hidden="true"
+          @playing="onLivePlaying"
+          @timeupdate="onLiveTimeUpdate"
+          @error="onLiveError"
         />
 
-        <!-- Sem arte própria, o logo ocupa o centro da prévia. -->
+        <!-- Diagnóstico apenas em desenvolvimento -->
         <span
-          v-if="!hasArt"
-          class="absolute inset-0 flex items-center justify-center"
-          aria-hidden="true"
+          v-if="isDev"
+          class="absolute left-3 top-3 z-10 rounded bg-black/80 px-2 py-1 text-[0.65rem] text-ink-muted"
         >
-          <img
-            v-if="media.logoUrl && !logoFailed"
-            :src="media.logoUrl"
-            alt=""
-            class="h-1/2 max-w-[55%] object-contain drop-shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
-            @error="logoFailed = true"
-          />
-          <span v-else class="text-5xl font-bold tracking-wide text-ink/90">{{ initials }}</span>
+          prévia: {{ liveState }}{{ liveReason ? ` — ${liveReason}` : '' }}
         </span>
 
-        <!-- Com arte, o logo vira marca d'água no canto. -->
-        <img
-          v-else-if="media.logoUrl && !logoFailed"
-          :src="media.logoUrl"
-          alt=""
-          aria-hidden="true"
-          class="absolute right-4 top-4 h-9 max-w-[28%] object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-          @error="logoFailed = true"
-        />
-
+        <!-- Selo ao vivo -->
         <span
-          v-if="media.isLive"
-          class="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/85 px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-wide text-ink"
+          v-if="media.isLive && !expanded"
+          class="absolute bottom-3 left-3 z-10 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/85 px-3 py-1.5 text-[0.72rem] font-semibold uppercase tracking-wide text-ink"
         >
-          <span class="live-dot h-2 w-2 rounded-full bg-[#ff4d4d]" aria-hidden="true" />
+          <span
+            class="live-dot h-2 w-2 rounded-full bg-[#ff4d4d]"
+            aria-hidden="true"
+          />
           Ao vivo
         </span>
+
+        <!-- Qualidade do canal -->
         <span
-          v-if="badge"
-          class="absolute bottom-3 right-3 rounded-md border border-white/15 bg-black/85 px-2.5 py-1 text-[0.72rem] font-semibold tracking-wide text-ink"
+          v-if="badge && !expanded"
+          class="absolute bottom-3 right-3 z-10 rounded-md border border-white/15 bg-black/85 px-2.5 py-1 text-[0.72rem] font-semibold tracking-wide text-ink"
         >
           {{ badge }}
         </span>
-      </NuxtLink>
+      </div>
+
+      <!-- Versões do canal (FHD/HD/SD/H265): trocam a prévia; OK na prévia abre a escolhida. -->
+      <div
+        v-if="variants.length"
+        class="flex shrink-0 flex-wrap gap-2"
+        role="group"
+        aria-label="Qualidade da transmissão"
+      >
+        <button
+          v-for="variant in variants"
+          :key="variant.media.id"
+          type="button"
+          class="quality-chip inline-flex h-10 min-w-[4.5rem] items-center justify-center rounded-full border px-4 text-[0.85rem] font-semibold tracking-wide transition-colors duration-fast focus:outline-none focus-visible:shadow-focus"
+          :class="
+            variant.media.id === activeVariantId
+              ? 'border-transparent bg-blue-dark text-ink shadow-[0_0_14px_rgba(22,136,255,0.45)]'
+              : 'border-line bg-elevated/70 text-ink-muted hover:border-blue/50 hover:text-ink'
+          "
+          :aria-pressed="variant.media.id === activeVariantId"
+          data-nav="quality"
+          @click="pickVariant(variant.media)"
+        >
+          {{ variant.label }}
+        </button>
+      </div>
 
       <!-- Canal + programa atual -->
       <section class="pv-card shrink-0 p-4 lg:p-5">
         <div class="flex items-center gap-4">
-          <span class="hidden h-12 w-[4.5rem] shrink-0 items-center justify-center lg:flex" aria-hidden="true">
+          <span
+            class="hidden h-12 w-[4.5rem] shrink-0 items-center justify-center lg:flex"
+            aria-hidden="true"
+          >
             <img
               v-if="media.logoUrl && !logoFailed"
               :src="media.logoUrl"
@@ -76,11 +209,20 @@
               class="max-h-full max-w-full object-contain"
               @error="logoFailed = true"
             />
-            <span v-else class="text-xl font-bold text-ink">{{ initials }}</span>
+            <span v-else class="text-xl font-bold text-ink">
+              {{ initials }}
+            </span>
           </span>
-          <span class="hidden h-9 w-px shrink-0 bg-white/12 lg:block" aria-hidden="true" />
+
+          <span
+            class="hidden h-9 w-px shrink-0 bg-white/12 lg:block"
+            aria-hidden="true"
+          />
+
           <div class="min-w-0">
-            <p class="truncate text-[1.05rem] font-semibold uppercase leading-tight text-ink lg:text-[1.15rem]">
+            <p
+              class="truncate text-[1.05rem] font-semibold uppercase leading-tight text-ink lg:text-[1.15rem]"
+            >
               {{ media.title }}
             </p>
             <p class="mt-0.5 truncate text-[0.9rem] text-ink-muted">
@@ -89,40 +231,60 @@
           </div>
         </div>
 
+        <!-- Programa atual -->
         <template v-if="guide.current.value">
           <div class="mt-4 flex items-center gap-4">
-            <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+            <div
+              class="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10"
+              aria-hidden="true"
+            >
               <div
                 class="h-full rounded-full bg-gradient-to-r from-[#4d6bff] to-[#7c5cff]"
-                :style="{ width: `${Math.round(guide.progress.value * 100)}%` }"
+                :style="{
+                  width: `${Math.round(guide.progress.value * 100)}%`
+                }"
               />
             </div>
+
             <div class="shrink-0 text-right leading-tight">
               <p class="text-[0.82rem] tabular-nums text-ink">
-                {{ formatHourMinute(guide.current.value.start) }} —
+                {{ formatHourMinute(guide.current.value.start) }}
+                —
                 {{ formatHourMinute(guide.current.value.end) }}
               </p>
-              <p class="text-[0.72rem] text-ink-muted">{{ guide.remainingMinutes.value }} min restantes</p>
+              <p class="text-[0.72rem] text-ink-muted">
+                {{ guide.remainingMinutes.value }} min restantes
+              </p>
             </div>
           </div>
-          <p class="mt-3 text-[1.05rem] font-semibold text-ink">{{ guide.current.value.title }}</p>
+
+          <p class="mt-3 text-[1.05rem] font-semibold text-ink">
+            {{ guide.current.value.title }}
+          </p>
+
           <p
             v-if="guide.current.value.description"
-            class="mt-1 line-clamp-3 text-[0.9rem] leading-relaxed text-ink-muted"
+            class="mt-1 line-clamp-2 text-[0.9rem] leading-relaxed text-ink-muted"
           >
             {{ guide.current.value.description }}
           </p>
         </template>
 
+        <!-- Ações -->
         <div class="mt-4 flex flex-wrap gap-3">
-          <NuxtLink
-            :to="mediaHref(media)"
+          <button
+            type="button"
             class="inline-flex h-11 items-center gap-2 rounded-full bg-blue-dark px-3 text-sm font-semibold text-ink shadow-[0_0_18px_rgba(22,136,255,0.45)] transition-colors duration-fast hover:bg-blue focus:outline-none focus-visible:shadow-focus lg:px-6"
             data-nav="preview"
+            @click="expand"
           >
-            <Icon name="material-symbols:play-arrow-rounded" class="h-5 w-5" aria-hidden="true" />
+            <Icon
+              name="material-symbols:play-arrow-rounded"
+              class="h-5 w-5"
+              aria-hidden="true"
+            />
             Assistir agora
-          </NuxtLink>
+          </button>
 
           <button
             type="button"
@@ -132,25 +294,54 @@
             @click="toggleFavorite"
           >
             <Icon
-              :name="favorite ? 'material-symbols:bookmark' : 'material-symbols:bookmark-outline'"
+              :name="
+                favorite
+                  ? 'material-symbols:star-rounded'
+                  : 'material-symbols:star-outline-rounded'
+              "
               class="h-5 w-5"
-              :class="favorite ? 'text-blue-light' : ''"
+              :class="favorite ? 'text-[#ffc94d]' : ''"
               aria-hidden="true"
             />
-            {{ favorite ? 'Na sua lista' : 'Adicionar à lista' }}
+            {{ favorite ? 'Nos favoritos' : 'Favoritar' }}
           </button>
         </div>
       </section>
 
       <!-- Programação -->
-      <section class="pv-card flex min-h-0 flex-1 flex-col p-4 lg:p-5" aria-labelledby="live-guide-heading">
+      <section
+        class="pv-card pv-guide flex min-h-[8rem] flex-1 shrink-0 flex-col p-4 focus:outline-none focus-visible:shadow-focus lg:p-5"
+        aria-labelledby="live-guide-heading"
+        tabindex="0"
+        data-nav="preview"
+        @keydown="onGuideKey"
+      >
         <div class="flex shrink-0 items-center gap-3">
-          <Icon name="material-symbols:calendar-month-outline-rounded" class="h-6 w-6 text-ink-muted" aria-hidden="true" />
-          <h2 id="live-guide-heading" class="flex-1 text-[1.05rem] font-medium text-ink">Programação</h2>
-          <Icon name="material-symbols:chevron-right-rounded" class="h-6 w-6 text-ink-muted" aria-hidden="true" />
+          <Icon
+            name="material-symbols:calendar-month-outline-rounded"
+            class="h-6 w-6 text-ink-muted"
+            aria-hidden="true"
+          />
+
+          <h2
+            id="live-guide-heading"
+            class="flex-1 text-[1.05rem] font-medium text-ink"
+          >
+            Programação
+          </h2>
+
+          <Icon
+            name="material-symbols:chevron-right-rounded"
+            class="h-6 w-6 text-ink-muted"
+            aria-hidden="true"
+          />
         </div>
 
-        <ul v-if="guide.schedule.value.length" class="rail-scroll mt-3 min-h-0 flex-1 overflow-y-auto">
+        <ul
+          v-if="guide.schedule.value.length"
+          ref="guideList"
+          class="rail-scroll mt-3 min-h-0 flex-1 overflow-y-auto"
+        >
           <li
             v-for="(program, position) in guide.schedule.value"
             :key="`${program.start}-${program.title}`"
@@ -161,67 +352,359 @@
                 : 'border-t border-white/8 text-ink first:border-t-0'
             "
           >
-            <span class="w-12 shrink-0 tabular-nums" :class="position === 0 && guide.current.value ? 'text-ink' : 'text-ink-muted'">
+            <span
+              class="w-12 shrink-0 tabular-nums"
+              :class="
+                position === 0 && guide.current.value
+                  ? 'text-ink'
+                  : 'text-ink-muted'
+              "
+            >
               {{ formatHourMinute(program.start) }}
             </span>
-            <span class="min-w-0 flex-1 truncate font-medium">{{ program.title }}</span>
+
+            <span class="min-w-0 flex-1 truncate font-medium">
+              {{ program.title }}
+            </span>
+
             <span
               v-if="position === 0 && guide.current.value"
               class="inline-flex shrink-0 items-center gap-1.5 text-[0.72rem] font-medium uppercase tracking-wide"
             >
-              <span class="live-dot h-1.5 w-1.5 rounded-full bg-[#ff4d4d]" aria-hidden="true" />
+              <span
+                class="live-dot h-1.5 w-1.5 rounded-full bg-[#ff4d4d]"
+                aria-hidden="true"
+              />
               Ao vivo
             </span>
           </li>
         </ul>
-        <p v-else class="mt-4 text-[0.9rem] leading-relaxed text-ink-muted">
+
+        <p
+          v-else
+          class="mt-4 text-[0.9rem] leading-relaxed text-ink-muted"
+        >
           A programação deste canal ainda não está disponível.
         </p>
       </section>
     </template>
 
-    <div v-else class="pv-card grid flex-1 place-items-center p-6 text-sm text-ink-muted">
-      Selecione um canal para ver os detalhes.
-    </div>
+    <!-- Nenhum canal escolhido: mesma estrutura, vazia (nada focável, nada carrega). -->
+    <template v-else>
+      <div
+        class="pv-card pv-thumb relative block aspect-video min-h-[6rem] w-full shrink overflow-hidden"
+        aria-hidden="true"
+      >
+        <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+          <Icon name="material-symbols:live-tv-outline-rounded" class="h-10 w-10 text-ink-muted/60" />
+          <span class="text-sm font-medium text-ink-muted">
+            Aperte OK em um canal para ver a prévia
+          </span>
+        </div>
+      </div>
+
+      <section class="pv-card shrink-0 p-4 lg:p-5" aria-hidden="true">
+        <div class="flex items-center gap-4">
+          <span class="pv-blank hidden h-12 w-[4.5rem] shrink-0 rounded-lg lg:block" />
+          <span class="hidden h-9 w-px shrink-0 bg-white/12 lg:block" />
+          <div class="min-w-0 flex-1">
+            <span class="pv-blank block h-4 w-3/5 rounded" />
+            <span class="pv-blank mt-2 block h-3 w-2/5 rounded" />
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center gap-4">
+          <span class="h-1.5 flex-1 rounded-full bg-white/10" />
+          <span class="pv-blank block h-3 w-20 rounded" />
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-3">
+          <span class="inline-flex h-11 items-center gap-2 rounded-full bg-blue-dark/25 px-3 text-sm font-semibold text-ink/40 lg:px-6">
+            <Icon name="material-symbols:play-arrow-rounded" class="h-5 w-5" />
+            Assistir agora
+          </span>
+          <span class="inline-flex h-11 items-center gap-2 rounded-full border border-line/60 bg-elevated/40 px-5 text-sm font-medium text-ink/40">
+            <Icon name="material-symbols:star-outline-rounded" class="h-5 w-5" />
+            Favoritar
+          </span>
+        </div>
+      </section>
+
+      <section class="pv-card flex min-h-[8rem] flex-1 shrink-0 flex-col p-4 lg:p-5" aria-hidden="true">
+        <div class="flex shrink-0 items-center gap-3">
+          <Icon name="material-symbols:calendar-month-outline-rounded" class="h-6 w-6 text-ink-muted" />
+          <h2 class="flex-1 text-[1.05rem] font-medium text-ink">Programação</h2>
+          <Icon name="material-symbols:chevron-right-rounded" class="h-6 w-6 text-ink-muted" />
+        </div>
+        <ul class="mt-3">
+          <li
+            v-for="row in 4"
+            :key="row"
+            class="flex items-center gap-4 border-t border-white/[0.06] px-3 py-3 first:border-t-0"
+          >
+            <span class="pv-blank block h-3 w-12 shrink-0 rounded" />
+            <span class="pv-blank block h-3 rounded" :style="{ width: `${[55, 40, 62, 48][row - 1]}%` }" />
+          </li>
+        </ul>
+      </section>
+    </template>
   </aside>
 </template>
 
 <script setup lang="ts">
+import { BLANK_POSTER, STORAGE_KEYS } from '~/constants';
 import { useChannelGuide } from '~/composables/useChannelGuide';
+import { useLivePreview } from '~/composables/useLivePreview';
 import { usePreferencesStore } from '~/stores/preferences';
-import { getCategoryVisual, gradientForHue } from '~/utils/categoryVisuals';
-import { channelInitials, formatHourMinute, qualityBadge } from '~/utils/live';
-import { mediaHref } from '~/utils/media';
+import {
+  channelInitials,
+  formatHourMinute,
+  qualityBadge,
+} from '~/utils/live';
 import type { MediaSummary } from '~/types';
 
 const props = defineProps<{
   media: MediaSummary | null;
-  /** Slug da categoria do canal — define o degradê quando não há arte. */
+  /** Slug da categoria do canal. */
   categorySlug?: string | null;
+  /** Pausa a prévia para evitar duas conexões simultâneas. */
+  paused?: boolean;
+}>();
+
+const emit = defineEmits<{
+  /** Escolheu outra versão (FHD/HD/SD…) do canal — o pai troca a seleção. */
+  variant: [media: MediaSummary];
+  /** Tela cheia: ↑/↓ pedem o canal de cima/de baixo da lista. */
+  zap: [direction: 1 | -1];
+  /** Saiu da tela cheia — o pai devolve o foco à linha do canal. */
+  closed: [];
 }>();
 
 const preferences = usePreferencesStore();
-const guide = useChannelGuide(() => props.media?.id ?? null);
 
-const thumbFailed = ref(false);
+// Versões do mesmo canal — busca com atraso: navegar a lista troca de canal a cada passo.
+const { variants, groupItems } = useLiveQualityVariants(() => props.media, { delay: 350 });
+
+/** Versão escolhida à mão nos chips — essa vale mais que a fonte lembrada. */
+const pickedId = ref<string | null>(null);
+
+function pickVariant(variant: MediaSummary): void {
+  pickedId.value = variant.id;
+  emit('variant', variant);
+}
+
+const guide = useChannelGuide(
+  () => props.media?.id ?? null,
+);
+
+// Elemento de vídeo
+const videoEl = ref<HTMLVideoElement | null>(null);
+
+/* ── Tela cheia: a própria prévia ocupa a tela (sem abrir o player nem reconectar) ── */
+
+const route = useRoute();
+const router = useRouter();
+
+const expanded = computed(() => route.query.full === '1' && props.media !== null);
+
+function expand(): void {
+  if (!props.media || expanded.value) return;
+  void router.push({ query: { ...route.query, full: '1' } });
+}
+
+function collapse(): void {
+  if (!expanded.value) return;
+  if (window.history.state?.back) router.back();
+  else void router.replace({ query: { ...route.query, full: undefined } });
+}
+
+defineExpose({ expand });
+
+// Recarregou com `?full=1`: abre a tela normal (a tela cheia só abre por ação).
+onMounted(() => {
+  if (route.query.full === '1') void router.replace({ query: { ...route.query, full: undefined } });
+});
+
+const { hudVisible, pokeHud } = useAutoHideHud(() => true);
+
+/* ── HUD da tela cheia ── */
+
+const fullHud = ref<HTMLElement | null>(null);
+/** Botão do HUD em foco (índice entre os `[data-full-ctl]`) — sobrevive ao HUD sumir. */
+const hudIndex = ref(1);
+
+function hudControls(): HTMLElement[] {
+  return Array.from(fullHud.value?.querySelectorAll<HTMLElement>('[data-full-ctl]') ?? []);
+}
+
+function focusControl(index: number): void {
+  const controls = hudControls();
+  if (controls.length === 0) return;
+  hudIndex.value = Math.min(Math.max(index, 0), controls.length - 1);
+  controls[hudIndex.value].focus({ preventScroll: true });
+}
+
+/** Mesma preferência do player: esticar a imagem para ocupar a tela toda. */
+const fillScreen = ref(false);
+
+function toggleFill(): void {
+  fillScreen.value = !fillScreen.value;
+  try {
+    localStorage.setItem(STORAGE_KEYS.playerFill, fillScreen.value ? '1' : '0');
+  } catch {
+    /* storage bloqueado: vale só nesta sessão */
+  }
+}
+
+onMounted(() => {
+  try {
+    fillScreen.value = localStorage.getItem(STORAGE_KEYS.playerFill) === '1';
+  } catch {
+    /* sem storage */
+  }
+});
+
+const BACK_KEYS = ['Escape', 'Backspace', 'GoBack', 'BrowserBack'];
+
+/**
+ * Tela cheia (captura, antes da lista por trás e do motor espacial):
+ *  - Voltar/Esc fecha;
+ *  - ↑/↓ trocam para o canal de cima/de baixo da lista;
+ *  - com o HUD escondido, a 1ª tecla só mostra o HUD;
+ *  - ←/→ andam entre os botões do HUD e OK aciona o botão em foco.
+ */
+function onFullKey(event: KeyboardEvent): void {
+  if (!expanded.value) return;
+  const { key, keyCode } = event;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  if (BACK_KEYS.includes(key) || keyCode === 10009) {
+    collapse();
+    return;
+  }
+
+  const hidden = !hudVisible.value;
+  pokeHud();
+
+  if (key === 'ArrowUp' || key === 'Up' || keyCode === 19) {
+    emit('zap', -1);
+    return;
+  }
+  if (key === 'ArrowDown' || key === 'Down' || keyCode === 20) {
+    emit('zap', 1);
+    return;
+  }
+
+  void nextTick(() => {
+    if (hidden) {
+      focusControl(hudIndex.value);
+      return;
+    }
+    if (key === 'ArrowLeft' || key === 'Left' || keyCode === 21) focusControl(hudIndex.value - 1);
+    else if (key === 'ArrowRight' || key === 'Right' || keyCode === 22) focusControl(hudIndex.value + 1);
+    else if (key === 'Enter' || key === ' ' || keyCode === 13 || keyCode === 23) hudControls()[hudIndex.value]?.click();
+  });
+}
+
+watch(expanded, async (value) => {
+  // Som só em tela cheia; a prévia na coluna continua muda.
+  const video = videoEl.value;
+  if (video) {
+    video.muted = !value;
+    if (value) void video.play().catch(() => undefined);
+  }
+  if (value) {
+    pokeHud();
+    window.addEventListener('keydown', onFullKey, true);
+    await nextTick();
+    // Começa no 1º botão depois do "Voltar" (OK sem querer não fecha a tela cheia).
+    focusControl(1);
+  } else {
+    window.removeEventListener('keydown', onFullKey, true);
+    emit('closed');
+  }
+});
+
+onBeforeUnmount(() => window.removeEventListener('keydown', onFullKey, true));
+
+// Diagnóstico
+const isDev = import.meta.dev;
+
+// Prévia ao vivo
+const {
+  playing: livePlaying,
+  state: liveState,
+  reason: liveReason,
+  onPlaying: onLivePlaying,
+  onTimeUpdate: onLiveTimeUpdate,
+  onVideoError: onLiveError,
+  notice: liveNotice,
+  current: liveSource,
+} = useLivePreview({
+  videoEl,
+  media: () => props.media,
+  alternatives: groupItems,
+  useRemembered: () => props.media?.id !== pickedId.value,
+  enabled: () => !props.paused,
+  muted: () => !expanded.value,
+});
+
+/** Chip aceso = versão tocando de fato (o failover pode ter trocado de versão). */
+const activeVariantId = computed(() => liveSource.value?.mediaId ?? props.media?.id ?? null);
+
+// Fundo animado parado enquanto a prévia toca — TV costuma ter um decodificador só.
+useSuspendBackgroundMotion(() => !props.paused && props.media !== null);
+
+// Lista da programação: ↑↓ rolam a lista antes de sair do card
+const guideList = ref<HTMLElement | null>(null);
+
+function onGuideKey(event: KeyboardEvent): void {
+  const list = guideList.value;
+  if (!list || event.target !== event.currentTarget) return;
+  const down = event.key === 'ArrowDown';
+  if (!down && event.key !== 'ArrowUp') return;
+  const room = down
+    ? list.scrollTop + list.clientHeight < list.scrollHeight - 1
+    : list.scrollTop > 0;
+  if (!room) return;
+  event.preventDefault();
+  event.stopPropagation();
+  list.scrollBy({ top: down ? 60 : -60 });
+}
+
+// Logo do canal
 const logoFailed = ref(false);
+
+// Reseta o estado ao trocar de canal
 watch(
   () => props.media?.id,
   () => {
-    thumbFailed.value = false;
     logoFailed.value = false;
   },
 );
 
-const hasArt = computed(() => !!props.media?.thumbnailUrl && !thumbFailed.value);
-const initials = computed(() => channelInitials(props.media?.title ?? ''));
-const badge = computed(() => qualityBadge(props.media?.quality));
-const gradient = computed(() => gradientForHue(getCategoryVisual(props.categorySlug ?? '').hue));
+// Iniciais do canal
+const initials = computed(() =>
+  channelInitials(props.media?.title ?? ''),
+);
 
-const favorite = computed(() => (props.media ? preferences.isFavorite(props.media.id) : false));
+// Qualidade
+const badge = computed(() =>
+  qualityBadge(props.media?.quality),
+);
+
+// Favoritos
+const favorite = computed(() =>
+  props.media
+    ? preferences.isFavorite(props.media.id)
+    : false,
+);
 
 function toggleFavorite(): void {
-  if (props.media) preferences.toggleFavorite(props.media.id);
+  if (props.media) {
+    preferences.toggleFavorite(props.media.id, props.media);
+  }
 }
 </script>
 
@@ -229,11 +712,71 @@ function toggleFavorite(): void {
 .pv-card {
   border: 1px solid rgba(124, 154, 255, 0.14);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(8, 22, 52, 0.96), rgba(4, 12, 32, 0.98));
+  background: linear-gradient(
+    180deg,
+    rgba(8, 22, 52, 0.96),
+    rgba(4, 12, 32, 0.98)
+  );
+}
+
+.pv-guide:focus-visible {
+  border-color: rgba(124, 154, 255, 0.7);
 }
 
 .pv-thumb {
   background: #050b1c;
+}
+
+.pv-thumb video {
+  object-fit: cover;
+}
+
+/* Prévia expandida: cobre a tela inteira (acima do header) com o mesmo <video>. */
+.pv-thumb--full {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  width: 100vw;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+  padding-top: 0;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  cursor: default;
+}
+
+.pv-thumb--full video {
+  object-fit: contain;
+}
+
+.pv-thumb--fill video {
+  object-fit: fill;
+}
+
+/* Foco do HUD sempre visível (mesmo fora do dpad-mode — o OK do controle não liga o modo). */
+.pv-ctl:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.pv-thumb--full:focus-visible {
+  box-shadow: none;
+}
+
+/* Traços do estado vazio (sem canal escolhido) — sem animação, só a forma. */
+.pv-blank {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* WebView <88 não tem aspect-ratio: sem isto a prévia fica com 0px de altura
+   (todo o conteúdo dela é absoluto). Padding em % da largura = 16:9. */
+@supports not (aspect-ratio: 16 / 9) {
+  .pv-thumb {
+    height: 0;
+    padding-top: 56.25%;
+  }
 }
 
 .pv-thumb:focus-visible {

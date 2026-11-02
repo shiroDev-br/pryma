@@ -8,8 +8,8 @@
       <button
         type="button"
         class="group inline-flex items-center gap-2 rounded-full py-1.5 pr-4 text-sm font-medium text-white/85 transition hover:text-white"
-        :aria-label="isFullscreen ? 'Sair da tela cheia' : 'Voltar'"
-        @click="handleBackClick"
+        aria-label="Voltar"
+        @click="$emit('back')"
       >
         <span
           class="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-black/75 transition group-hover:border-white/40 group-hover:bg-white/10"
@@ -18,8 +18,14 @@
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
         </span>
-        <span class="hidden sm:inline">{{ isFullscreen ? 'Sair da tela cheia' : 'Voltar' }}</span>
+        <span class="hidden sm:inline">Voltar</span>
       </button>
+
+      <!-- Nome do título: aparece junto com o HUD (inclusive ao avançar/voltar). -->
+      <div v-if="title" class="mx-6 min-w-0 flex-1 text-center">
+        <p class="truncate text-xl font-semibold leading-tight text-white drop-shadow">{{ title }}</p>
+        <p v-if="subtitle" class="mt-0.5 truncate text-sm text-white/70">{{ subtitle }}</p>
+      </div>
 
       <div class="flex items-center gap-2">
         <span
@@ -41,7 +47,7 @@
           CC
         </button>
 
-        <div ref="speedWrap" class="relative">
+        <div v-if="!live" ref="speedWrap" class="relative">
           <button
             type="button"
             class="h-9 min-w-11 rounded-md border border-white/20 bg-black/80 px-2.5 text-xs font-semibold text-white/85 transition hover:border-white/40"
@@ -76,7 +82,8 @@
         <button
           type="button"
           class="grid h-9 w-9 place-items-center rounded-md border border-white/20 bg-black/80 text-white/85 transition hover:border-white/40"
-          :aria-label="isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'"
+          :aria-label="isFullscreen ? 'Ajustar à tela' : 'Tela cheia (preencher)'"
+          :aria-pressed="isFullscreen"
           @click="$emit('toggle-fullscreen')"
         >
           <svg v-if="!isFullscreen" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -91,7 +98,15 @@
 
     <!-- Base: progresso + controles -->
     <footer class="absolute inset-x-0 bottom-0 px-5 pb-5 sm:px-8" :class="barGradient">
-      <div class="mb-3 flex items-center gap-4">
+      <!-- Ao vivo: não há linha do tempo pra percorrer — só o selo. -->
+      <div v-if="live" class="mb-3 flex items-center">
+        <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">
+          <span class="h-2 w-2 rounded-full bg-[#ff4d4d]" aria-hidden="true" />
+          Ao vivo
+        </span>
+      </div>
+
+      <div v-else class="mb-3 flex items-center gap-4">
         <span class="w-14 shrink-0 text-right text-xs tabular-nums text-white/80">{{ currentLabel }}</span>
 
         <div
@@ -125,7 +140,10 @@
 
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
+          <!-- Ao vivo: sem pausa. O play só aparece se a transmissão parou
+               (autoplay barrado, volta do segundo plano) — pra retomar. -->
           <button
+            v-if="!live || !playing"
             type="button"
             class="grid h-14 w-14 place-items-center rounded-full border border-blue/60 bg-[#0b3a9c]/70 text-white shadow-[0_0_18px_rgba(22,136,255,0.45)] transition hover:border-blue hover:bg-[#0b3a9c]/90"
             :aria-label="playing ? 'Pausar' : 'Reproduzir'"
@@ -140,6 +158,7 @@
           </button>
 
           <button
+            v-if="!live"
             type="button"
             class="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/75 text-white/90 transition hover:border-white/45 hover:bg-white/10"
             aria-label="Voltar 10 segundos"
@@ -153,6 +172,7 @@
           </button>
 
           <button
+            v-if="!live"
             type="button"
             class="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 bg-black/75 text-white/90 transition hover:border-white/45 hover:bg-white/10"
             aria-label="Avançar 10 segundos"
@@ -230,6 +250,9 @@
             </svg>
           </button>
 
+          <!-- Fora da navegação do controle (tabindex -1): a seta num range muda o
+               valor e o foco ficava preso aqui. Na TV o volume é do próprio controle;
+               no mouse/toque o slider continua funcionando. -->
           <input
             type="range"
             min="0"
@@ -238,6 +261,7 @@
             :value="muted ? 0 : volume"
             class="h-1.5 w-24 cursor-pointer accent-blue"
             aria-label="Volume"
+            tabindex="-1"
             @input="onVolumeInput"
           />
 
@@ -258,7 +282,8 @@
           <button
             type="button"
             class="grid h-10 w-10 place-items-center rounded-full text-white/90 transition hover:bg-white/10"
-            :aria-label="isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'"
+            :aria-label="isFullscreen ? 'Ajustar à tela' : 'Tela cheia (preencher)'"
+            :aria-pressed="isFullscreen"
             @click="$emit('toggle-fullscreen')"
           >
             <svg v-if="!isFullscreen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -287,7 +312,6 @@ export interface QualityOption {
 
 const emit = defineEmits<{
   back: [];
-  'exit-fullscreen': [];
   'toggle-play': [];
   skip: [delta: number];
   'seek-ratio': [ratio: number];
@@ -313,8 +337,14 @@ const props = withDefaults(
     captionsOn: boolean;
     quality: string | null;
     qualityOptions?: QualityOption[];
+    /** Transmissão ao vivo — esconde progresso, ±10s, velocidade e a pausa. */
+    live?: boolean;
+    /** Nome do filme/episódio/canal no topo. */
+    title?: string;
+    /** Linha de apoio (ex.: "Temporada 1 · Episódio 3"). */
+    subtitle?: string | null;
   }>(),
-  { qualityOptions: () => [] },
+  { qualityOptions: () => [], live: false, title: '', subtitle: null },
 );
 
 const track = ref<HTMLElement | null>(null);
@@ -360,11 +390,6 @@ function endScrub(event: PointerEvent): void {
 
 function emitSeek(ratio: number): void {
   emit('seek-ratio', ratio);
-}
-
-function handleBackClick(): void {
-  if (props.isFullscreen) emit('exit-fullscreen');
-  else emit('back');
 }
 
 function onVolumeInput(event: Event): void {

@@ -12,6 +12,8 @@ export interface HomeMenuItem {
   to?: string;
   /** Link externo — abre no navegador do dispositivo (fora do app). */
   externalUrl?: string;
+  /** Código do Downloader (AFTVnews): no APK o card abre o app Downloader com ele. */
+  downloaderCode?: string;
   /** Imagem de fundo do card (asset em `public/img/cards/`). */
   image?: string;
   /** Logo em imagem (PNG transparente) — substitui o ícone quando presente. */
@@ -40,12 +42,14 @@ const EXTRA_ITEMS: HomeMenuItem[] = [
     title: 'Música',
     description: 'Ouvir seus artistas e playlists favoritos.',
     icon: 'material-symbols:music-note-rounded',
+    to: '/musica',
   },
   {
     id: 'youtube',
     title: 'YouTube',
     description: 'Vídeos e canais direto da web.',
     icon: 'logos:youtube',
+    to: '/youtube',
   },
   {
     id: 'sobre',
@@ -59,7 +63,8 @@ const EXTRA_ITEMS: HomeMenuItem[] = [
     title: 'Atualizações',
     description: 'Novidades e versões mais recentes do app.',
     icon: 'material-symbols:system-update-rounded',
-    externalUrl: 'http://aftv.news/9323613',
+    externalUrl: 'http://aftv.news/6104758',
+    downloaderCode: '6104758',
   },
   {
     id: 'cache',

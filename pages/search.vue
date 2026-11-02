@@ -115,7 +115,7 @@
     </div>
 
     <template v-else>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6" data-media-grid>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6" data-media-grid @keydown="onGridKeydown">
         <MediaCard v-for="media in filteredItems" :key="media.id" :media="media" />
       </div>
 
@@ -149,7 +149,7 @@
 </style>
 
 <script setup lang="ts">
-import { SECTIONS } from '~/constants';
+import { MAX_QUERY_LENGTH, SECTIONS } from '~/constants';
 import { isAdultItem } from '~/utils/adult';
 import type { Suggestion, MediaType, MediaSummary } from '~/types';
 
@@ -175,6 +175,37 @@ const filteredSection = computed(() => {
 });
 
 const search = useSearchResults({ type: () => searchType.value });
+
+/*
+ * O texto buscado vive em `?q=`: abrir um resultado e voltar (controle ou
+ * navegador) reabre a busca com os mesmos resultados, não a tela vazia.
+ * `replace` — digitar não empilha uma entrada por letra no histórico.
+ * Só no cliente: a busca exige o token (localStorage), que o SSR não tem.
+ */
+const router = useRouter();
+
+function routeQueryText(): string {
+  const value = route.query.q;
+  return typeof value === 'string' ? value.slice(0, MAX_QUERY_LENGTH) : '';
+}
+
+onMounted(async () => {
+  const initial = routeQueryText();
+  if (!initial || search.search.query.value) return;
+  search.search.setQuery(initial);
+  // Voltou de um resultado: foco na grade (sem reabrir sugestões/teclado da TV).
+  // Depois do tick: o debounce já começou e o foco espera pelos resultados.
+  await nextTick();
+  goToFirstResult();
+});
+
+// Grava depois do debounce (normalizedQuery), com o texto como foi digitado.
+watch(search.search.normalizedQuery, () => {
+  const text = search.search.query.value.trim();
+  if (text === routeQueryText()) return;
+  void router.replace({ query: { ...route.query, q: text || undefined } });
+});
+const { onGridKeydown } = useGridNav();
 const suggest = useSearchSuggestions(() => search.search.query.value);
 
 const inputFocused = ref(false);
@@ -227,15 +258,70 @@ const SUGGESTION_LABELS: Record<Suggestion['type'], string> = {
   category: 'Categoria',
 };
 
+/** Clique numa sugestão: aplica e vai pro primeiro resultado (igual ao Enter). */
 function applySuggestion(suggestion: Suggestion): void {
   search.search.setQuery(suggestion.value);
+  goToFirstResult();
+}
+
+/* ---------- Enter: direto pro primeiro resultado ---------- */
+
+/** Enter pediu o primeiro resultado; espera o debounce/requisição da busca atual. */
+const focusFirstPending = ref(false);
+
+function closeSuggestions(): void {
   suggest.reset();
   activeIndex.value = -1;
-  inputFocused.value = false; // esconde sugestões ao aplicar
+  inputFocused.value = false;
+}
+
+/** Fecha as sugestões e leva o foco ao primeiro card (o D-pad segue pela grade). */
+function goToFirstResult(): void {
+  closeSuggestions();
+  focusFirstPending.value = true;
+  void focusFirstWhenReady();
+}
+
+async function focusFirstWhenReady(): Promise<void> {
+  if (!focusFirstPending.value) return;
+  // Ainda no debounce (Enter logo após digitar): o texto "pronto" é o anterior —
+  // espera o watch abaixo chamar de novo. Vem antes do isReady por isso.
+  if (search.search.isDebouncing.value) return;
+  if (!search.search.isReady.value) {
+    focusFirstPending.value = false;
+    return;
+  }
+  // Requisição da busca atual em voo: espera a resposta.
+  if (search.isLoading.value) return;
+
+  focusFirstPending.value = false;
+  await nextTick();
+  const first = document.querySelector<HTMLElement>('[data-media-grid] [data-media-card]');
+  if (!first) return; // sem resultado: o foco fica no campo
+  first.focus({ preventScroll: true });
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+watch(
+  [() => search.search.isDebouncing.value, () => search.isLoading.value, filteredItems],
+  () => void focusFirstWhenReady(),
+);
+
+/** Enter do teclado ou o "buscar/ir" do teclado virtual da TV (às vezes só keyCode 13). */
+function isEnter(event: KeyboardEvent): boolean {
+  return event.key === 'Enter' || event.keyCode === 13;
 }
 
 /** Autocomplete clássico: o foco fica no input e as setas andam pela lista. */
 function onInputKeydown(event: KeyboardEvent): void {
+  if (isEnter(event)) {
+    event.preventDefault();
+    const suggestion = showSuggestions.value ? suggest.suggestions.value[activeIndex.value] : undefined;
+    if (suggestion) search.search.setQuery(suggestion.value);
+    goToFirstResult();
+    return;
+  }
+
   const count = suggest.suggestions.value.length;
 
   if (!showSuggestions.value || count === 0) return;
@@ -249,18 +335,9 @@ function onInputKeydown(event: KeyboardEvent): void {
       event.preventDefault();
       activeIndex.value = activeIndex.value > 0 ? activeIndex.value - 1 : count - 1;
       break;
-    case 'Enter': {
-      const suggestion = suggest.suggestions.value[activeIndex.value];
-      if (!suggestion) return;
-      event.preventDefault();
-      applySuggestion(suggestion);
-      break;
-    }
     case 'Escape':
       event.preventDefault();
-      suggest.reset();
-      activeIndex.value = -1;
-      inputFocused.value = false;
+      closeSuggestions();
       break;
   }
 }

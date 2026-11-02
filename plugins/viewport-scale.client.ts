@@ -10,16 +10,21 @@
  *   --header-h  11% (faixa do header)
  *   --footer-h  11% (faixa da barra inferior)
  * e a classe `tv-scale` no <html> (landscape).
+ *
+ * O painel de staff (/admin) fica de fora: é ferramenta web (desktop/celular),
+ * com layout responsivo próprio — a escala de TV o deixava gigante em monitor
+ * grande e ilegível em celular deitado.
  */
 export default defineNuxtPlugin(() => {
   const root = document.documentElement;
+  const router = useRouter();
 
   const apply = (): void => {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    if (!isLandscape(w, h)) {
-      // Retrato = celular: rem normal + fallbacks de CSS.
+    if (!isLandscape(w, h) || isAdminPath(router.currentRoute.value.path)) {
+      // Retrato = celular (e o painel): rem normal + fallbacks de CSS.
       root.style.fontSize = '';
       root.style.removeProperty('--app-vh');
       root.style.removeProperty('--header-h');
@@ -37,6 +42,11 @@ export default defineNuxtPlugin(() => {
   };
 
   apply();
+  // Entrar/sair do painel troca o modo de escala.
+  router.afterEach(() => apply());
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', apply);
+  // TVs que só aplicam a viewport real depois do boot (sem `resize` confiável):
+  // reaplica a escala nos primeiros frames/segundos até estabilizar.
+  onViewportSettle(() => apply());
 });

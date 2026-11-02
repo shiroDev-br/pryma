@@ -1,19 +1,19 @@
 <template>
   <aside v-if="media" class="overflow-hidden rounded-lg border border-line/70 bg-surface/95" aria-label="Detalhe do título">
     <!-- Hero: arte do título com fade para a superfície do painel -->
-    <div class="relative aspect-video w-full overflow-hidden bg-elevated">
+    <div class="ratio-16x9 relative aspect-video w-full overflow-hidden bg-elevated">
       <img
         v-if="!heroFailed && media.thumbnailUrl"
         :key="media.id"
         :src="media.thumbnailUrl"
         :alt="media.title"
         decoding="async"
-        class="h-full w-full object-cover object-[center_28%]"
+        class="absolute inset-0 h-full w-full object-cover object-[center_28%]"
         @error="heroFailed = true"
       />
       <div
         v-else
-        class="flex h-full w-full items-center justify-center text-blue-dark"
+        class="absolute inset-0 flex items-center justify-center text-blue-dark"
         aria-hidden="true"
       >
         <Icon name="material-symbols:theaters" class="h-12 w-12" />
@@ -103,17 +103,17 @@
               :to="mediaHref(item)"
               class="group block w-[6.5rem] overflow-hidden rounded-md border border-line/70 bg-elevated transition-colors duration-fast hover:border-blue/50 focus:outline-none focus-visible:shadow-focus"
               :aria-label="item.title"
-              @mouseenter="emit('preview', item)"
+              @mouseenter="onPointerEnter(item)"
               @focus="emit('preview', item)"
             >
-              <span class="relative block aspect-[2/3] w-full overflow-hidden">
+              <span class="ratio-2x3 relative block aspect-[2/3] w-full overflow-hidden">
                 <img
                   v-if="!failedThumbs[item.id] && item.thumbnailUrl"
                   :src="item.thumbnailUrl"
                   :alt="item.title"
                   loading="lazy"
                   decoding="async"
-                  class="h-full w-full object-cover transition-transform duration-normal group-hover:scale-105"
+                  class="absolute inset-0 h-full w-full object-cover transition-transform duration-normal group-hover:scale-105"
                   @error="failedThumbs[item.id] = true"
                 />
                 <span
@@ -147,6 +147,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   preview: [media: MediaSummary];
 }>();
+
+/** Hover não move a prévia no modo D-pad (ponteiro parado da TV marcava outro título). */
+function onPointerEnter(item: MediaSummary): void {
+  if (document.body.classList.contains('dpad-mode')) return;
+  emit('preview', item);
+}
 
 const detailsStore = useMediaDetailsStore();
 const preferences = usePreferencesStore();
@@ -256,7 +262,7 @@ const cast = computed(() => (detail.value?.actors ?? []).slice(0, 8));
 const favorite = computed(() => (props.media ? preferences.isFavorite(props.media.id) : false));
 
 function toggleFavorite(): void {
-  if (props.media) preferences.toggleFavorite(props.media.id);
+  if (props.media) preferences.toggleFavorite(props.media.id, props.media);
 }
 
 function initials(name: string): string {

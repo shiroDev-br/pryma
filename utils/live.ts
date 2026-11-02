@@ -1,5 +1,10 @@
 import type { MediaQuality } from '~/types';
 
+/** Grupo "Favoritos" da TV ao vivo — não é categoria da API, vem do localStorage. */
+export const FAVORITES_SLUG = '__favoritos__';
+/** Grupo "Jogos do dia" — canais que transmitem os jogos de hoje (jogos × programação). */
+export const GAMES_SLUG = '__jogos__';
+
 /** Posição na lista -> "001", "012", "891". */
 export function channelNumber(position: number): string {
   return String(position).padStart(3, '0');
@@ -83,6 +88,37 @@ export function variantLabel(title: string, quality: MediaQuality | null | undef
   if (resolution) return resolution;
   if (tokens[0]) return tokens[0];
   return qualityBadge(quality) ?? 'SD';
+}
+
+/** Resolução na listagem — da menor pra maior (sem sufixo = canal "puro", primeiro). */
+const LIST_RESOLUTION_RANK: Record<string, number> = { SD: 1, HD: 2, FHD: 3, '4K': 4 };
+/** Codec depois da resolução: "X HD" < "X HD H265". */
+const LIST_CODEC_RANK: Record<string, number> = { H264: 1, H265: 2, 'H.265': 2, HEVC: 2 };
+
+/** Uma instância só (criar Collator por comparação pesa no sort de 1.500 canais). */
+const channelCollator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+
+/**
+ * Ordem dos canais na TV ao vivo: nome-base em ordem natural (SPORTV < SPORTV 2
+ * < SPORTV 10) e, no mesmo nome, a qualidade crescente:
+ * SPORTV · SPORTV HD · SPORTV FHD · SPORTV 2 · SPORTV 2 HD · SPORTV 2 FHD…
+ */
+export function compareChannelTitles(a: string, b: string): number {
+  const left = splitQualitySuffix(a);
+  const right = splitQualitySuffix(b);
+  const byBase = channelCollator.compare(left.base, right.base);
+  if (byBase !== 0) return byBase;
+
+  const rank = (tokens: string[]): number => {
+    let resolution = 0;
+    let codec = 0;
+    for (const token of tokens) {
+      resolution = Math.max(resolution, LIST_RESOLUTION_RANK[token] ?? 0);
+      codec = Math.max(codec, LIST_CODEC_RANK[token] ?? 0);
+    }
+    return resolution * 10 + codec;
+  };
+  return rank(left.tokens) - rank(right.tokens) || channelCollator.compare(a, b);
 }
 
 /** Ordem de exibição das variantes: 4K > FHD > HD > SD > codec/desconhecido. */

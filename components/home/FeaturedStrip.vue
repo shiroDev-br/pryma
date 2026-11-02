@@ -106,7 +106,8 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 onMounted(() => {
-  nextTick(() => focusCard(0));
+  // Não foca automaticamente — deixa a HomeCarousel (meio) ter o foco inicial
+  // O usuário navega pra cá com ArrowDown
 });
 
 function navigateToTeam(): void {

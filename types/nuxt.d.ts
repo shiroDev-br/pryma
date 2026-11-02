@@ -7,6 +7,11 @@ declare module '#app' {
     footballApiKey: string;
     footballTimezone: string;
   }
+
+  interface PageMeta {
+    /** Página do painel restrita a admin (revendedor volta para /admin). */
+    adminOnly?: boolean;
+  }
 }
 
 declare module '*.mp4' {

@@ -304,16 +304,50 @@ function toNextFixture(row: UpstreamFixture): NextFixture {
   };
 }
 
-/** Ligas permitidas para exibição no app. */
+/**
+ * Ligas exibidas no app — as que passam na TV brasileira. IDs da API-Football
+ * (conferidos em /leagues). Fora daqui o jogo nem entra em "Jogos do dia" e,
+ * por isso, também não ganha canal: a Copa do Brasil fora da lista escondia
+ * os jogos de Globo/SporTV/Premiere.
+ */
 const ALLOWED_LEAGUE_IDS = new Set<number>([
+  // Brasil
   71,   // Brasileirão Série A
   72,   // Brasileirão Série B
-  2,    // Champions League
+  75,   // Brasileirão Série C
+  73,   // Copa do Brasil
+  632,  // Supercopa do Brasil
+  612,  // Copa do Nordeste
+  475,  // Paulistão
+  624,  // Carioca
+  629,  // Mineiro
+  477,  // Gaúcho
+  74,   // Brasileirão Feminino
+  // América do Sul
   13,   // Libertadores
-  14,   // Sul-Americana
+  11,   // Sul-Americana (o 14 é a UEFA Youth League)
+  541,  // Recopa Sul-Americana
+  128,  // Campeonato Argentino
+  // Europa — clubes
+  2,    // Champions League
+  3,    // Europa League
+  848,  // Conference League
+  531,  // Supercopa da UEFA
   39,   // Premier League
+  45,   // FA Cup
+  48,   // Copa da Liga Inglesa
   140,  // La Liga
-  135,  // Serie A (Italy)
+  143,  // Copa do Rei
+  135,  // Serie A (Itália)
+  137,  // Copa da Itália
+  78,   // Bundesliga
+  61,   // Ligue 1
+  94,   // Liga Portugal
+  // Seleções / mundial
+  1,    // Copa do Mundo
+  15,   // Mundial de Clubes
+  9,    // Copa América
+  34,   // Eliminatórias (América do Sul)
 ]);
 
 /** Jogos de um dia — cacheia até 06:00 do dia seguinte (refaz às 6h da manhã). */

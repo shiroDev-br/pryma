@@ -86,7 +86,7 @@ export default defineComponent({
     });
 
     let mounted = false;
-    let fullscreen = ref(false);
+    const fullscreen = ref(false);
     let apiReady = false;
     let apiError = ref<string | null>(null);
     let iframeObserver: MutationObserver | null = null;
@@ -124,44 +124,118 @@ export default defineComponent({
       iframeObserver.observe(iframe, { attributes: true, attributeFilter: ['width', 'height'] });
     }
 
-    async function startPlayback(clip: MtvClip): Promise<void> {
+    /** Montagem em andamento — troca de clipe nesse meio-tempo só anota o id. */
+    let mounting = false;
+    let pendingId: string | null = null;
+
+    async function startPlayback(clip: MtvClip | null): Promise<void> {
       if (!clip?.id) return;
       playerError.value = null;
       await nextTick();
-      if (!mounted && frameEl.value) {
-        try {
-          await player.mount(frameEl.value, clip.id);
-          apiReady = true;
-          apiError.value = null;
-          mounted = true;
-          await nextTick();
-          forceIframeFullSize();
-          setupIframeObserver();
-        } catch (err) {
-          apiReady = false;
-          apiError.value = 'Não foi possível carregar o player do YouTube.';
-        }
-      } else if (mounted) {
+      if (mounted) {
         player.load(clip.id);
         // O YouTube pode redefinir width/height ao trocar vídeo
         await nextTick();
         forceIframeFullSize();
         setupIframeObserver();
+        return;
+      }
+      if (mounting) {
+        pendingId = clip.id;
+        return;
+      }
+      // Sem o elemento ainda (clipes chegaram antes do mount): o onMounted inicia.
+      if (!frameEl.value) return;
+
+      mounting = true;
+      pendingId = null;
+      apiError.value = null;
+      try {
+        await player.mount(frameEl.value, clip.id);
+        apiReady = true;
+        mounted = true;
+        await nextTick();
+        forceIframeFullSize();
+        setupIframeObserver();
+        if (pendingId && pendingId !== clip.id) player.load(pendingId);
+      } catch {
+        apiReady = false;
+        apiError.value = 'Não foi possível carregar o player do YouTube.';
+      } finally {
+        mounting = false;
+        pendingId = null;
+      }
+    }
+
+    /* ── Tela cheia ────────────────────────────────────────────────────── */
+
+    // WebView antiga (Chrome <71) só tem a API com prefixo webkit.
+    type FsDocument = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => void };
+    type FsElement = HTMLElement & { webkitRequestFullscreen?: () => void };
+
+    function fullscreenElement(): Element | null {
+      const doc = document as FsDocument;
+      return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+    }
+
+    /** Botão que abriu a tela cheia — recebe o foco de volta na saída (D-pad). */
+    let fullscreenOpener: HTMLElement | null = null;
+
+    /** O estado vem do documento: sair por Esc/Voltar/botão do YouTube não passa
+     *  pelo toggle, e um flag próprio ficava "true" — o próximo OK só saía. */
+    function onFullscreenChange(): void {
+      fullscreen.value = fullscreenElement() !== null;
+      if (!fullscreen.value && fullscreenOpener?.isConnected) {
+        fullscreenOpener.focus({ preventScroll: true });
+        fullscreenOpener = null;
       }
     }
 
     /** Alterna tela cheia do iframe YouTube. */
-    function toggleFullscreen(): void {
-      const iframe = frameEl.value?.querySelector('iframe');
-      if (!iframe) return;
-      if (fullscreen.value) {
-        document.exitFullscreen().catch(() => {});
-        fullscreen.value = false;
-      } else {
-        iframe.requestFullscreen?.().catch(() => {});
-        fullscreen.value = true;
+    function toggleFullscreen(event?: Event): void {
+      if (fullscreenElement()) {
+        const doc = document as FsDocument;
+        if (doc.exitFullscreen) doc.exitFullscreen().catch(() => {});
+        else doc.webkitExitFullscreen?.();
+        return;
       }
+      const iframe = frameEl.value?.querySelector<FsElement>('iframe');
+      if (!iframe) return;
+      fullscreenOpener = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+      if (iframe.requestFullscreen) iframe.requestFullscreen().catch(() => {});
+      else iframe.webkitRequestFullscreen?.();
     }
+
+    // O card da playlist some ao abrir o player: sem isto o foco caía no
+    // <body> e o OK do controle não fazia nada. Os controles só aparecem
+    // depois que os clipes chegam — tenta por alguns segundos.
+    let focusTimer: ReturnType<typeof setTimeout> | null = null;
+    function focusToggle(attempt = 0): void {
+      focusTimer = null;
+      const active = document.activeElement;
+      if (active && active !== document.body) return;
+      const toggle = document.querySelector<HTMLElement>('[data-nav="toggle"]');
+      if (toggle && toggle.getClientRects().length > 0) {
+        toggle.focus({ preventScroll: true });
+        return;
+      }
+      if (attempt < 40) focusTimer = setTimeout(() => focusToggle(attempt + 1), 150);
+    }
+
+    onMounted(() => {
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+      focusToggle();
+    });
+
+    onBeforeUnmount(() => {
+      if (focusTimer) clearTimeout(focusTimer);
+    });
+
+    onBeforeUnmount(() => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    });
 
     function playAt(index: number): void {
       if (index < 0 || index >= queue.value.length) return;
@@ -225,9 +299,10 @@ export default defineComponent({
         if (playable.length) {
           queue.value = shuffle(playable);
           currentIndex.value = 0;
-          startPlayback(queue.value[0]);
         }
       }
+      // A fila pode ter sido montada pelo watch antes do frame existir.
+      if (queue.value.length) void startPlayback(currentClip.value);
       // Observa sentinela do infinite scroll
       const setupObserver = (el: HTMLElement | null, has: boolean) => {
         observer?.disconnect();

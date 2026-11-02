@@ -1,4 +1,6 @@
 import { usePreferencesStore } from '~/stores/preferences';
+import type { BackgroundMedia } from '~/stores/preferences';
+import type { Wallpaper } from '~/types';
 
 export interface BackgroundOption {
   /** Id persistido no localStorage — para `'none'` é o fundo padrão do app. */
@@ -18,8 +20,11 @@ const LABELS: Record<string, string> = {
   barcelona: 'Barcelona',
   corinthians: 'Corinthians',
   cruzeiro: 'Cruzeiro',
+  flamengo: 'Flamengo',
   gremio: 'Grêmio',
   inter: 'Inter',
+  palmeiras: 'Palmeiras',
+  realmadrid: 'Real Madrid',
   santos: 'Santos',
   saopaulo: 'São Paulo',
   vasco: 'Vasco',
@@ -80,14 +85,24 @@ export function useBackgrounds() {
 
   const options = OPTIONS;
 
+  /** Wallpaper animado ativo (da API) — `null` quando o fundo é local. */
+  const selectedMedia = computed<BackgroundMedia | null>(() => {
+    if (!preferences.backgroundHydrated) return null;
+    const media = preferences.backgroundMedia;
+    return media && media.id === preferences.backgroundId ? media : null;
+  });
+
   const selectedId = computed(() => {
     if (!preferences.backgroundHydrated) return AMBIENT_OPTION.id;
+    if (selectedMedia.value) return selectedMedia.value.id;
     return VALID_IDS.has(preferences.backgroundId)
       ? preferences.backgroundId
       : AMBIENT_OPTION.id;
   });
 
+  /** Imagem do fundo: arquivo local ou o pôster (1º quadro) do wallpaper animado. */
   const selectedUrl = computed(() => {
+    if (selectedMedia.value) return selectedMedia.value.posterUrl;
     const id = selectedId.value;
     if (!id) return '';
     return OPTIONS.find((option) => option.id === id)?.url ?? '';
@@ -98,5 +113,14 @@ export function useBackgrounds() {
     preferences.setBackground(id);
   }
 
-  return { options, selectedId, selectedUrl, select };
+  function selectRemote(wallpaper: Wallpaper): void {
+    preferences.setRemoteBackground(wallpaper);
+  }
+
+  /** Arquivo do wallpaper sumiu (excluído no painel): volta ao Padrão. */
+  function resetMissing(): void {
+    if (selectedMedia.value) preferences.setBackground(AMBIENT_OPTION.id);
+  }
+
+  return { options, selectedId, selectedUrl, selectedMedia, select, selectRemote, resetMissing };
 }

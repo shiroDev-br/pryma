@@ -24,6 +24,8 @@
       </div>
     </header>
 
+    <DeviceDiagnostics />
+
     <div class="space-y-3">
       <article
         v-for="section in sections"

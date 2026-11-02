@@ -53,7 +53,10 @@ export function useNextEpisode(media: () => MediaDetail | null) {
 
   function openNext(): void {
     if (!nextEpisode.value) return;
-    navigateTo(`/medias/${nextEpisode.value.slug}`);
+    // Troca no lugar: com push, cada episódio aberto pelo card de pausa virava
+    // uma entrada no histórico e o Voltar ia desfilando os episódios anteriores
+    // em vez de voltar pra página da série.
+    navigateTo(`/medias/${nextEpisode.value.slug}`, { replace: true });
   }
 
   return { nextEpisode, openNext };

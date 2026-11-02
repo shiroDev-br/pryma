@@ -5,14 +5,12 @@
     :class="
       selected
         ? 'border-transparent bg-[#081a42]/85'
-        : 'border-line/70 bg-[#061534]/70 hover:border-blue-dark/60 hover:bg-[#08193d]'
+        : 'live-row--idle border-line/70 bg-[#061534]/70'
     "
     :aria-label="`${number} ${media.title}`"
     :aria-current="selected ? 'true' : undefined"
     data-nav="row"
     :data-channel-id="media.id"
-    @mouseenter="emit('preview', media)"
-    @focus="emit('preview', media)"
   >
     <!-- Borda em gradiente (azul → violeta) + halo, igual ao item ativo das outras listagens. -->
     <span v-if="selected" class="row-ring pointer-events-none absolute" aria-hidden="true" />
@@ -64,7 +62,7 @@
       <Icon
         name="material-symbols:chevron-right-rounded"
         class="h-6 w-6 transition-colors duration-fast"
-        :class="selected ? 'text-ink' : 'text-ink-muted group-hover:text-blue-light'"
+        :class="selected ? 'text-ink' : 'live-row__chevron text-ink-muted'"
         aria-hidden="true"
       />
     </span>
@@ -83,10 +81,6 @@ const props = defineProps<{
   selected: boolean;
 }>();
 
-const emit = defineEmits<{
-  preview: [media: MediaSummary];
-}>();
-
 const logoFailed = ref(false);
 const initials = computed(() => channelInitials(props.media.title));
 </script>
@@ -102,6 +96,17 @@ const initials = computed(() => channelInitials(props.media.title));
 
 .live-row:focus-visible {
   border-radius: var(--radius-md);
+}
+
+/* Hover só fora do modo D-pad — senão a linha sob o ponteiro parado também
+   acende enquanto as setas andam (dois canais "marcados"). */
+body:not(.dpad-mode) .live-row--idle:hover {
+  border-color: rgba(11, 92, 255, 0.6);
+  background-color: #08193d;
+}
+
+body:not(.dpad-mode) .live-row--idle:hover .live-row__chevron {
+  color: var(--color-blue-light);
 }
 
 /* Borda em gradiente — a máscara recorta só o contorno. */

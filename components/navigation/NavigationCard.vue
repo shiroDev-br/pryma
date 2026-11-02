@@ -10,6 +10,8 @@
     :style="cardStyle"
     :aria-current="isActive ? 'true' : undefined"
     :aria-label="item.title"
+    :aria-hidden="ghost ? 'true' : undefined"
+    :tabindex="ghost ? -1 : undefined"
     @click="onClick"
     data-nav-card
   >
@@ -65,13 +67,13 @@
 
     <!-- Conteúdo -->
     <span
-      class="nav-card__body relative flex h-full flex-col items-center px-5 text-center"
-      :class="isActive ? 'justify-center py-5 sm:py-6' : 'justify-end pb-5 pt-4'"
+      class="nav-card__body relative flex h-full flex-col items-center text-center"
+      :class="isActive ? 'justify-center px-5 py-3' : 'justify-center px-4 py-3'"
     >
       <!-- Ícone: ativo = traço grande sem caixa; inativo = medalhão redondo. -->
       <span
         v-if="isActive"
-        class="flex h-[3.6rem] w-[3.6rem] shrink-0 items-center justify-center text-ink sm:h-[4.6rem] sm:w-[4.6rem]"
+        class="flex h-[2.6rem] w-[2.6rem] shrink-0 items-center justify-center text-ink"
         aria-hidden="true"
       >
         <img
@@ -84,7 +86,7 @@
       </span>
       <span
         v-else
-        class="flex h-[2.9rem] w-[2.9rem] shrink-0 items-center justify-center rounded-full border border-white/20 bg-[#050d1f]/80 text-ink"
+        class="flex h-[2.4rem] w-[2.4rem] shrink-0 items-center justify-center rounded-full border border-white/20 bg-[#050d1f]/80 text-ink"
         aria-hidden="true"
       >
         <img
@@ -102,29 +104,25 @@
         class="nav-card__title block max-w-full shrink-0 truncate font-semibold uppercase transition-colors duration-fast"
         :class="
           isActive
-            ? 'mt-2.5 text-[1.95rem] leading-none tracking-[0.05em] text-ink sm:mt-4'
-            : 'mt-3 text-[0.85rem] leading-none tracking-[0.1em] text-ink'
+            ? 'mt-2 text-[1.6rem] leading-none tracking-[0.05em] text-ink'
+            : 'mt-2.5 text-[0.85rem] leading-none tracking-[0.1em] text-ink'
         "
       >
         {{ item.title }}
       </span>
 
-      <!-- Descrição -->
+      <!-- Descrição — só no card ativo (os laterais, baixos, ficam em ícone + nome). -->
       <span
-        class="transition-colors duration-fast"
-        :class="
-          isActive
-            ? 'mt-2.5 max-w-[30ch] text-balance text-[0.8rem] leading-snug text-ink sm:mt-4'
-            : 'mt-2 line-clamp-3 max-w-[20ch] text-[0.65rem] leading-snug text-ink-muted'
-        "
+        v-if="isActive"
+        class="mt-1.5 max-w-[30ch] truncate text-[0.75rem] leading-snug text-ink"
       >
-        {{ isActive ? (item.longDescription ?? item.description) : item.description }}
+        {{ item.longDescription ?? item.description }}
       </span>
 
       <!-- Meta — só card ativo (quando o dado existe). -->
       <span
         v-if="isActive && item.meta"
-        class="mt-3 block text-[1.05rem] font-medium tabular-nums tracking-[0.1em] text-blue"
+        class="mt-1.5 block text-[0.95rem] font-medium tabular-nums tracking-[0.1em] text-blue"
       >
         {{ item.meta }}
       </span>
@@ -134,8 +132,8 @@
         class="flex shrink-0 items-center justify-center rounded-full border transition-colors duration-fast"
           :class="
             isActive
-              ? 'mt-3.5 h-9 w-9 border-[#4d9dff]/70 bg-[#0b3a9c]/60 text-ink shadow-[0_0_16px_rgba(22,136,255,0.45)] group-hover:bg-[#0b5cff]/70 sm:mt-5 sm:h-10 sm:w-10'
-              : 'mt-4 h-8 w-8 border-white/30 bg-black/25 text-ink group-hover:border-[#1688ff] group-hover:text-blue-light'
+              ? 'mt-2.5 h-8 w-8 border-[#4d9dff]/70 bg-[#0b3a9c]/60 text-ink shadow-[0_0_16px_rgba(22,136,255,0.45)] group-hover:bg-[#0b5cff]/70'
+              : 'mt-2.5 h-7 w-7 border-white/30 bg-black/25 text-ink group-hover:border-[#1688ff] group-hover:text-blue-light'
           "
         aria-hidden="true"
       >
@@ -154,6 +152,7 @@ import type { CSSProperties } from 'vue';
 import { NuxtLink } from '#components';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
+import { useUpdater } from '~/composables/useUpdater';
 import type { HomeMenuItem } from '~/composables/useHomeMenu';
 
 const props = defineProps<{
@@ -161,14 +160,18 @@ const props = defineProps<{
   /** Distância assinada em relação ao card ativo (0 = centro, ±1 = vizinho …). */
   offset: number;
   isActive: boolean;
+  /** Card de espera fora da borda (invisível, sem foco) — entra deslizando ao navegar. */
+  ghost?: boolean;
   /** Geometria do palco em px (calculada no pai — WebView antiga não resolve clamp/calc+var). */
-  metrics: { activeW: number; nearW: number; farW: number; gap: number };
+  metrics: { activeW: number; nearW: number; farW: number; gap: number; centerY: number };
 }>();
 
 const emit = defineEmits<{
   /** Pedido de ativação — o pai decide selecionar (lado) ou navegar (centro). */
   activate: [];
 }>();
+
+const updater = useUpdater();
 
 /** Link externo (ex.: Atualizações) abre no navegador do sistema. */
 const isExternal = computed(() => Boolean(props.item.externalUrl));
@@ -186,18 +189,25 @@ const cardBind = computed(() => {
   return props.item.to ? { to: props.item.to } : { type: 'button' as const };
 });
 
-/** Bandas de profundidade — apenas offsets até ±2 são renderizados. */
-const depth = computed(() => {
-  const abs = Math.abs(props.offset);
+type Depth = 'active' | 'near' | 'far';
+
+/** Cards baixos (~1/2 da proporção original) — mais fundo à mostra. Mesmo valor em HomeCarousel (ACTIVE_H_PER_W). */
+const HEIGHT_SCALE = 0.6;
+
+/** Banda de profundidade de uma distância ao centro (o fantasma usa a do mais distante). */
+function depthOf(abs: number): Depth {
   if (abs === 0) return 'active';
   if (abs === 1) return 'near';
   return 'far';
-});
+}
+
+const depth = computed(() => depthOf(Math.abs(props.offset)));
 
 const depthClass = computed(() => ({
   'z-30': depth.value === 'active',
   'z-20': depth.value === 'near',
-  'z-10': depth.value === 'far',
+  'z-10': depth.value === 'far' && !props.ghost,
+  'pointer-events-none': props.ghost,
 }));
 
 /**
@@ -210,26 +220,28 @@ const cardStyle = computed<CSSProperties>(() => {
   const sign = Math.sign(props.offset);
   const m = props.metrics;
 
-  const width = depth.value === 'active' ? m.activeW : depth.value === 'near' ? m.nearW : m.farW;
+  const widthOf = (band: Depth): number => (band === 'active' ? m.activeW : band === 'near' ? m.nearW : m.farW);
+  const width = widthOf(depth.value);
 
   // Altura derivada da largura (no lugar de aspect-ratio — Chrome <88 da TV
   // ignora a propriedade e o card colapsa para a altura do conteúdo).
   const RATIO: Record<string, number> = { active: 1.14, near: 0.78, far: 0.72 };
-  const height = Math.round(width / RATIO[depth.value]);
+  const height = Math.round((width / RATIO[depth.value]) * HEIGHT_SCALE);
 
   // Deslocamento = metade do card ativo + respiro + (larguras dos cards
   // intermediários + respiros) + metade deste card. Sem isso, o card de
   // profundidade 2 ficava POR CIMA do de profundidade 1.
-  const shift =
-    abs === 0
-      ? 0
-      : sign * (m.activeW / 2 + (abs - 1) * (m.nearW + m.gap) + m.gap + width / 2);
-  const brightness = abs === 0 ? 1 : abs === 1 ? 0.82 : 0.66;
+  let between = 0;
+  for (let step = 1; step < abs; step += 1) between += widthOf(depthOf(step)) + m.gap;
+  const shift = abs === 0 ? 0 : sign * (m.activeW / 2 + m.gap + between + width / 2);
+  // Fantasma: opacidade 0 — acende durante o deslize de entrada.
+  const brightness = props.ghost ? 0 : abs === 0 ? 1 : abs === 1 ? 0.82 : 0.66;
 
   // Faixa lateral plana (sem rotateY/translateZ): em TV em modo compat a
   // perspectiva 3D distorcia os cards — a referência dos notebooks é o
   // coverflow reto, deslizando no eixo X com wrap-around infinito.
   return {
+    top: `${m.centerY}px`,
     width: `${Math.round(width)}px`,
     height: `${height}px`,
     transform: `translate(-50%, -50%) translateX(${Math.round(shift)}px)`,
@@ -245,7 +257,10 @@ function onClick(event: MouseEvent): void {
     // Link externo: abre no navegador do sistema (Fora do app).
     if (isExternal.value && props.item.externalUrl) {
       event.preventDefault();
-      if (Capacitor.isNativePlatform()) {
+      // Atualizações: no APK vai pelo app Downloader (que instala o APK novo).
+      if (props.item.downloaderCode) {
+        void updater.openUpdates(props.item.downloaderCode, props.item.externalUrl);
+      } else if (Capacitor.isNativePlatform()) {
         void Browser.open({ url: props.item.externalUrl });
       } else {
         window.open(props.item.externalUrl, '_blank', 'noopener');
@@ -260,21 +275,18 @@ function onClick(event: MouseEvent): void {
 
 <style scoped>
 .nav-card {
-  /* Faixa plana — só translateX/width/height/opacity (sem preserve-3d). */
+  /* Faixa plana — só translateX/width/height/opacity (sem preserve-3d).
+     Deslize próprio, mais curto que o `--transition-slow` geral: o carrossel
+     acompanha toques rápidos do controle sem ficar para trás. */
+  --nav-card-slide: 210ms cubic-bezier(0.22, 0.61, 0.36, 1);
   transition:
-    transform var(--transition-slow),
-    width var(--transition-slow),
-    height var(--transition-slow),
-    opacity var(--transition-slow);
-  /* Otimização: contenção de layout/pintura + visibilidade de conteúdo */
+    transform var(--nav-card-slide),
+    width var(--nav-card-slide),
+    height var(--nav-card-slide),
+    opacity var(--nav-card-slide);
+  /* Contenção de layout/pintura. Sem content-visibility:auto: ela adiava o
+     desenho do card que entra pela borda — ele "piscava" no meio do deslize. */
   contain: layout paint style;
-  content-visibility: auto;
-  contain-intrinsic-size: 300px 260px;
-}
-
-.nav-card:focus-within,
-.nav-card:hover {
-  content-visibility: visible;
 }
 
 /* Borda em gradiente (azul elétrico → violeta) — máscara recorta só o contorno. */

@@ -1,24 +1,17 @@
 <template>
-  <Transition name="global-loading" appear>
-    <div
-      v-if="isLoading"
-      class="global-loading fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div class="flex flex-col items-center gap-4 text-center px-6">
-        <Icon name="svg-spinners:3-dots-fade" class="h-10 w-10 text-blue-dark" aria-hidden="true" />
-        <p class="text-lg font-medium text-ink">{{ loadingMessage }}</p>
-      </div>
-    </div>
+  <!-- Sem `appear`: com ele o SSR embrulha o overlay num `template` vazio e a
+       hidratação quebra ("content.getAttribute is not a function") se o
+       overlay ligar antes de a página hidratar. O overlay nunca está visível
+       no primeiro render, então `appear` não tinha efeito. -->
+  <Transition name="global-loading">
+    <BrandLoading v-if="isLoading" class="global-loading fixed inset-0 z-[100]" />
   </Transition>
 </template>
 
 <script setup lang="ts">
 import { useGlobalLoading } from '~/composables/useGlobalLoading';
 
-const { isLoading, loadingMessage } = useGlobalLoading();
+const { isLoading } = useGlobalLoading();
 </script>
 
 <style scoped>

@@ -217,6 +217,23 @@ export const mockMediaRepository: MediaRepository = {
     } satisfies NowNext;
   },
 
+  async fixtureChannels(fixtures) {
+    await simulateLatency();
+    const live = (await this.listMedia({ type: 'live', limit: 6 })).items;
+    return fixtures
+      .filter((_, index) => index % 2 === 0)
+      .map((fixture, index) => ({
+        fixtureId: fixture.id,
+        program: {
+          title: `${fixture.home} x ${fixture.away}`,
+          description: null,
+          startsAt: fixture.kickoff,
+          endsAt: new Date(Date.parse(fixture.kickoff) + 2 * 3600_000).toISOString(),
+        },
+        channels: live.slice(index % 3, (index % 3) + 2),
+      }));
+  },
+
   async search(params) {
     const query = sanitizeQuery(params.q);
     if (!isSearchableQuery(query)) {

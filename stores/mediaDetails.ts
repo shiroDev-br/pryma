@@ -27,10 +27,12 @@ export const useMediaDetailsStore = defineStore('mediaDetails', {
       this.pending[id] = true;
       try {
         const detail = await getRepositories().media.getMedia(id);
-        this.details = { ...this.details, [detail.id]: detail };
+        // Mutação no lugar: só quem lê ESTE id re-renderiza. Trocar o objeto
+        // inteiro invalidava todas as linhas da listagem a cada resposta.
+        this.details[detail.id] = detail;
       } catch {
         // Sem retry automático — a falha evita rebuscar o mesmo id em loop.
-        this.failed = { ...this.failed, [id]: true };
+        this.failed[id] = true;
       } finally {
         delete this.pending[id];
       }

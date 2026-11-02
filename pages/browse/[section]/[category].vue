@@ -47,18 +47,28 @@
     />
 
     <EmptyState
-      v-else-if="mediaList.items.value.length === 0"
+      v-else-if="visibleItems.length === 0"
       title="Nada por aqui ainda"
       description="Tente outra categoria ou volte mais tarde."
     />
 
     <template v-else>
-      <component
-        :is="sectionDef.type === 'live' ? TVLiveSplitView : BrowseSplitView"
-        :items="mediaList.items.value"
+      <TVLiveSplitView
+        v-if="sectionDef.type === 'live'"
+        :items="visibleItems"
         :category-slug="categorySlug"
         :type="sectionDef.type"
       />
+
+      <!-- Filmes/séries: grade de pôsteres (como na busca); o card abre a tela de detalhes. -->
+      <div
+        v-else
+        class="grid grid-cols-6 gap-4"
+        data-media-grid
+        @keydown="onGridKeydown"
+      >
+        <MediaCard v-for="media in visibleItems" :key="media.id" :media="media" />
+      </div>
 
       <div ref="sentinel" class="h-px" aria-hidden="true" />
 
@@ -81,10 +91,12 @@
 
 <script setup lang="ts">
 import { DEFAULT_PAGE_SIZE, DEFAULT_SORT, SECTIONS, isSectionKey } from '~/constants';
-import { isAdultCategory } from '~/utils/adult';
+import { isAdultCategory, isAdultItem } from '~/utils/adult';
+import { ALL_CATEGORY_SLUG, categoryBelongsToSection } from '~/utils/categorySections';
 import type { MediaSort } from '~/types';
-import BrowseSplitView from '~/components/browse/BrowseSplitView.vue';
 import TVLiveSplitView from '~/components/browse/TVLiveSplitView.vue';
+
+const { onGridKeydown } = useGridNav();
 
 const route = useRoute();
 
@@ -120,8 +132,11 @@ const canSort = computed(() => sectionDef.type !== 'live');
 /** Séries: a listagem agrupa episódios por `seriesId` — um card por série. */
 const isSeriesSection = computed(() => sectionDef.type === 'series');
 
+/** "Todos": a seção inteira, sem filtro de categoria. */
+const isAll = categorySlug === ALL_CATEGORY_SLUG;
+
 const mediaParams = computed(() => ({
-  category: categorySlug,
+  category: isAll ? undefined : categorySlug,
   type: sectionDef.type,
   sort: sort.value,
   limit: DEFAULT_PAGE_SIZE,
@@ -136,11 +151,30 @@ const category = computed(() =>
   categories.categories.value.find((item) => item.slug === categorySlug),
 );
 
-const heading = computed(() => category.value?.name ?? categorySlug);
+const heading = computed(() => {
+  if (isAll) return isSeriesSection.value ? 'Todas as séries' : 'Todos os filmes';
+  return category.value?.name ?? categorySlug;
+});
+
+/** Categorias desta seção (o "Todos" soma elas e herda o tipo do catálogo). */
+const sectionCategories = computed(() =>
+  categories.categories.value.filter(
+    (item) =>
+      categoryBelongsToSection(item, section) && (adultUnlocked.value || !isAdultCategory(item.slug)),
+  ),
+);
+
+/** "Todos" lista sem filtro de categoria — o adulto sai aqui até o desbloqueio. */
+const visibleItems = computed(() =>
+  isAll && !adultUnlocked.value
+    ? mediaList.items.value.filter((item) => !isAdultItem(item))
+    : mediaList.items.value,
+);
 
 /** Só acusa "não encontrada" quando as categorias carregaram e o slug não existe nelas. */
 const categoryMissing = computed(
   () =>
+    !isAll &&
     !mediaList.isPending.value &&
     !mediaList.error.value &&
     categories.error.value === null &&
@@ -149,11 +183,16 @@ const categoryMissing = computed(
 );
 
 const resultLabel = computed(() => {
-  const total = mediaList.total.value;
+  // "Todos": soma das categorias visíveis (o total da API conta o adulto).
+  const allTotal = sectionCategories.value.reduce((sum, item) => sum + item.itemCount, 0);
+  const total = isAll && allTotal > 0 ? allTotal : mediaList.total.value;
+  // Catálogo Xtream lista uma entrada por série; a lista legada, episódios.
+  const typed = isAll ? sectionCategories.value.some((item) => item.type) : category.value?.type;
+  const seriesNoun = typed ? ['série', 'séries'] : ['episódio', 'episódios'];
   const noun = isSeriesSection.value
     ? total === 1
-      ? 'episódio'
-      : 'episódios'
+      ? seriesNoun[0]
+      : seriesNoun[1]
     : total === 1
       ? 'título'
       : 'títulos';
@@ -163,6 +202,12 @@ const resultLabel = computed(() => {
 const sentinel = ref<HTMLElement | null>(null);
 useIntersectionObserver(sentinel, (isIntersecting) => {
   if (isIntersecting) mediaList.loadMore();
+});
+
+// Foco no primeiro card — o D-pad segue pela grade.
+onMounted(() => {
+  if (document.activeElement && document.activeElement !== document.body) return;
+  document.querySelector<HTMLElement>('[data-media-grid] [data-media-card]')?.focus({ preventScroll: true });
 });
 
 useHead({ title: computed(() => `Pryma — ${heading.value}`) });

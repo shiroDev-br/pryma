@@ -1,23 +1,23 @@
 <template>
   <NuxtLink
-    :to="mediaHref(media)"
-    class="group relative block w-full overflow-hidden rounded-md border border-line/70 bg-surface transition duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus"
+    :to="detailHref(media)"
+    class="media-card group relative block w-full overflow-hidden rounded-md border border-line/70 bg-surface transition-[transform,border-color] duration-normal focus-visible:shadow-focus"
     :aria-label="media.title"
     data-media-card
   >
-    <div class="relative aspect-[2/3] w-full overflow-hidden bg-elevated">
+    <div class="ratio-2x3 relative aspect-[2/3] w-full overflow-hidden bg-elevated">
       <img
         v-if="!imageFailed && media.thumbnailUrl"
-        :src="media.thumbnailUrl"
+        :src="tmdbSized(media.thumbnailUrl, 'w342')"
         :alt="media.title"
         loading="lazy"
         decoding="async"
-        class="h-full w-full object-cover transition-transform duration-normal group-hover:scale-[1.04]"
+        class="absolute inset-0 h-full w-full media-card__poster object-cover transition-transform duration-normal"
         @error="imageFailed = true"
       />
       <div
         v-else
-        class="flex h-full w-full items-center justify-center text-blue-dark"
+        class="absolute inset-0 flex items-center justify-center text-blue-dark"
         aria-hidden="true"
       >
         <Icon name="material-symbols:theaters" class="h-10 w-10" />
@@ -42,7 +42,7 @@
 
       <div class="absolute inset-x-0 bottom-0 p-3">
         <p
-          class="truncate text-sm font-semibold text-ink drop-shadow-sm transition-colors duration-fast group-hover:text-blue-light"
+          class="truncate text-sm font-semibold text-ink media-card__title drop-shadow-sm transition-colors duration-fast"
         >
           {{ media.title }}
         </p>
@@ -63,8 +63,9 @@
 </template>
 
 <script setup lang="ts">
+import { tmdbSized } from '~/utils/imageSize';
 import { formatDuration } from '~/utils/format';
-import { mediaHref } from '~/utils/media';
+import { detailHref } from '~/utils/media';
 import type { MediaSummary } from '~/types';
 
 const props = defineProps<{
@@ -77,3 +78,22 @@ const durationLabel = computed(() =>
   props.media.isLive ? null : formatDuration(props.media.durationSec),
 );
 </script>
+
+<style scoped>
+/* Hover só fora do modo D-pad: na TV o ponteiro fica parado sobre a grade e o
+   card embaixo dele ficava "levantado" junto do card com o cursor 2D — dois
+   títulos marcados. */
+body:not(.dpad-mode) .media-card:hover {
+  transform: translateY(-0.25rem);
+  border-color: rgba(var(--color-blue-dark-rgb), 0.7);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+body:not(.dpad-mode) .media-card:hover .media-card__poster {
+  transform: scale(1.04);
+}
+
+body:not(.dpad-mode) .media-card:hover .media-card__title {
+  color: var(--color-blue-light);
+}
+</style>

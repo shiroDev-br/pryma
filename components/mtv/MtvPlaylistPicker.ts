@@ -1,4 +1,4 @@
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, nextTick, onMounted, watch, type PropType } from 'vue';
 import type { MtvPlaylist } from '~/types';
 
 export default defineComponent({
@@ -16,7 +16,20 @@ export default defineComponent({
     retry: (): boolean => true,
   },
 
-  setup(_props, { emit }) {
+  setup(props, { emit }) {
+    /** Foco no 1º card quando a lista aparece (fim da abertura, ou depois do
+     *  carregamento): sem isto o foco ficava no <body> e o OK não fazia nada.
+     *  A volta do player é do plugins/focus-restore (data-focus-restore). */
+    function focusFirst(): void {
+      void nextTick(() => {
+        const active = document.activeElement;
+        if (active && active !== document.body) return;
+        document.querySelector<HTMLElement>('.mtv-picker [data-focus-restore]')?.focus({ preventScroll: true });
+      });
+    }
+    onMounted(focusFirst);
+    watch(() => props.playlists.length, focusFirst);
+
     /** Rótulo da era — prefere 2000s se houver, senão 1990s→90. */
     function eraLabel(name: string): string {
       // Busca todos os números de 1-4 dígitos

@@ -55,6 +55,7 @@ function enterDpadMode(): void {
 }
 
 import { pickSpatialBest } from '~/utils/spatial';
+import { createKeyRepeatGate } from '~/utils/keyRepeatGate';
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -131,13 +132,18 @@ function invalidateCandidates(): void {
   }, 150);
 }
 
-function collectElements(): HTMLElement[] {
-  if (cachedElements) return cachedElements;
+/** Modal que estava aberto quando o cache foi montado. */
+let cachedModal: HTMLElement | null = null;
 
-  // Se houver modal dialog aberto, limita candidatos a ele.
+function collectElements(): HTMLElement[] {
+  // Se houver modal dialog aberto, limita candidatos a ele. Conferido a cada
+  // tecla: o cache só invalida 150ms após a mutação, e uma seta logo depois de
+  // abrir o modal ainda navegaria pela página de fundo.
   const modal = document.querySelector<HTMLElement>(
     '[role="dialog"][aria-modal="true"]:not([hidden]):not([inert])',
   );
+  if (cachedElements && modal === cachedModal) return cachedElements;
+  cachedModal = modal;
   const nodes: NodeListOf<HTMLElement> = modal
     ? modal.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
     : document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
@@ -163,6 +169,39 @@ function measure(elements: HTMLElement[]): { element: HTMLElement; rect: DOMRect
 
 /* ── Movimento ─────────────────────────────────────────────────────────── */
 
+/** Barra fixa (header do PRYMA): fica na tela enquanto o conteúdo rola por baixo. */
+const CHROME_SELECTOR = '[data-spatial-chrome]';
+
+/**
+ * Header fixo × conteúdo rolado: com a lista rolada, os cards de cima ficam
+ * fora da tela — mais longe que o header. Sem esta regra, ↑ na 1ª fileira
+ * visível pulava pro header, e ↑ no header "voltava" pros cards fora da tela.
+ *  - no conteúdo: ↑ sobe pro header só quando não há mais conteúdo acima;
+ *  - no header: ←/→/↑ ficam no header; só ↓ desce pro conteúdo.
+ */
+function pickInDirection(
+  current: HTMLElement,
+  currentRect: DOMRect,
+  candidates: { element: HTMLElement; rect: DOMRect }[],
+  direction: Direction,
+): HTMLElement | null {
+  const inChrome = (element: HTMLElement) => element.closest(CHROME_SELECTOR) !== null;
+  const chrome = candidates.filter((candidate) => inChrome(candidate.element));
+  if (chrome.length === 0) return pickSpatialBest(currentRect, candidates, direction);
+
+  if (inChrome(current)) {
+    if (direction !== 'down') return pickSpatialBest(currentRect, chrome, direction);
+    return pickSpatialBest(currentRect, candidates, direction);
+  }
+
+  // O header fica no topo: só ↑ sobe pra ele. ←/→ na ponta do conteúdo
+  // (ex.: "Favoritar" no detalhe) pulavam pro sino/menu do canto da tela.
+  const content = candidates.filter((candidate) => !inChrome(candidate.element));
+  const inContent = pickSpatialBest(currentRect, content, direction);
+  if (inContent || direction !== 'up') return inContent;
+  return pickSpatialBest(currentRect, chrome, direction);
+}
+
 /** Foca o próximo candidato na direção. Rolagem sempre instantânea: em chip
  *  fraco a rolagem suave disputa repaint com o foco e parece "travada". */
 function focusNext(current: HTMLElement | null, direction: Direction): boolean {
@@ -187,7 +226,7 @@ function focusNext(current: HTMLElement | null, direction: Direction): boolean {
   }
 
   const currentRect = current.getBoundingClientRect();
-  const best = pickSpatialBest(currentRect, candidates, direction);
+  const best = pickInDirection(current, currentRect, candidates, direction);
   if (!best) return false;
 
   best.focus({ preventScroll: true });
@@ -216,5 +255,16 @@ function onKeydown(event: KeyboardEvent): void {
     if (!(direction === 'up' || direction === 'down') || !isSingleLineInput(active)) return;
   }
 
-  if (focusNext(active, direction)) event.preventDefault();
+  if (repeatGate.shouldDrop(event)) {
+    event.preventDefault();
+    return;
+  }
+
+  if (focusNext(active, direction)) {
+    event.preventDefault();
+    repeatGate.mark();
+  }
 }
+
+/** Seta segurada: um passo por quadro, sem fila (ver utils/keyRepeatGate). */
+const repeatGate = createKeyRepeatGate();

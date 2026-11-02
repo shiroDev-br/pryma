@@ -42,6 +42,13 @@ export interface MediaDetail extends MediaSummary {
   streamCount: number;
   /** Programação do canal (EPG) — datas em ISO 8601. */
   guide: GuideProgram[] | null;
+  /** Id do trailer no YouTube (filmes/séries do provedor) — ausente quando não há. */
+  trailerId?: string | null;
+  /** Arte larga de fundo (backdrop) — a tela de detalhes cai no pôster sem ela. */
+  backdropUrl?: string | null;
+  /** Nota do provedor (0–10). */
+  rating?: number | null;
+  director?: string | null;
 }
 
 export interface Category {
@@ -49,9 +56,16 @@ export interface Category {
   name: string;
   slug: string;
   itemCount: number;
+  /** Seção da categoria quando o catálogo vem do servidor Xtream; ausente na lista legada. */
+  type?: MediaType | null;
 }
 
 export type PlaybackProtocol = 'hls' | 'dash' | 'file';
+
+export interface PlaybackSource {
+  url: string;
+  protocol: PlaybackProtocol;
+}
 
 export interface PlaybackSession {
   mediaId: string;
@@ -59,6 +73,8 @@ export interface PlaybackSession {
   protocol: PlaybackProtocol;
   headers: Record<string, string> | null;
   expiresAt: string;
+  /** Mesmo canal em outro formato (ao vivo Xtream: .ts ↔ .m3u8) — fallback quando trava. */
+  alternates?: PlaybackSource[];
 }
 
 export interface Suggestion {
@@ -99,6 +115,22 @@ export interface NowNext {
 }
 
 /** Programa da grade (EPG) de um canal ao vivo. Datas em ISO 8601. */
+/** Jogo enviado à API para achar os canais que o transmitem (EPG). */
+export interface FixtureQuery {
+  id: number;
+  home: string;
+  away: string;
+  /** Início do jogo em ISO (UTC). */
+  kickoff: string;
+}
+
+/** Canais do usuário que transmitem um jogo ao vivo, melhor primeiro. */
+export interface FixtureChannels {
+  fixtureId: number;
+  program: GuideProgram;
+  channels: MediaSummary[];
+}
+
 export interface GuideProgram {
   title: string;
   description: string | null;
@@ -106,6 +138,19 @@ export interface GuideProgram {
   endsAt: string;
   /** Marcador interno: true = está no ar agora */
   isNow?: boolean;
+}
+
+/* ── YouTube (feed da aba YouTube) ────────────────────────────────────── */
+
+/** Vídeo do feed — só os que tocam no player embutido (sem Shorts/ao vivo). */
+export interface YoutubeVideo {
+  videoId: string;
+  title: string;
+  channelTitle: string;
+  thumbnailUrl: string;
+  durationSec: number | null;
+  viewCount: number | null;
+  publishedAt: string | null;
 }
 
 /* ── MTV (§6.14/6.15) ─────────────────────────────────────────────────── */

@@ -5,17 +5,6 @@
   background: rgba(3, 9, 24, 0.55);
 }
 
-/* Linha "grupo atual" — mesmo degradê da aba ativa. */
-.group-row {
-  border-radius: var(--radius-md);
-  background: linear-gradient(90deg, #1e55e6 0%, #4a43d8 100%);
-  box-shadow: 0 8px 24px rgba(30, 85, 230, 0.28);
-}
-
-.group-row:focus-visible {
-  border-radius: var(--radius-md);
-}
-
 /* Slide transition para categorias e guias da coluna. */
 .slide-enter-active,
 .slide-leave-active {
@@ -28,4 +17,12 @@
   transform: translateY(-10px);
   max-height: 0;
   overflow: hidden;
+}
+
+/* Painel — fundo opaco. Sem backdrop-filter: em colunas de altura inteira,
+   o blur era recalculado com a lista rolando atrás (travava D-pad e rolagem). */
+.live-panel {
+  border: 1px solid rgba(124, 154, 255, 0.14);
+  border-radius: 1.35rem;
+  background: linear-gradient(180deg, rgba(8, 22, 52, 0.96), rgba(4, 12, 32, 0.98));
 }

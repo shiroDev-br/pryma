@@ -24,7 +24,7 @@
     <div v-else class="relative">
       <ul
         ref="rail"
-        class="category-rail -mx-2 px-2 py-2"
+        class="category-rail -mx-3 px-3 py-3"
         role="list"
         aria-label="Categorias"
         @scroll.passive="updateEdges"
@@ -38,12 +38,37 @@
           />
         </li>
 
+        <!-- Card "Todos" — a seção inteira numa lista só, sem dividir por categoria. -->
+        <li v-if="sectionDef.type !== 'live'" class="min-w-0">
+          <CategoryCard
+            data-category-card
+            :category="allCategory"
+            :to="`/browse/${section}/${ALL_CATEGORY_SLUG}`"
+          />
+        </li>
+
+        <!-- Card "Favoritos" — só filmes/séries; sempre visível (vazio explica como favoritar). -->
+        <li v-if="sectionDef.type !== 'live'" class="min-w-0">
+          <NuxtLink
+            data-category-card
+            :to="`/browse/${section}/favoritos`"
+            class="group relative block h-[6.5rem] w-[9.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-[transform,border-color] duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus sm:h-[9rem] sm:w-[11rem] md:h-[10.5rem] md:w-[12.5rem]"
+            aria-label="Favoritos"
+          >
+            <div class="relative flex h-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-[#ffc94d]/20 to-blue/10 p-3 sm:gap-2 sm:p-4">
+              <Icon name="material-symbols:star-rounded" class="h-8 w-8 text-[#ffc94d] sm:h-10 sm:w-10 md:h-12 md:w-12" aria-hidden="true" />
+              <p class="text-center text-xs font-semibold text-ink sm:text-sm">Favoritos</p>
+              <p class="text-center text-[0.62rem] text-ink-muted sm:text-[0.7rem]">{{ sectionDef.type === 'series' ? 'Suas séries marcadas' : 'Seus filmes marcados' }}</p>
+            </div>
+          </NuxtLink>
+        </li>
+
         <!-- Card "Continuar assistindo" — só filmes/séries, só se houver progresso local. -->
         <li v-if="sectionDef.type !== 'live' && hasRecents" class="min-w-0">
           <NuxtLink
             data-category-card
             :to="`/browse/${section}/${RECENTS_SLUG}`"
-            class="group relative block h-[6.5rem] w-[9.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-all duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus sm:h-[9rem] sm:w-[11rem] md:h-[10.5rem] md:w-[12.5rem]"
+            class="group relative block h-[6.5rem] w-[9.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-[transform,border-color] duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus sm:h-[9rem] sm:w-[11rem] md:h-[10.5rem] md:w-[12.5rem]"
             aria-label="Continuar assistindo"
           >
             <div class="relative flex h-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-blue-dark/40 to-blue/10 p-3 sm:gap-2 sm:p-4">
@@ -89,15 +114,17 @@
 
 <script setup lang="ts">
 import { SECTIONS, isSectionKey } from '~/constants';
-import { categoryBelongsToSection } from '~/utils/categorySections';
+import { ALL_CATEGORY_SLUG, categoryBelongsToSection } from '~/utils/categorySections';
+import type { Category } from '~/types';
 import { isAdultCategory } from '~/utils/adult';
 import { pickSpatialBest } from '~/utils/spatial';
 import { RECENTS_SLUG, hasRecentProgress } from '~/utils/recentlyWatched';
 
 const route = useRoute();
 
-/** Troca de seção (/browse/filmes → /browse/series) remonta a página com a seção nova. */
-definePageMeta({ key: (route) => route.fullPath });
+/** Troca de seção (/browse/filmes → /browse/series) remonta a página com a seção nova.
+ *  Só o caminho: `?full=1` (prévia da TV em tela cheia) não pode remontar a tela. */
+definePageMeta({ key: (route) => route.path });
 
 const sectionParam = String(route.params.section);
 if (!isSectionKey(sectionParam)) {
@@ -116,10 +143,19 @@ const adultUnlocked = useState<boolean>('adult.unlocked', () => false);
 const sectionCategories = computed(() =>
   categories.categories.value.filter(
     (category) =>
-      categoryBelongsToSection(category.slug, section) &&
+      categoryBelongsToSection(category, section) &&
       (adultUnlocked.value || !isAdultCategory(category.slug)),
   ),
 );
+
+/** Card "Todos": soma das categorias visíveis da seção (adulto fora até desbloquear). */
+const allCategory = computed<Category>(() => ({
+  id: '__todos__',
+  name: section === 'series' ? 'Todas as séries' : 'Todos os filmes',
+  slug: ALL_CATEGORY_SLUG,
+  itemCount: sectionCategories.value.reduce((sum, category) => sum + category.itemCount, 0),
+  type: sectionDef.type,
+}));
 
 /** Mostra o card "Continuar assistindo" só se houver progresso local (client-side). */
 const hasRecents = ref(false);
@@ -174,13 +210,43 @@ function onWheel(event: WheelEvent): void {
   element.scrollLeft += event.deltaY;
 }
 
-function focusCard(index: number, repeat = false): void {
+/** Colunas visíveis do trilho (`--cols` no CSS: 2 em retrato, 5 em landscape). */
+function visibleColumns(): number {
+  const element = rail.value;
+  if (!element) return 1;
+  return Math.max(1, Number.parseInt(getComputedStyle(element).getPropertyValue('--cols'), 10) || 1);
+}
+
+/**
+ * Trilho em páginas fixas (como a home): o foco anda pelos cards sem mexer na
+ * tela e, ao passar da borda, o trilho salta uma página inteira de uma vez.
+ * Antes cada seta rolava suave uma coluna — na TV a rolagem constante engasgava.
+ */
+function showPageOf(index: number): void {
+  const element = rail.value;
+  const list = cards();
+  const card = list[index]?.closest('li');
+  if (!element || !card) return;
+  const box = element.getBoundingClientRect();
+  const rect = card.getBoundingClientRect();
+  if (rect.left >= box.left - 1 && rect.right <= box.right + 1) return;
+  const cols = visibleColumns();
+  const pageStart = Math.floor(Math.floor(index / ROWS) / cols) * cols * ROWS;
+  const anchor = list[pageStart]?.closest('li');
+  if (!anchor) return;
+  const padding = Number.parseFloat(getComputedStyle(element).paddingLeft) || 0;
+  const delta = anchor.getBoundingClientRect().left - element.getBoundingClientRect().left - padding;
+  if (Math.abs(delta) > 1) element.scrollLeft += delta;
+}
+
+function focusCard(index: number): void {
   const target = cards()[index];
   if (!target) return;
   lastIndex = index;
   target.focus({ preventScroll: true });
-  // Autorepeat do remote: rolagem instantânea (suave empilhada trava a TV).
-  target.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: repeat ? 'auto' : 'smooth' });
+  showPageOf(index);
+  // Card no fim da página pode estar abaixo da dobra: só a rolagem vertical, sem animação.
+  target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
 }
 
 function focusHighlights(): void {
@@ -197,13 +263,11 @@ function onKeydown(event: KeyboardEvent): void {
   const target = event.target as HTMLElement | null;
   if (!target) return;
 
-  const repeat = event.repeat;
-
   // Vindo da faixa inferior: ↑ volta para o último card focado.
   if (target.closest('[data-highlights]')) {
     if (key === 'ArrowUp') {
       event.preventDefault();
-      focusCard(lastIndex, repeat);
+      focusCard(lastIndex);
     }
     return;
   }
@@ -225,9 +289,11 @@ function onKeydown(event: KeyboardEvent): void {
     return;
   }
 
+  // ↑ na fileira de cima: o motor global sobe pro header (sino, menu, logo).
+  if (key === 'ArrowUp' && next < 0) return;
   event.preventDefault();
   if (next < 0 || next === index) return;
-  focusCard(next, repeat);
+  focusCard(next);
 }
 
 function focusFirstCard(): void {
@@ -269,7 +335,9 @@ onBeforeUnmount(() => {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
-  scroll-padding-inline: 0.5rem;
+  scroll-padding-inline: 0.75rem;
+  /* Salto de página instantâneo (a rolagem suave é só das setas do mouse). */
+  scroll-behavior: auto;
   scrollbar-width: none;
 }
 

@@ -5,6 +5,8 @@ import type { GuideProgram } from '~/types';
 
 const TICK_MS = 30_000;
 const UPCOMING_LIMIT = 4;
+/** Tempo parado no canal antes de buscar a programação. */
+const GUIDE_DWELL_MS = 300;
 
 interface TimedProgram extends GuideProgram {
   start: number;
@@ -56,12 +58,18 @@ export function useChannelGuide(channelId: MaybeRefOrGetter<string | null>) {
     }
   }
 
+  /** Passando por canais com a seta, cada parada disparava uma requisição de
+   *  programação — só busca depois que o canal fica parado um instante. */
+  let dwellTimer: ReturnType<typeof setTimeout> | undefined;
+
   watch(
     () => toValue(channelId),
-    async (id) => {
+    (id) => {
+      clearTimeout(dwellTimer);
       programs.value = [];
+      requestId += 1; // resposta do canal anterior que chegar agora é descartada
       if (!id || import.meta.server) return;
-      await loadGuide(id);
+      dwellTimer = setTimeout(() => void loadGuide(id), GUIDE_DWELL_MS);
     },
     { immediate: true },
   );
@@ -73,7 +81,10 @@ export function useChannelGuide(channelId: MaybeRefOrGetter<string | null>) {
     }, TICK_MS);
   });
 
-  onBeforeUnmount(() => clearInterval(timer));
+  onBeforeUnmount(() => {
+    clearInterval(timer);
+    clearTimeout(dwellTimer);
+  });
 
   const current = computed(
     () => programs.value.find((program) => program.start <= now.value && now.value < program.end) ?? null,

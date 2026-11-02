@@ -1,0 +1,498 @@
+/* ── Painel de staff (/admin) ─────────────────────────────────────────────
+   CSS global (nuxt.config `css`) — NÃO usar <style scoped> no painel: ele roda
+   sem SSR e o CSS de componente não chega ao navegador em produção. Mesmos
+   tokens do app (main.css), densidade de ferramenta. Tudo prefixado
+   (adm-/admin-/status-) para não vazar no app. */
+
+.admin-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, rgba(22, 136, 255, 0.08), transparent 70%),
+    var(--color-bg);
+  color: var(--color-text);
+}
+
+.adm-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(6, 20, 45, 0.72);
+}
+
+.adm-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.adm-input,
+.adm-select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  background: rgba(2, 8, 23, 0.7);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.adm-input::placeholder {
+  color: rgba(169, 185, 214, 0.45);
+}
+
+.adm-select {
+  appearance: none;
+  padding-right: 2rem;
+  background-image: linear-gradient(45deg, transparent 50%, #a9b9d6 50%),
+    linear-gradient(135deg, #a9b9d6 50%, transparent 50%);
+  background-position: calc(100% - 1rem) 55%, calc(100% - 0.7rem) 55%;
+  background-size: 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+}
+
+.adm-select option {
+  background: var(--color-surface);
+}
+
+.adm-input:focus,
+.adm-select:focus {
+  outline: none;
+  border-color: var(--color-blue-dark);
+  box-shadow: 0 0 0 0.15rem rgba(77, 157, 255, 0.35);
+}
+
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: rgba(10, 31, 69, 0.6);
+  transition: background var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.adm-btn:hover:not(:disabled) {
+  border-color: rgba(169, 185, 214, 0.35);
+  background: rgba(10, 31, 69, 0.95);
+}
+
+.adm-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.15rem rgba(77, 157, 255, 0.55);
+}
+
+.adm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adm-btn--primary {
+  border-color: transparent;
+  background: var(--color-blue-dark);
+}
+
+.adm-btn--primary:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--color-blue);
+}
+
+.adm-btn--sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+}
+
+.adm-btn--link {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-blue-light);
+}
+
+.adm-btn--link:hover:not(:disabled) {
+  border-color: transparent;
+  background: rgba(22, 136, 255, 0.1);
+}
+
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.adm-table th {
+  padding: 0.7rem 1rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.adm-table td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(169, 185, 214, 0.07);
+}
+
+.adm-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.adm-table tbody tr:hover td {
+  background: rgba(22, 136, 255, 0.04);
+}
+
+.adm-num,
+.adm-table .adm-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-alert {
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+}
+
+.adm-alert--error {
+  color: var(--color-danger);
+  border-color: rgba(223, 102, 102, 0.4);
+  background: rgba(223, 102, 102, 0.1);
+}
+
+.adm-alert--success {
+  color: #6fd3a0;
+  border-color: rgba(111, 211, 160, 0.35);
+  background: rgba(111, 211, 160, 0.08);
+}
+
+.adm-btn--danger {
+  border-color: transparent;
+  background: #c94a4a;
+}
+
+.adm-btn--danger:hover:not(:disabled) {
+  border-color: transparent;
+  background: #df6666;
+}
+
+.adm-btn--ghost-danger {
+  color: var(--color-danger);
+}
+
+.adm-btn--ghost-danger:hover:not(:disabled) {
+  border-color: rgba(223, 102, 102, 0.45);
+  background: rgba(223, 102, 102, 0.1);
+}
+
+/* Confirmação (AdminConfirmDialog). */
+.adm-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 8, 23, 0.72);
+}
+
+.adm-dialog {
+  width: 100%;
+  max-width: 28rem;
+  padding: 1.5rem;
+  background: var(--color-surface);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* Senha gerada (mostrada uma vez). */
+.adm-secret {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px dashed rgba(111, 211, 160, 0.45);
+  border-radius: var(--radius-sm);
+  background: rgba(2, 8, 23, 0.6);
+}
+
+.adm-secret > span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  word-break: break-all;
+}
+
+/* Navegação do topo (layouts/admin.vue). */
+.admin-nav-link {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.admin-nav-link:hover {
+  color: var(--color-text);
+  background: rgba(169, 185, 214, 0.06);
+}
+
+.admin-nav-link--active {
+  color: var(--color-text);
+  background: rgba(22, 136, 255, 0.14);
+}
+
+/* Status de lista (AdminStatusBadge). */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.status-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.status-badge--ready {
+  color: #6fd3a0;
+  border-color: rgba(111, 211, 160, 0.3);
+  background: rgba(111, 211, 160, 0.08);
+}
+
+.status-badge--syncing,
+.status-badge--pending {
+  color: var(--color-blue-light);
+  border-color: rgba(77, 157, 255, 0.3);
+  background: rgba(77, 157, 255, 0.08);
+}
+
+.status-badge--failed {
+  color: var(--color-danger);
+  border-color: rgba(223, 102, 102, 0.35);
+  background: rgba(223, 102, 102, 0.08);
+}
+
+/* Aviso neutro (orientação da tela). */
+.adm-alert--info {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  background: rgba(169, 185, 214, 0.04);
+}
+
+/* Abas do cabeçalho (Wallpapers: Biblioteca | DesktopHut). */
+.adm-tabs {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(2, 8, 23, 0.5);
+}
+
+.adm-tab {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-radius: calc(var(--radius-sm) - 2px);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.adm-tab:hover {
+  color: var(--color-text);
+}
+
+.adm-tab--active {
+  color: var(--color-text);
+  background: rgba(22, 136, 255, 0.18);
+}
+
+/* Wallpapers — miniatura na tabela e grade de escolha do DesktopHut. */
+.wp-thumb-sm {
+  width: 6rem;
+  height: 3.375rem;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.wp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  gap: 0.85rem;
+}
+
+.wp-card {
+  display: block;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(6, 20, 45, 0.72);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.wp-card:hover {
+  border-color: var(--color-blue-dark);
+}
+
+.wp-card:focus-within {
+  box-shadow: 0 0 0 2px rgba(22, 136, 255, 0.55);
+}
+
+.wp-card--selected {
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 1px var(--color-blue);
+}
+
+.wp-card--done {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.wp-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: var(--color-surface);
+}
+
+.wp-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wp-flag {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 999px;
+  color: var(--color-text);
+  background: rgba(2, 8, 23, 0.85);
+}
+
+.wp-check {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  color: var(--color-blue);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+/* Telas estreitas (celular/tablet em pé): navegação numa linha própria,
+   abaixo de logo + usuário; menos respiro lateral. */
+@media (max-width: 760px) {
+  .admin-header,
+  .admin-main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .admin-main {
+    padding-top: 1.5rem;
+  }
+
+  .admin-nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* Celular e tablet em pé: cada linha vira um cartão (rótulo à esquerda, valor à direita).
+   Media query em CSS puro — os breakpoints do Tailwind estão neutralizados no
+   projeto (escala por rem para TV). */
+@media (max-width: 900px) {
+  .adm-table--stack thead {
+    display: none;
+  }
+
+  .adm-table--stack,
+  .adm-table--stack tbody,
+  .adm-table--stack tr,
+  .adm-table--stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .adm-table--stack tr {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(169, 185, 214, 0.1);
+  }
+
+  .adm-table--stack tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .adm-table--stack td,
+  .adm-table--stack .adm-num {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    border: 0;
+    text-align: right;
+  }
+
+  .adm-table--stack td > * {
+    min-width: 0;
+  }
+
+  .adm-table--stack td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 1.6rem;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--color-text-muted);
+  }
+
+  .adm-table--stack td:not([data-label]) {
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+  }
+
+  .adm-table--stack td > .flex-col {
+    align-items: flex-end;
+  }
+
+  .adm-table tbody tr:hover td {
+    background: transparent;
+  }
+}

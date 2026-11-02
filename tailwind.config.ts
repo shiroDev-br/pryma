@@ -1,5 +1,21 @@
 import type { Config } from 'tailwindcss';
 
+/** Cor do tema que aceita opacidade: `bg-surface/80` → rgba(var(--color-surface-rgb), 0.8). */
+const themeColor = (name: string): string => `rgba(var(--color-${name}-rgb), <alpha-value>)`;
+
+/** Opacidade própria da borda (--color-border no main.css). */
+const BORDER_ALPHA = 0.14;
+
+/**
+ * A borda já é translúcida: `border-line` continua exatamente --color-border e
+ * `border-line/70` vira 70% dessa opacidade (não 70% de branco-azulado opaco).
+ */
+const lineColor = ({ opacityValue }: { opacityValue?: string }): string => {
+  const ratio = Number(opacityValue);
+  if (opacityValue === undefined || !Number.isFinite(ratio)) return 'var(--color-border)';
+  return `rgba(var(--color-border-rgb), ${+(ratio * BORDER_ALPHA).toFixed(3)})`;
+};
+
 /** Alias "~" aponta para a raiz do projeto. */
 const root = new URL('.', import.meta.url).pathname;
 const src = (p: string) => `${root}${p}`;
@@ -40,25 +56,28 @@ export default <Partial<Config>>{
       '2xl': '99999px',
     },
     extend: {
+      // Cores com <alpha-value> (via --*-rgb do main.css): só assim o Tailwind
+      // gera as variantes com opacidade (bg-surface/80, border-blue/50…).
       colors: {
-        bg: 'var(--color-bg)',
-        surface: 'var(--color-surface)',
-        elevated: 'var(--color-surface-elevated)',
-        line: 'var(--color-border)',
+        bg: themeColor('bg'),
+        surface: themeColor('surface'),
+        elevated: themeColor('surface-elevated'),
+        // Cor em função é suportada pelo Tailwind 3, mas não pelos tipos dele.
+        line: lineColor as unknown as string,
         blue: {
-          DEFAULT: 'var(--color-blue)',
-          light: 'var(--color-blue-light)',
-          dark: 'var(--color-blue-dark)',
+          DEFAULT: themeColor('blue'),
+          light: themeColor('blue-light'),
+          dark: themeColor('blue-dark'),
         },
         accent: {
-          DEFAULT: 'var(--color-accent)',
-          light: 'var(--color-accent-light)',
+          DEFAULT: themeColor('accent'),
+          light: themeColor('accent-light'),
         },
         ink: {
-          DEFAULT: 'var(--color-text)',
-          muted: 'var(--color-text-muted)',
+          DEFAULT: themeColor('text'),
+          muted: themeColor('text-muted'),
         },
-        danger: 'var(--color-danger)',
+        danger: themeColor('danger'),
       },
       borderRadius: {
         sm: 'var(--radius-sm)',

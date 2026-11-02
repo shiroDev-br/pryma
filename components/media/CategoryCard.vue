@@ -1,11 +1,11 @@
 <template>
   <NuxtLink
     :to="to"
-    class="category-card group relative block aspect-[3/2] min-h-[8.5rem] overflow-hidden rounded-lg border border-white/10 bg-surface transition-[transform,border-color,box-shadow] duration-normal [container-type:inline-size] hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-card focus:outline-none focus-visible:border-accent focus-visible:shadow-focus"
+    class="category-card group relative block aspect-[3/2] min-h-[8.5rem] overflow-hidden rounded-lg border border-white/10 bg-surface transition-[transform,border-color] duration-normal [container-type:inline-size] focus:outline-none focus-visible:border-accent focus-visible:shadow-focus"
   >
     <!-- Degradê da categoria — base permanente (sobrevive se a arte falhar no WebView). -->
     <div
-      class="absolute inset-0 transition-transform duration-slow ease-stage group-hover:scale-[1.06]"
+      class="absolute inset-0 category-card__art transition-transform duration-slow ease-stage"
       :style="{ background: gradient }"
       aria-hidden="true"
     />
@@ -14,7 +14,7 @@
          nem de lazy-load, que quebram em WebViews antigos de celular. -->
     <div
       v-if="visual.art"
-      class="absolute inset-0 bg-cover bg-center transition-transform duration-slow ease-stage group-hover:scale-[1.06]"
+      class="absolute inset-0 bg-cover bg-center category-card__art transition-transform duration-slow ease-stage"
       :style="{ backgroundImage: `url(${visual.art})` }"
       aria-hidden="true"
     />
@@ -44,7 +44,7 @@
 
         <Icon
           name="material-symbols:chevron-right-rounded"
-          class="card-chevron shrink-0 text-ink transition-transform duration-fast group-hover:translate-x-0.5"
+          class="card-chevron shrink-0 text-ink category-card__chevron transition-transform duration-fast"
           aria-hidden="true"
         />
       </span>
@@ -73,6 +73,21 @@ const countLabel = computed(() => {
 </script>
 
 <style scoped>
+/* Hover só fora do modo D-pad — ponteiro parado da TV não marca um 2º card. */
+body:not(.dpad-mode) .category-card:hover {
+  transform: translateY(-0.125rem);
+  border-color: rgba(var(--color-accent-rgb), 0.6);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+body:not(.dpad-mode) .category-card:hover .category-card__art {
+  transform: scale(1.06);
+}
+
+body:not(.dpad-mode) .category-card:hover .category-card__chevron {
+  transform: translateX(0.125rem);
+}
+
 /* Fallbacks em rem primeiro: WebViews antigos (sem cqw/container queries)
    caem neles; os navegadores modernos sobrescrevem com o clamp() seguinte. */
 .card-body {

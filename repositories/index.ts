@@ -3,18 +3,41 @@ import { createHttpClient } from '~/services/http';
 import { mockMediaRepository } from '~/mocks/media.mock';
 import { mockAuthRepository } from '~/mocks/auth.mock';
 import { mockMtvRepository } from '~/mocks/mtv.mock';
+import { mockYoutubeRepository } from '~/mocks/youtube.mock';
 import { clearTokens } from '~/utils/tokenStorage';
 import { createHttpMediaRepository } from './media.repository';
 import { createHttpAuthRepository } from './auth.repository';
 import { createHttpMtvRepository } from './mtv.repository';
-import type { AuthRepository, MediaRepository, MtvRepository } from './contracts';
+import { createHttpYoutubeRepository } from './youtube.repository';
+import { createHttpAdminRepository } from './admin.repository';
+import { createHttpWallpaperRepository, emptyWallpaperRepository } from './wallpaper.repository';
+import type {
+  AdminRepository,
+  AuthRepository,
+  MediaRepository,
+  MtvRepository,
+  WallpaperRepository,
+  YoutubeRepository,
+} from './contracts';
 
-export type { AuthRepository, MediaRepository, MtvRepository } from './contracts';
+export type {
+  AdminRepository,
+  AuthRepository,
+  MediaRepository,
+  MtvRepository,
+  WallpaperRepository,
+  YoutubeRepository,
+} from './contracts';
 
 interface RepositoryBundle {
   media: MediaRepository;
   auth: AuthRepository;
   mtv: MtvRepository;
+  youtube: YoutubeRepository;
+  /** Fundos animados — no mock a lista vem vazia (só os fundos locais). */
+  wallpapers: WallpaperRepository;
+  /** Painel de staff — sempre HTTP (o mock não tem revendedores/listas). */
+  admin: AdminRepository;
 }
 
 let bundle: RepositoryBundle | null = null;
@@ -52,6 +75,9 @@ function createBundle(): RepositoryBundle {
     auth: authRepository,
     media: isMockMode() ? mockMediaRepository : createHttpMediaRepository(client),
     mtv: isMockMode() ? mockMtvRepository : createHttpMtvRepository(client),
+    youtube: isMockMode() ? mockYoutubeRepository : createHttpYoutubeRepository(client),
+    wallpapers: isMockMode() ? emptyWallpaperRepository : createHttpWallpaperRepository(client),
+    admin: createHttpAdminRepository(client),
   };
 }
 

@@ -10,6 +10,9 @@ export interface UsePlayerOptions {
   mediaId: MaybeRefOrGetter<string | null>;
   /** Enviar heartbeat periodicamente durante a reprodução. */
   heartbeat?: boolean;
+  /** Atalhos globais do Plyr (espaço/k pausa, ←/→ ±10s, 0–9 pula). Desligar em
+   *  transmissão ao vivo: lá não há o que pausar nem pular. Padrão: ligado. */
+  keyboard?: MaybeRefOrGetter<boolean>;
 }
 
 export interface PlayerControls {
@@ -86,6 +89,7 @@ export function usePlayer(videoEl: Ref<HTMLVideoElement | null>, options: UsePla
     });
 
     store.setMedia(mediaId.value);
+    syncKeyboard();
 
     player.on('ready', () => {
       store.setVolume(player?.volume ?? 1);
@@ -98,49 +102,100 @@ export function usePlayer(videoEl: Ref<HTMLVideoElement | null>, options: UsePla
       store.setMuted(player.muted);
     });
 
-    player.on('play', () => {
-      store.setPlaying(true);
-      startHeartbeat();
-    });
-
-    player.on('pause', () => {
-      store.setPlaying(false);
-      stopHeartbeat();
-    });
-
-    player.on('ended', () => {
-      store.setPlaying(false);
-      stopHeartbeat();
-    });
-
-    player.on('waiting', () => store.setBuffering(true));
-    player.on('playing', () => store.setBuffering(false));
-
-    player.on('timeupdate', () => {
-      store.setProgress(player?.currentTime ?? 0, player?.duration ?? 0);
-    });
-
+    // Tocando/pausado/progresso vêm do <video> (bindNative) — não do Plyr.
     player.on('enterfullscreen', () => store.setFullscreen(true));
     player.on('exitfullscreen', () => store.setFullscreen(false));
   }
 
+  /* ── Estado de reprodução direto do <video> ──────────────────────────────
+   * O Plyr chega por import dinâmico; o stream é ligado em paralelo. Quando o
+   * vídeo dava `play` antes do Plyr existir, o evento se perdia: a tela achava
+   * que estava pausado e o card de pausa ficava por cima do filme rodando, sem
+   * sumir nunca. Os eventos nativos entram junto com o elemento, e o
+   * `timeupdate` corrige qualquer evento perdido (tempo andando = tocando). */
+
+  let unbindNative: (() => void) | null = null;
+
+  function syncPlaying(video: HTMLVideoElement): void {
+    const playing = !video.paused && !video.ended;
+    if (playing !== store.isPlaying) store.setPlaying(playing);
+    if (playing) startHeartbeat();
+    else stopHeartbeat();
+  }
+
+  function bindNative(video: HTMLVideoElement): void {
+    unbindNative?.();
+    const onPlayState = () => syncPlaying(video);
+    const onWaiting = () => store.setBuffering(true);
+    const onPlaying = () => {
+      store.setBuffering(false);
+      syncPlaying(video);
+    };
+    const onTime = () => {
+      store.setProgress(video.currentTime || 0, Number.isFinite(video.duration) ? video.duration : 0);
+      if (!video.paused !== store.isPlaying) syncPlaying(video);
+    };
+    const events: [string, () => void][] = [
+      ['play', onPlayState],
+      ['pause', onPlayState],
+      ['ended', onPlayState],
+      ['playing', onPlaying],
+      ['waiting', onWaiting],
+      ['timeupdate', onTime],
+    ];
+    for (const [name, handler] of events) video.addEventListener(name, handler);
+    syncPlaying(video); // já estava tocando antes de ligar
+    unbindNative = () => {
+      for (const [name, handler] of events) video.removeEventListener(name, handler);
+      unbindNative = null;
+    };
+  }
+
+  /** Estado atual do listener global de teclado do Plyr (liga ao criar). */
+  let keyboardOn = true;
+
+  /** Liga/desliga o listener global (`listeners.global` é interno do Plyr: não há
+   *  API pública pra isso). Guarda o estado — ligar duas vezes duplicaria o listener. */
+  function syncKeyboard(): void {
+    const wanted = options.keyboard === undefined ? true : toValue(options.keyboard);
+    const listeners = (player as unknown as { listeners?: { global?: (toggle: boolean) => void } } | null)?.listeners;
+    if (!listeners?.global || wanted === keyboardOn) return;
+    listeners.global(wanted);
+    keyboardOn = wanted;
+  }
+
+  watch(() => (options.keyboard === undefined ? true : toValue(options.keyboard)), syncKeyboard);
+
   function teardown(): void {
+    unbindNative?.();
     stopHeartbeat();
     player?.destroy();
     player = null;
+    keyboardOn = true;
     store.reset();
   }
 
   watch(videoEl, (element) => {
-    if (element) void setup();
+    if (element) {
+      bindNative(element);
+      void setup();
+    } else {
+      unbindNative?.();
+    }
   }, { immediate: true, flush: 'post' });
 
   onScopeDispose(teardown);
 
   return {
-    play: () => player?.play(),
-    pause: () => player?.pause(),
-    toggle: () => (store.isPlaying ? player?.pause() : player?.play()),
+    // Direto no <video>: funciona mesmo antes do Plyr terminar de carregar.
+    play: () => void videoEl.value?.play().catch(() => undefined),
+    pause: () => videoEl.value?.pause(),
+    toggle: () => {
+      const video = videoEl.value;
+      if (!video) return;
+      if (video.paused || video.ended) void video.play().catch(() => undefined);
+      else video.pause();
+    },
     seek: (seconds: number) => {
       if (player) player.currentTime = seconds;
     },

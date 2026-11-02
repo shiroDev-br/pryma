@@ -38,6 +38,8 @@ const PLAY = 'material-symbols:play-circle-outline-rounded';
 
 /** Ordem importa: regras mais específicas primeiro. */
 const RULES: Rule[] = [
+  // Categoria virtual "Todos" (Filmes/Séries).
+  { match: ['todos'], icon: 'material-symbols:apps-rounded', hue: 214 },
   // Gêneros com arte própria
   { match: ['documentar'], art: art('documentarios'), icon: 'material-symbols:description-outline-rounded' },
   { match: ['infantil', 'kids', 'animacao', 'anime', 'desenho'], art: art('infantil'), icon: 'material-symbols:mood-outline-rounded' },

@@ -17,21 +17,21 @@ export const SECTIONS = {
     type: 'vod',
     description: 'Lançamentos, clássicos e muito mais.',
     icon: 'material-symbols:movie-outline-rounded',
-    image: '/img/cards/filmes.svg',
+    image: '/img/cards/filmes.webp',
   },
   series: {
     label: 'Séries',
     type: 'series',
     description: 'Suas séries favoritas, sempre disponíveis.',
     icon: 'material-symbols:tv-gen-outline-rounded',
-    image: '/img/cards/series.svg',
+    image: '/img/cards/series.webp',
   },
   tv: {
     label: 'TV ao Vivo',
     type: 'live',
     description: 'Canais ao vivo, 24 horas por dia.',
     icon: 'material-symbols:live-tv',
-    image: '/img/cards/canais.svg',
+    image: '/img/cards/canais.webp',
   },
 } as const satisfies Record<string, SectionDef>;
 
@@ -56,7 +56,30 @@ export const ENDPOINTS = {
   heartbeat: `${API_PREFIX}/playback/heartbeat`,
   mtvPlaylists: `${API_PREFIX}/mtv/playlists`,
   mtvClips: `${API_PREFIX}/mtv/clips`,
+  youtubeTrending: `${API_PREFIX}/youtube/trending`,
+  youtubeSearch: `${API_PREFIX}/youtube/search`,
+  // Painel (/admin) — staff only.
+  users: `${API_PREFIX}/users`,
+  userById: (id: string) => `${API_PREFIX}/users/${encodeURIComponent(id)}`,
+  userPlaylistSync: (id: string) => `${API_PREFIX}/users/${encodeURIComponent(id)}/playlist/sync`,
+  resellers: `${API_PREFIX}/resellers`,
+  servers: `${API_PREFIX}/servers`,
+  serverById: (id: string) => `${API_PREFIX}/servers/${encodeURIComponent(id)}`,
+  // Fundos animados — app (logado) e painel (admin).
+  wallpapers: `${API_PREFIX}/wallpapers`,
+  wallpaperCategories: `${API_PREFIX}/wallpapers/categories`,
+  adminWallpapers: `${API_PREFIX}/admin/wallpapers`,
+  adminWallpaperSource: `${API_PREFIX}/admin/wallpapers/source`,
+  adminWallpaperById: (id: string) => `${API_PREFIX}/admin/wallpapers/${encodeURIComponent(id)}`,
+  adminWallpaperRetry: (id: string) => `${API_PREFIX}/admin/wallpapers/${encodeURIComponent(id)}/retry`,
 } as const;
+
+/** Painel — página da tabela de clientes e intervalo de atualização do status. */
+export const ADMIN_PAGE_SIZE = 25;
+export const ADMIN_POLL_MS = 5_000;
+
+/** Fundos animados — página da grade de escolha. */
+export const WALLPAPERS_PAGE_SIZE = 24;
 
 /** MTV — tamanho de página de clipes. */
 export const MTV_CLIPS_PAGE_SIZE = 50;
@@ -95,13 +118,25 @@ export const MAX_RETRIES = 2;
 export const STORAGE_KEYS = {
   recentSearches: 'iptv.recentSearches',
   favorites: 'iptv.favorites',
+  /** Dados dos favoritos (título, logo…) — a aba Favoritos da TV ao vivo lista sem ir à API. */
+  favoriteItems: 'iptv.favoriteItems',
   footballTeam: 'iptv.footballTeam',
   footballFixture: 'iptv.footballFixture',
   background: 'iptv.background',
+  /** Mídia do fundo animado escolhido — o app desenha o fundo sem ir à API. */
+  backgroundMedia: 'iptv.backgroundMedia',
+  /** Fundo animado ligado/desligado (desligado = só o pôster). */
+  backgroundMotion: 'iptv.backgroundMotion',
   /** Posições de reprodução por mediaId — "continuar assistindo" local. */
   watchProgress: 'iptv.watchProgress',
   /** Último episódio assistido por seriesId — marcador nas listagens. */
   seriesProgress: 'iptv.seriesProgress',
+  /** Player com a imagem esticada até preencher a tela. */
+  playerFill: 'iptv.playerFill',
+  /** Vinheta de abertura já tocou nesta abertura do app (sessionStorage). */
+  introShown: 'iptv.introShown',
+  /** Última fonte que funcionou por canal ao vivo (versão + formato). */
+  liveGoodSources: 'iptv.liveGoodSources',
 } as const;
 
 export const MAX_RECENT_SEARCHES = 10;
@@ -109,8 +144,17 @@ export const MAX_RECENT_SEARCHES = 10;
 /** Live/EPG — passa pela base da API (/api/v1). */
 export const LIVE_ENDPOINTS = {
   nowNext: (id: string) => `/api/v1/media/${encodeURIComponent(id)}/now-next`,
+  /** Jogos do dia × EPG → canais que transmitem cada jogo. */
+  fixtureChannels: '/api/v1/live/fixture-channels',
 } as const;
 
 export const FOOTBALL_MIN_SEARCH_CHARS = 3;
 export const FOOTBALL_SEARCH_DEBOUNCE_MS = 400;
 export const FOOTBALL_RESULT_LIMIT = 12;
+
+/**
+ * Pôster vazio (GIF 1×1 transparente) para todo <video>. Sem ele o WebView do
+ * Android desenha o pôster padrão — tela cinza com ícone de play — até o 1º quadro.
+ */
+export const BLANK_POSTER =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';

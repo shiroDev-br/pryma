@@ -322,6 +322,11 @@ export function generateMediaDetail(index: number): MediaDetail {
     addedAt: new Date(ADDED_AT_BASE - index * 60_000).toISOString(),
     streamCount: fields.streamCount,
     guide: null,
+    // Trailer/fundo só em parte do catálogo — a tela de detalhes precisa lidar com os dois casos.
+    trailerId: index % 3 === 0 ? 'aqz-KE-bpKQ' : null,
+    backdropUrl: index % 2 === 0 ? `https://picsum.photos/seed/${mediaIdAt(index)}-bg/1280/720` : null,
+    rating: fields.type === 'live' ? null : Math.round((5 + (index % 45) / 10) * 10) / 10,
+    director: fields.type === 'live' ? null : 'Direção Exemplo',
   };
 }
 

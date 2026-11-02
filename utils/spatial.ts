@@ -81,7 +81,10 @@ export function pickSpatialBest(
         : Math.max(0, current.left - rect.right, rect.left - current.right);
     const aligned = overlap || gap <= ALIGN_GAP;
 
-    const score = main + (aligned ? 0 : cross * 3);
+    // Alinhado ainda paga um pouco do eixo cruzado: sem isso, numa grade o card
+    // logo abaixo empatava com os das diagonais (vão de coluna < ALIGN_GAP) e
+    // vencia o primeiro do DOM — a descida saía em zigue-zague.
+    const score = main + cross * (overlap ? 0.25 : aligned ? 1 : 3);
     if (score < bestScore) {
       bestScore = score;
       best = candidate.element;

@@ -1,157 +1,139 @@
 import { computed, defineComponent, ref, type PropType } from 'vue';
-import type { Category, MediaSummary } from '~/types';
-import ChannelGuide from './ChannelGuide.vue';
+import type { Category } from '~/types';
+import { FAVORITES_SLUG, GAMES_SLUG } from '~/utils/live';
 
 interface SidebarGroup {
   name: string;
-  channels: MediaSummary[];
   slug: string;
+  icon: string;
+  /** Total real do grupo (API / favoritos guardados); null = ainda não se sabe. */
+  total: number | null;
+}
+
+/** Métodos expostos pro pai controlar foco e rolagem. */
+interface SidebarExposed {
+  focusFirst: () => void;
+  focusGroup: (slug: string) => boolean;
+}
+
+/**
+ * Grupos de atalho por nome de canal (Premiere/ESPN/SporTV) — slugs que o pai
+ * busca por termo. Só aparecem quando o provedor NÃO tem categoria da marca:
+ * com "Canal SporTV" na lista, o atalho "SporTV" duplicava o grupo.
+ */
+const SPECIAL_GROUPS: { name: string; slug: string; brand: RegExp }[] = [
+  { name: 'Premiere', slug: '__premiere__', brand: /premiere/ },
+  { name: 'ESPN', slug: '__espn__', brand: /\bespn\b/ },
+  { name: 'SporTV', slug: '__sportv__', brand: /spor ?tv|sporttv/ },
+];
+
+function normalizeName(name: string): string {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Ordem dos grupos depois de Favoritos / Todos / Jogos do dia: abertos (Globo,
+ * SBT, Band), esportes (ESPN, Premiere, SporTV), 24h — o resto em ordem alfabética.
+ * Por palavra no nome (os nomes das categorias vêm do provedor e variam).
+ */
+const GROUP_ORDER: RegExp[] = [
+  /abert/,
+  /globo/,
+  /\bsbt\b/,
+  /\bband\b/,
+  /esporte/,
+  /\bespn\b/,
+  /premiere/,
+  /spor ?tv|sporttv/,
+  /24 ?h|24 horas/,
+];
+
+function groupRank(name: string): number {
+  const normalized = normalizeName(name);
+  const index = GROUP_ORDER.findIndex((pattern) => pattern.test(normalized));
+  return index === -1 ? GROUP_ORDER.length : index;
 }
 
 export default defineComponent({
   name: 'LiveChannelsSidebar',
 
-  components: { ChannelGuide },
-
   props: {
-    /** Canais candidatos da coluna — vindo do pai (listagem + abas especiais, já filtrados). */
-    pool: { type: Array as PropType<MediaSummary[]>, required: true },
-    /** Categorias TV — pra mapear nome de grupo → slug de aba. */
+    /** Categorias TV — viram os grupos da coluna. */
     categories: { type: Array as PropType<Category[]>, required: true },
-    /** Aba/slug ativa (destaque dos grupos). */
+    /** Grupo ativo ('' = todos os canais). */
     activeSlug: { type: String, required: true },
-    /** Rótulo do grupo atual (topo da coluna). */
-    label: { type: String, required: true },
-    /** Total de canais exibido no topo. */
-    count: { type: Number, required: true },
+    /** Total de canais de "Todos os canais". */
+    allCount: { type: Number, required: true },
+    /** Quantos favoritos de TV ao vivo existem. */
+    favoritesCount: { type: Number, required: true },
+    /** Canais com jogo hoje — null até o grupo ser aberto (a busca é pesada). */
+    gamesCount: { type: Number as PropType<number | null>, default: null },
+    /** Totais dos grupos especiais (Premiere/ESPN/SportTV), por slug. */
+    specialTotals: { type: Object as PropType<Record<string, number>>, required: true },
     /** Texto da busca (v-model). */
     query: { type: String, required: true },
-    /** Canal selecionado na lista principal (destaque). */
-    selectedId: { type: String as PropType<string | null>, default: null },
   },
 
   emits: {
     'update:query': (_value: string): boolean => true,
     clear: (): boolean => true,
-    /** Usuário escolheu um grupo — o pai troca a aba. */
+    /** Usuário abriu um grupo — o pai troca a lista do meio. */
     select: (slug: string): boolean => typeof slug === 'string',
-    /** Guia escolheu um canal — o pai seleciona e rola a lista até ele. */
-    pick: (channel: MediaSummary): boolean => !!channel,
-    /** Guia clicou em uma transmissão — ir direto pro player. */
-    play: (channel: MediaSummary): boolean => !!channel,
-    /** Botão "grupo atual" — o pai rola a lista principal pro primeiro canal. */
-    'focus-first': (): boolean => true,
+    /** Botão voltar do topo da coluna. */
+    back: (): boolean => true,
   },
 
   setup(props, { emit, expose }) {
     const sideEl = ref<HTMLElement | null>(null);
-    const sideSentinel = ref<HTMLElement | null>(null);
+    const rootEl = ref<HTMLElement | null>(null);
 
-    /** Superfície pro pai: rolagem/reset e sentinela do infinite scroll da coluna. */
-    function resetScroll(): void {
-      sideEl.value?.scrollTo({ top: 0 });
+    /** Foco no primeiro item navegável da coluna ("Todos os canais", logo abaixo da busca). */
+    function focusFirst(): void {
+      rootEl.value?.querySelector<HTMLElement>('[data-nav="sidebar"]')?.focus({ preventScroll: true });
     }
 
-    function revealChannel(id: string): void {
-      sideEl.value
-        ?.querySelector<HTMLElement>(`[data-channel-id="${id}"]`)
-        ?.scrollIntoView({ block: 'nearest' });
+    /** Foco no botão de um grupo (volta do player / ← da lista do meio). */
+    function focusGroup(slug: string): boolean {
+      const element = rootEl.value?.querySelector<HTMLElement>(`[data-group="${CSS.escape(slug)}"]`);
+      if (!element) return false;
+      element.focus({ preventScroll: true });
+      element.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      return true;
     }
 
-    function sentinel(): HTMLElement | null {
-      return sideSentinel.value;
-    }
-
-    expose({ resetScroll, revealChannel, sentinel });
+    const exposed: SidebarExposed = { focusFirst, focusGroup };
+    expose(exposed);
 
     const countFormatter = new Intl.NumberFormat('pt-BR');
 
-    /* ── Grupos expansíveis ─────────────────────────────────────────────── */
-
-    const expanded = ref<Set<string>>(new Set());
-    const expandedGuides = ref<Set<string>>(new Set());
-
-    /** Mapa nome → slug pra filtrar a lista principal ao clicar no grupo. */
-    const slugByName = computed(() => {
-      const map = new Map<string, string>();
-      for (const category of props.categories) {
-        map.set(category.name, category.slug);
-      }
-      // Canais com slug especial
-      map.set('Premiere', '__premiere__');
-      map.set('ESPN', '__espn__');
-      map.set('SportTV', '__sportv__');
-      return map;
-    });
-
-    /** Nome do grupo de um canal — separa ESPN e SportTV das demais. */
-    function groupFor(channel: MediaSummary): string {
-      const title = channel.title.toLowerCase();
-      if (title.includes('premiere') || title.includes('premiére')) return 'Premiere';
-      if (title.includes('espn')) return 'ESPN';
-      if (title.includes('sportv') || title.includes('spor tv')) return 'SportTV';
-      return channel.categoryName || 'Outros';
-    }
-
-    const PRIORITY = [
-      'Premiere', 'ESPN', 'SportTV', 'Aberto', 'Esportes', 'Desenhos 24h', 'Notícias',
-      'Variedades', 'Filmes', 'Séries', 'Infantil', 'Documentários', 'Música', 'Religioso', 'Outros',
-    ];
-
-    /** Agrupa o pool e ordena por prioridade fixa (o resto em ordem alfabética). */
+    /** Favoritos, Todos e Jogos do dia fixos no topo; depois abertos, esportes, 24h e o resto (A–Z). */
     const groups = computed<SidebarGroup[]>(() => {
-      const map = new Map<string, MediaSummary[]>();
+      const names = props.categories.map((category) => normalizeName(category.name));
+      const shortcuts = SPECIAL_GROUPS.filter((group) => !names.some((name) => group.brand.test(name)));
+      const ranked: SidebarGroup[] = [
+        ...shortcuts.map((group) => ({
+          name: group.name,
+          slug: group.slug,
+          icon: 'material-symbols:sports-soccer-rounded',
+          total: props.specialTotals[group.slug] ?? 0,
+        })),
+        ...props.categories.map((category) => ({
+          name: category.name,
+          slug: category.slug,
+          icon: 'material-symbols:live-tv',
+          total: category.itemCount,
+        })),
+      ].sort(
+        (a, b) => groupRank(a.name) - groupRank(b.name) || a.name.localeCompare(b.name, 'pt-BR'),
+      );
 
-      for (const channel of props.pool) {
-        const name = groupFor(channel);
-        const existing = map.get(name);
-        if (existing) {
-          existing.push(channel);
-        } else {
-          map.set(name, [channel]);
-        }
-      }
-
-      return [...map.entries()]
-        .map(([name, channels]) => ({
-          name,
-          // Ordem alfabética dentro do grupo (o pool vem em ordem do servidor
-          // + abas especiais anexadas no fim — a coluna da esquerda ficava
-          // embaralhada enquanto a lista do meio estava em A–Z).
-          channels: [...channels].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR')),
-          slug: slugByName.value.get(name) ?? '',
-        }))
-        .sort((a, b) => {
-          const idxA = PRIORITY.indexOf(a.name);
-          const idxB = PRIORITY.indexOf(b.name);
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          return a.name.localeCompare(b.name, 'pt-BR');
-        });
+      return [
+        { name: 'Favoritos', slug: FAVORITES_SLUG, icon: 'material-symbols:star-rounded', total: props.favoritesCount },
+        { name: 'Todos os canais', slug: '', icon: 'material-symbols:tv-gen-outline-rounded', total: props.allCount },
+        { name: 'Jogos do dia', slug: GAMES_SLUG, icon: 'material-symbols:scoreboard-outline-rounded', total: props.gamesCount },
+        ...ranked,
+      ];
     });
-
-    function isExpanded(name: string): boolean {
-      return expanded.value.has(name);
-    }
-
-    /** Clica no grupo: filtra a lista (evento pro pai) e expande pra mostrar os canais. */
-    function selectGroup(group: SidebarGroup): void {
-      emit('select', group.slug);
-      expanded.value.add(group.name);
-    }
-
-    function isGuideExpanded(channelId: string): boolean {
-      return expandedGuides.value.has(channelId);
-    }
-
-    function toggleGuide(channelId: string): void {
-      if (expandedGuides.value.has(channelId)) {
-        expandedGuides.value.delete(channelId);
-      } else {
-        expandedGuides.value.add(channelId);
-      }
-    }
 
     function onQueryInput(event: Event): void {
       emit('update:query', (event.target as HTMLInputElement).value);
@@ -160,17 +142,14 @@ export default defineComponent({
     return {
       emit,
       sideEl,
-      sideSentinel,
+      rootEl,
       countFormatter,
       groups,
-      isExpanded,
-      selectGroup,
-      isGuideExpanded,
-      toggleGuide,
       onQueryInput,
-      resetScroll,
-      revealChannel,
-      sentinel,
+      FAVORITES_SLUG,
+      // Também no retorno do setup: só assim o pai enxerga os métodos no tipo da instância.
+      focusFirst,
+      focusGroup,
     };
   },
 });

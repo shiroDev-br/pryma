@@ -1,5 +1,7 @@
 import { defineComponent, ref } from 'vue';
 import openingSrc from '~/assets/mtv-opening.mp4';
+import { BLANK_POSTER } from '~/constants';
+import { releaseVideo } from '~/utils/video';
 
 export default defineComponent({
   name: 'MtvOpening',
@@ -14,6 +16,7 @@ export default defineComponent({
     const muted = ref(false);
 
     function finish(): void {
+      releaseVideo(videoEl.value);
       emit('done');
     }
 
@@ -25,6 +28,6 @@ export default defineComponent({
       }
     }
 
-    return { openingSrc, videoEl, muted, finish, toggleSound };
+    return { openingSrc, BLANK_POSTER, videoEl, muted, finish, toggleSound };
   },
 });

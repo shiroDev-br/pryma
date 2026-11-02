@@ -32,6 +32,11 @@
         </provider>
     </application>
 
+    <!-- Android 11+: sem isto o app não "enxerga" o Downloader (botão Atualizações). -->
+    <queries>
+        <package android:name="com.esaba.downloader" />
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

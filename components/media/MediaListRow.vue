@@ -2,29 +2,32 @@
   <NuxtLink
     :ref="setRoot"
     :to="mediaHref(media)"
-    class="media-row group relative flex w-full items-center gap-3 rounded-md border p-2.5 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus sm:gap-4 sm:p-3"
+    class="media-row group relative flex w-full items-center gap-3 rounded-md border p-1.5 text-left transition-colors duration-fast focus:outline-none focus-visible:shadow-focus sm:gap-4"
     :class="
       selected
         ? 'border-transparent bg-[#081a42]/85'
-        : 'border-line/70 bg-surface/70 hover:border-blue-dark/60 hover:bg-surface'
+        : 'media-row--idle border-line/70 bg-surface/70'
     "
     :aria-label="displayTitle"
     :aria-current="selected ? 'true' : undefined"
-    @mouseenter="emit('preview', media)"
+    @mouseenter="onPointerEnter"
     @focus="emit('preview', media)"
   >
     <!-- Borda em gradiente (azul elétrico → violeta) + halo — igual ao card ativo da home. -->
     <span v-if="selected" class="row-ring pointer-events-none absolute" aria-hidden="true" />
     <span v-if="selected" class="row-glow pointer-events-none absolute" aria-hidden="true" />
 
-    <div class="relative aspect-video w-24 shrink-0 overflow-hidden rounded bg-elevated sm:w-32 lg:w-36">
+    <!-- Pôster em pé com tamanho fixo (não aspect-ratio): a TV antiga ignora a
+         propriedade e a linha assumia a altura do pôster inteiro. Pequeno de
+         propósito — cabem ~5 títulos na coluna antes de rolar. -->
+    <div class="relative h-[3.4rem] w-[2.3rem] shrink-0 overflow-hidden rounded bg-elevated">
       <img
         v-if="!imageFailed && media.thumbnailUrl"
-        :src="media.thumbnailUrl"
+        :src="tmdbSized(media.thumbnailUrl, 'w342')"
         :alt="media.title"
         loading="lazy"
         decoding="async"
-        class="h-full w-full object-cover object-[center_30%] transition-transform duration-normal group-hover:scale-[1.04]"
+        class="media-row__poster h-full w-full object-cover transition-transform duration-normal"
         @error="imageFailed = true"
       />
       <div
@@ -32,14 +35,14 @@
         class="flex h-full w-full items-center justify-center text-blue-dark"
         aria-hidden="true"
       >
-        <Icon name="material-symbols:theaters" class="h-8 w-8" />
+        <Icon name="material-symbols:theaters" class="h-6 w-6" />
       </div>
 
       <div class="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/25" aria-hidden="true" />
 
       <span
         v-if="media.quality"
-        class="absolute left-1.5 top-1.5 rounded-sm bg-black/85 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wide text-blue"
+        class="absolute inset-x-0 bottom-0 bg-black/85 py-px text-center text-[0.5rem] font-semibold tracking-wide text-blue"
       >
         {{ media.quality }}
       </span>
@@ -62,7 +65,7 @@
     <div class="flex shrink-0 items-center gap-1.5 self-center pr-0.5">
       <span
         v-if="selected"
-        class="hidden h-9 w-9 items-center justify-center rounded-full border border-[#4d9dff]/70 bg-[#0b3a9c]/60 text-ink shadow-[0_0_16px_rgba(22,136,255,0.45)] transition-colors duration-fast group-hover:bg-[#0b5cff]/70 sm:flex"
+        class="hidden h-9 w-9 items-center justify-center rounded-full border border-[#4d9dff]/70 bg-[#0b3a9c]/60 text-ink shadow-[0_0_16px_rgba(22,136,255,0.45)] media-row__play transition-colors duration-fast sm:flex"
         aria-hidden="true"
       >
         <Icon name="material-symbols:play-arrow-rounded" class="h-5 w-5" />
@@ -70,7 +73,7 @@
       <Icon
         name="material-symbols:chevron-right-rounded"
         class="h-5 w-5 transition-colors duration-fast"
-        :class="selected ? 'text-blue-light' : 'text-ink-muted group-hover:text-blue-light'"
+        :class="selected ? 'text-blue-light' : 'media-row__chevron text-ink-muted'"
         aria-hidden="true"
       />
     </div>
@@ -78,6 +81,7 @@
 </template>
 
 <script setup lang="ts">
+import { tmdbSized } from '~/utils/imageSize';
 import { formatRuntime, stripEpisodeToken } from '~/utils/format';
 import { mediaHref } from '~/utils/media';
 import { useMediaDetailsStore } from '~/stores/mediaDetails';
@@ -93,6 +97,16 @@ const emit = defineEmits<{
 }>();
 
 const imageFailed = ref(false);
+
+/**
+ * Ponteiro só move a prévia fora do modo D-pad: na TV o ponteiro fica parado
+ * sobre a lista e, quando ela rola sob ele, o `mouseenter` selecionava outra
+ * linha — dois títulos "marcados" (um pelo cursor 2D, outro pelo hover).
+ */
+function onPointerEnter(): void {
+  if (document.body.classList.contains('dpad-mode')) return;
+  emit('preview', props.media);
+}
 
 const store = useMediaDetailsStore();
 const detail = computed(() => store.find(props.media.id));
@@ -164,11 +178,29 @@ const metaLabel = computed(() => {
     linear-gradient(#000 0 0);
 }
 
+/* Hover só fora do modo D-pad (mesmo motivo do `onPointerEnter`). */
+body:not(.dpad-mode) .media-row--idle:hover {
+  border-color: rgba(11, 92, 255, 0.6);
+  background-color: var(--color-surface);
+}
+
+body:not(.dpad-mode) .media-row:hover .media-row__poster {
+  transform: scale(1.04);
+}
+
+body:not(.dpad-mode) .media-row:hover .media-row__play {
+  background-color: rgba(11, 92, 255, 0.7);
+}
+
+body:not(.dpad-mode) .media-row:hover .media-row__chevron {
+  color: var(--color-blue-light);
+}
+
 /* Linhas fora da viewport não são pintadas (Chrome 85+; WebViews antigas
    ignoram) — listas longas de VOD/séries/busca rodam mais leves. */
 .media-row {
   content-visibility: auto;
-  contain-intrinsic-size: auto 5.5rem;
+  contain-intrinsic-size: auto 4.25rem;
 }
 
 /* Halo azul difuso atrás da linha — luz fixa (box-shadow animado em loop

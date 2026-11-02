@@ -60,6 +60,7 @@
             type="button"
             class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-fast hover:text-ink focus:outline-none focus-visible:shadow-focus sm:h-8 sm:w-8"
             aria-label="Canais anteriores"
+            tabindex="-1"
             @click="scrollRail(-1)"
           >
             <Icon name="material-symbols:chevron-left-rounded" class="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
@@ -67,7 +68,8 @@
 
           <ul
             ref="rail"
-            class="flex min-w-0 flex-1 snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth [scrollbar-width:none] sm:gap-5 [&::-webkit-scrollbar]:hidden"
+            class="flex min-w-0 flex-1 snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] sm:gap-5 [&::-webkit-scrollbar]:hidden"
+            @keydown="onRailKeydown"
           >
             <li v-if="channels.length === 0" class="py-4 text-sm text-ink-muted sm:py-5">
               Nenhum canal disponível.
@@ -106,6 +108,7 @@
             type="button"
             class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-fast hover:text-ink focus:outline-none focus-visible:shadow-focus sm:h-8 sm:w-8"
             aria-label="Próximos canais"
+            tabindex="-1"
             @click="scrollRail(1)"
           >
             <Icon name="material-symbols:chevron-right-rounded" class="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
@@ -150,6 +153,7 @@
           role="tab"
           :aria-selected="position === slideIndex"
           :aria-label="item.label"
+          tabindex="-1"
           class="h-1.5 rounded-full transition-[width,background-color] duration-normal focus:outline-none focus-visible:shadow-focus"
           :class="position === slideIndex ? 'w-10 bg-accent' : 'w-1.5 bg-white/30 hover:bg-white/50'"
           @click="slideIndex = position"
@@ -209,6 +213,34 @@ function scrollRail(direction: 1 | -1): void {
   const element = rail.value;
   if (!element) return;
   element.scrollBy({ left: direction * element.clientWidth * 0.8, behavior: 'smooth' });
+}
+
+/**
+ * ←/→ entre os canais por índice, com rolagem instantânea. Antes o motor
+ * espacial media as posições no meio da rolagem suave (+ snap) e escolhia
+ * vizinhos errados: → mandava o foco pra esquerda e voltava pra setinha.
+ * Na ponta esquerda a tecla segue pro motor (vai pro "Assistir agora").
+ */
+function onRailKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  const element = rail.value;
+  if (!element) return;
+  const links = Array.from(element.querySelectorAll<HTMLElement>('a'));
+  const index = links.indexOf(event.target as HTMLElement);
+  if (index < 0) return;
+  const next = links[index + (event.key === 'ArrowRight' ? 1 : -1)];
+  if (!next) {
+    if (event.key === 'ArrowRight') event.preventDefault();
+    return;
+  }
+  event.preventDefault();
+  next.focus({ preventScroll: true });
+  const box = element.getBoundingClientRect();
+  const rect = (next.closest('li') ?? next).getBoundingClientRect();
+  // Fora da faixa: o canal vira o primeiro visível (bate com o snap-start).
+  if (rect.left < box.left - 1 || rect.right > box.right + 1) {
+    element.scrollLeft += rect.left - box.left;
+  }
 }
 
 function initials(title: string): string {

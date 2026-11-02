@@ -1,20 +1,36 @@
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
+import { useDoubleBackExit } from '~/composables/useDoubleBackExit';
+import { useUpdater } from '~/composables/useUpdater';
 
 /**
  * Botão voltar do Android no app nativo:
  * 1. tela cheia → sai da tela cheia;
- * 2. tem histórico → volta;
- * 3. sem histórico → fecha o app.
+ * 2. janela "Sair do app?" aberta → fecha a janela;
+ * 3. tem histórico → volta;
+ * 4. fora da home sem histórico → vai pra home (replace: a home não "volta" pra cá);
+ * 5. na home → aviso "pressione de novo" e, no 2º, a janela de confirmação.
+ *    Nunca fecha direto: voltar 2× rápido numa tela qualquer chegava na home
+ *    e o 2º toque fechava o app sem perguntar.
  */
 export default defineNuxtPlugin(() => {
   if (!Capacitor.isNativePlatform()) return;
 
   const router = useRouter();
+  const { showExitModal, handleBackButton } = useDoubleBackExit();
+  const { updateModal, closeUpdateModal } = useUpdater();
 
   void CapApp.addListener('backButton', () => {
     if (document.fullscreenElement) {
       void document.exitFullscreen();
+      return;
+    }
+    if (showExitModal.value) {
+      handleBackButton(); // cancela
+      return;
+    }
+    if (updateModal.value) {
+      closeUpdateModal();
       return;
     }
     if (window.history.state?.back) {
@@ -22,9 +38,9 @@ export default defineNuxtPlugin(() => {
       return;
     }
     if (router.currentRoute.value.path !== '/') {
-      void router.push('/');
+      void router.replace('/');
       return;
     }
-    void CapApp.exitApp();
+    handleBackButton();
   });
 });

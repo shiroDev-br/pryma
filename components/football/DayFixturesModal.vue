@@ -8,6 +8,7 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="day-fixtures-title"
+        @keydown="onKeydown"
       >
         <!-- Header -->
         <header class="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0">
@@ -27,8 +28,9 @@
           </button>
         </header>
 
-        <!-- Content -->
-        <div class="flex-1 overflow-y-auto p-4 lg:p-6">
+        <!-- Content — min-h-0: sem ele, na WebView antiga o filho flex cresce com
+             a lista em vez de rolar, e o fim dos jogos fica cortado. -->
+        <div ref="listEl" class="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">
           <LoadingState v-if="loading" message="Carregando jogos…" class="h-64 justify-center" />
 
           <ErrorState
@@ -54,10 +56,17 @@
                 </tr>
               </thead>
               <tbody>
+                <!-- Linha focável: o D-pad anda jogo a jogo (antes só os "Assistir"
+                     recebiam foco e a lista não rolava). OK abre a transmissão. -->
                 <tr
                   v-for="fixture in fixtures"
                   :key="fixture.id"
-                  class="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
+                  tabindex="0"
+                  data-fixture-row
+                  class="fixture-row border-b border-white/5 hover:bg-white/[0.02] transition-colors focus:outline-none"
+                  :class="{ 'fixture-row--playable': getMatch(fixture.id) }"
+                  @keydown.enter.self="openMatch(fixture.id)"
+                  @click="openMatch(fixture.id)"
                 >
                   <td class="py-3 pr-3 text-[0.7rem] font-medium tabular-nums text-ink">{{ formatTime(fixture.timestamp) }}</td>
                   <td class="py-3 pr-3">
@@ -88,16 +97,16 @@
                         {{ statusLabel(fixture.status.short) }}
                       </span>
 
-                      <!-- Botão assistir quando tem canal com transmissão -->
-                      <NuxtLink
+                      <!-- Canal que transmite (EPG): OK na linha abre direto o primeiro. -->
+                      <span
                         v-if="getMatch(fixture.id)"
-                        :to="`/medias/${getMatch(fixture.id)!.channel.slug}`"
-                        class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue/20 text-blue text-[0.6rem] font-semibold hover:bg-blue/30 transition-colors"
-                        @click="close"
+                        class="inline-flex min-w-0 items-center gap-1 px-2 py-1 rounded-md bg-blue/20 text-blue text-[0.6rem] font-semibold"
+                        :title="channelNames(fixture.id)"
                       >
-                        <Icon name="material-symbols:play-arrow-rounded" class="h-3.5 w-3.5" aria-hidden="true" />
-                        Assistir
-                      </NuxtLink>
+                        <Icon name="material-symbols:play-arrow-rounded" class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span class="truncate">{{ channelNames(fixture.id) }}</span>
+                      </span>
+                      <span v-else-if="channelsLoading" class="text-[0.6rem] text-ink-muted">Procurando canal…</span>
                     </div>
                   </td>
                 </tr>
@@ -111,13 +120,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useDayFixtures } from '~/composables/useDayFixtures';
 import { useFixtureChannels } from '~/composables/useFixtureChannels';
-import { getRepositories } from '~/repositories';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { MediaSummary } from '~/types';
 
 interface Props {
   isOpen: boolean;
@@ -131,18 +138,22 @@ const props = defineProps<Props>();
 const emit = defineEmits<{ close: [] }>();
 
 const { isLoading, error, data, fetchFixtures } = useDayFixtures();
-const { matches, findChannels } = useFixtureChannels();
-
-/** Categorias onde os canais que transmitem jogos costumam estar. */
-const SPORT_CATEGORIES = ['premieres', 'esportes', 'futebol-ppv', 'globos'] as const;
-
-const sportsChannels = shallowRef<MediaSummary[]>([]);
+const { matches, findChannels, isLoading: channelsLoading } = useFixtureChannels();
 
 const loading = computed(() => isLoading.value);
 const fixtures = computed(() => data.value?.fixtures ?? []);
 
 function getMatch(fixtureId: number) {
   return matches.value.get(fixtureId) ?? null;
+}
+
+/** "SporTV · Premiere Clubes" — nomes curtos dos canais que passam o jogo. */
+function channelNames(fixtureId: number): string {
+  const match = getMatch(fixtureId);
+  if (!match) return '';
+  return match.channels
+    .map((channel) => channel.title.replace(/\s+(FHD|HD|SD|4K|UHD|H\.?265|HEVC)\b.*$/i, '').trim())
+    .join(' · ');
 }
 
 const formattedDate = computed(() => {
@@ -169,37 +180,106 @@ watch(
   }
 );
 
-/** Carrega os canais das categorias de esporte (uma vez por sessão). */
-async function loadSportsChannels(): Promise<void> {
-  if (sportsChannels.value.length > 0) return;
-  const repository = getRepositories().media;
-  const pages = await Promise.all(
-    SPORT_CATEGORIES.map((category) =>
-      repository.listMedia({ type: 'live', category, limit: 100 }),
-    ),
-  );
-  const byId = new Map<string, MediaSummary>();
-  for (const page of pages) {
-    for (const item of page.items) byId.set(item.id, item);
-  }
-  sportsChannels.value = [...byId.values()];
-}
-
 async function loadFixtures(): Promise<void> {
-  // Canais e jogos em paralelo — depois cruza EPG x fixtures.
-  const [result] = await Promise.all([
-    fetchFixtures(props.date),
-    loadSportsChannels().catch(() => undefined),
-  ]);
-
-  if (result?.fixtures?.length && sportsChannels.value.length) {
-    await findChannels(result.fixtures, sportsChannels.value);
-  }
+  const result = await fetchFixtures(props.date);
+  // A tabela aparece já; os canais chegam em seguida (a API cruza com o EPG).
+  if (result?.fixtures?.length) await findChannels(result.fixtures);
 }
 
 function close(): void {
   emit('close');
 }
+
+/* ---------- D-pad: jogo a jogo, rolagem junto ---------- */
+
+const listEl = ref<HTMLElement | null>(null);
+/** Quem abriu o modal — recebe o foco de volta ao fechar. */
+let opener: HTMLElement | null = null;
+
+function rows(): HTMLElement[] {
+  return Array.from(listEl.value?.querySelectorAll<HTMLElement>('[data-fixture-row]') ?? []);
+}
+
+function focusRow(row: HTMLElement | undefined): void {
+  if (!row) return;
+  row.focus({ preventScroll: true });
+  row.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+}
+
+/** ↑/↓ entre linhas (o motor global não sabe rolar a lista), Esc/Voltar fecha. */
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' || event.key === 'Backspace' || event.key === 'GoBack') {
+    event.preventDefault();
+    // Não deixa chegar no listener global de "voltar" (app.vue): na home ele
+    // contaria como 1º toque do "voltar 2x pra sair".
+    event.stopPropagation();
+    close();
+    return;
+  }
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+  const list = rows();
+  if (list.length === 0) return;
+  event.preventDefault();
+  const index = list.indexOf(document.activeElement as HTMLElement);
+  if (index < 0) {
+    focusRow(list[0]);
+    return;
+  }
+  const next = event.key === 'ArrowDown' ? index + 1 : index - 1;
+  if (next < 0) {
+    // Topo da lista: sobe pro "Fechar".
+    listEl.value?.scrollTo({ top: 0 });
+    (listEl.value?.parentElement?.querySelector<HTMLElement>('header button'))?.focus();
+    return;
+  }
+  focusRow(list[Math.min(next, list.length - 1)]);
+}
+
+/** OK/clique numa linha com transmissão abre direto o melhor canal do jogo. */
+function openMatch(fixtureId: number): void {
+  const match = getMatch(fixtureId);
+  if (!match) return;
+  close();
+  void navigateTo(`/medias/${match.channel.slug}`);
+}
+
+// Abriu: guarda quem abriu e, quando os jogos chegam, foca o primeiro.
+// Fechou: devolve o foco (sem isso o D-pad ficava "perdido" na home).
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open) {
+      opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      // Jogos já em cache (reabriu): o watch de `fixtures` não dispara.
+      // Sem jogos ainda (carregando/vazio): foco no "Fechar", nunca atrás do modal.
+      void nextTick(() => {
+        const first = rows()[0];
+        if (first) focusRow(first);
+        else listEl.value?.parentElement?.querySelector<HTMLElement>('header button')?.focus();
+      });
+      return;
+    }
+    if (opener?.isConnected) opener.focus({ preventScroll: true });
+    opener = null;
+  },
+);
+
+watch(fixtures, async (list) => {
+  if (!props.isOpen || list.length === 0) return;
+  await nextTick();
+  focusRow(rows()[0]);
+});
+
+// Canais chegaram (a API cruza com o EPG depois da tabela): se o foco ainda está
+// no 1º jogo e ele não tem transmissão, pula pro 1º jogo que tem — OK já abre.
+watch(matches, async (found) => {
+  if (!props.isOpen || found.size === 0) return;
+  await nextTick();
+  const list = rows();
+  if (document.activeElement !== list[0] || getMatch(fixtures.value[0]?.id ?? -1)) return;
+  const index = fixtures.value.findIndex((fixture) => found.has(fixture.id));
+  if (index >= 0) focusRow(list[index]);
+});
 
 function formatTime(timestamp: number): string {
   return format(new Date(timestamp * 1000), 'HH:mm', { locale: ptBR });
@@ -288,6 +368,16 @@ function statusLabel(short: string): string {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.fixture-row--playable {
+  cursor: pointer;
+}
+
+/* Linha em foco — anel visível no D-pad (o tr não tem :focus-visible confiável na TV). */
+.fixture-row:focus {
+  background: rgba(22, 136, 255, 0.14);
+  box-shadow: inset 9px 0 0 #1688ff;
 }
 
 .day-fixtures-overlay {

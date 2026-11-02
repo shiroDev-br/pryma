@@ -1,4 +1,6 @@
+export type * from './admin';
 export type * from './api';
 export type * from './auth';
 export type * from './football';
 export type * from './media';
+export type * from './wallpaper';

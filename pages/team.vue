@@ -106,7 +106,7 @@
           placeholder="Nome do time (ex.: Flamengo)…"
           aria-label="Buscar time"
           class="w-full rounded-sm border border-line bg-surface/80 py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted/70 transition-colors duration-fast focus:border-blue-dark focus:outline-none focus:shadow-focus"
-          @keydown.enter="selectFirst"
+          @keydown="onSearchKeydown"
         />
       </div>
 
@@ -119,7 +119,7 @@
         :on-retry="search.refresh"
       />
 
-      <div v-else-if="search.results.length > 0" class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-else-if="search.results.length > 0" ref="resultsEl" class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         <button
           v-for="item in search.results"
           :key="item.id"
@@ -228,12 +228,40 @@ function select(item: FavoriteTeam): void {
   football.setTeam(item);
 }
 
-function selectFirst(): void {
-  const first = search.results[0];
-  if (!first || search.isSearching) return;
-  if (search.query.trim().length < FOOTBALL_MIN_SEARCH_CHARS) return;
-  select(first);
+/** Grade de resultados — alvo do foco no Enter. */
+/** Enter pediu o primeiro time; espera o debounce/requisição da query atual. */
+const focusFirstPending = ref(false);
+
+/** Enter do teclado ou o "buscar/ir" do teclado virtual da TV (às vezes só keyCode 13). */
+function onSearchKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Enter' || event.keyCode === 13) selectFirst(event);
 }
+
+/**
+ * Enter: leva o foco ao primeiro time encontrado (OK escolhe). Não escolhe
+ * direto — escolher é salvar o time do coração, e o Enter pode vir de um
+ * resultado ainda da busca anterior.
+ */
+function selectFirst(event: KeyboardEvent): void {
+  event.preventDefault();
+  if (search.query.trim().length < FOOTBALL_MIN_SEARCH_CHARS) return;
+  focusFirstPending.value = true;
+  void focusFirstWhenReady();
+}
+
+async function focusFirstWhenReady(): Promise<void> {
+  if (!focusFirstPending.value || search.isDebouncing || search.isSearching) return;
+  focusFirstPending.value = false;
+  await nextTick();
+  resultsEl.value?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
+}
+
+watch(
+  () => [search.isDebouncing, search.isSearching, search.results] as const,
+  () => void focusFirstWhenReady(),
+);
+
+const resultsEl = ref<HTMLElement | null>(null);
 
 onMounted(() => {
   const timer = window.setInterval(() => {

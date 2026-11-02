@@ -1,5 +1,6 @@
 <template>
   <header
+    data-spatial-chrome
     class="app-header fixed inset-x-0 top-0 z-40 border-b border-white/[0.12] bg-[rgba(2,8,23,0.55)]"
   >
     <!-- Sem flex gap: WebView antiga (<84) não o resolve e os itens do

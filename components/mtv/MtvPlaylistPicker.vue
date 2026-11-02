@@ -30,6 +30,7 @@
           class="mtv-picker__card"
           role="listitem"
           :data-nav="`picker-${playlist.id}`"
+          :data-focus-restore="`mtv-${playlist.id}`"
           @click="emit('select', playlist)"
         >
           <span class="mtv-picker__card-era" aria-hidden="true">{{ eraLabel(playlist.name) }}</span>

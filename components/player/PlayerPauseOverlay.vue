@@ -2,7 +2,7 @@
   <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-between gap-6 px-5 sm:px-8">
     <!-- Card da mídia -->
     <section
-      class="pointer-events-auto flex max-w-2xl gap-5 rounded-2xl border border-white/12 bg-[#06142d]/80 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl overlay-rise"
+      class="pointer-events-auto flex max-w-2xl gap-5 rounded-2xl border border-white/12 bg-[#06142d]/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.55)] overlay-rise"
       aria-label="Informações da mídia"
     >
       <div class="relative hidden w-40 shrink-0 overflow-hidden rounded-xl border border-white/10 sm:block">
@@ -77,7 +77,7 @@
     <!-- Card do próximo episódio (séries) -->
     <section
       v-if="nextEpisode"
-      class="pointer-events-auto hidden w-80 shrink-0 rounded-2xl border border-white/12 bg-[#06142d]/80 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl overlay-rise lg:block"
+      class="pointer-events-auto hidden w-80 shrink-0 rounded-2xl border border-white/12 bg-[#06142d]/95 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.55)] overlay-rise lg:block"
       aria-label="Próximo episódio"
     >
       <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-white/60">Próximo episódio</p>

@@ -2,8 +2,10 @@
   <div class="tv-safe pb-28 pt-24">
     <header class="mb-8 space-y-6">
       <NuxtLink
+        ref="seriesLinkEl"
         to="/browse/series"
         class="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors duration-fast hover:text-ink"
+        @keydown.down="onSeriesLinkDown"
       >
         <Icon name="material-symbols:arrow-back-rounded" class="h-4 w-4" aria-hidden="true" />
         Séries
@@ -41,9 +43,11 @@
 
           <button
             v-if="continueTarget"
+            ref="continueEl"
             type="button"
             class="inline-flex items-center gap-2.5 rounded-full bg-blue px-6 py-3 text-sm font-semibold text-[#04101f] shadow-[0_0_22px_rgba(22,136,255,0.5)] transition hover:bg-blue-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-            @click="watch(continueTarget)"
+            @click="playEpisode(continueTarget)"
+            @keydown="onContinueKey"
           >
             <Icon name="material-symbols:play-arrow-rounded" class="h-5 w-5" aria-hidden="true" />
             {{ continueLabel }}
@@ -73,49 +77,93 @@
       description="Esta série ainda não tem episódios disponíveis."
     />
 
-    <template v-else>
-      <section
-        v-for="[season, list] in seasons"
-        :key="season"
-        class="mb-10 space-y-3"
-        :aria-label="seasonLabel(season)"
-      >
-        <div class="flex items-baseline justify-between gap-3">
-          <h2 class="text-lg font-bold tracking-tight text-ink">
-            {{ season === 0 ? 'Especiais' : `T${season}` }}
-            <span v-if="season !== 0" class="ml-1.5 text-sm font-normal text-ink-muted">
-              Temporada {{ season }}
-            </span>
-          </h2>
-          <p class="text-sm tabular-nums text-ink-muted">
-            {{ list.length }} {{ list.length === 1 ? 'episódio' : 'episódios' }}
-          </p>
-        </div>
-
-        <div class="space-y-2.5">
-          <EpisodeRow
-            v-for="episode in list"
-            :key="episode.id"
-            :episode="episode"
-            :last-watched="episode.id === lastWatchedId"
-            :watch-position="positions[episode.id] ?? null"
-          />
-        </div>
-      </section>
-
-      <div ref="sentinel" class="h-px" aria-hidden="true" />
-
-      <div class="flex justify-center">
+    <!-- Episódio a episódio de uma temporada (`?season=N`) -->
+    <template v-else-if="openSeason">
+      <div class="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2">
         <button
-          v-if="episodes.hasNext.value"
+          ref="backToSeasonsEl"
           type="button"
-          class="rounded-sm border border-line bg-surface px-6 py-2.5 text-sm text-ink transition-colors duration-fast hover:border-blue-dark hover:text-blue-light disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="episodes.isLoading.value"
-          @click="episodes.loadMore()"
+          class="inline-flex h-10 items-center gap-2 rounded-full border border-line bg-surface/70 px-4 text-sm font-medium text-ink transition-colors duration-fast hover:border-blue/50 hover:text-blue-light focus:outline-none focus-visible:shadow-focus"
+          @click="closeSeason"
+          @keydown.up="focusContinue($event)"
         >
-          {{ episodes.isLoading.value ? 'Carregando…' : 'Carregar mais' }}
+          <Icon name="material-symbols:arrow-back-rounded" class="h-4 w-4" aria-hidden="true" />
+          Temporadas
         </button>
+        <h2 class="text-lg font-bold tracking-tight text-ink">
+          {{ seasonTitle(openSeason[0]) }}
+          <span class="ml-1.5 text-sm font-normal tabular-nums text-ink-muted">
+            {{ episodeCount(openSeason[1].length) }}
+          </span>
+        </h2>
       </div>
+
+      <div ref="episodesEl" class="space-y-2.5">
+        <EpisodeRow
+          v-for="episode in openSeason[1]"
+          :key="episode.id"
+          :episode="episode"
+          :data-episode-id="episode.id"
+          :last-watched="episode.id === lastWatchedId"
+          :watch-position="positions[episode.id] ?? null"
+        />
+      </div>
+    </template>
+
+    <!-- Temporadas em cards — OK abre os episódios da temporada -->
+    <template v-else>
+      <div
+        ref="seasonsEl"
+        class="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6"
+        data-media-grid
+        @keydown="onSeasonsKeydown"
+      >
+        <NuxtLink
+          v-for="[season, list] in seasons"
+          :key="season"
+          :to="{ query: { ...route.query, season: String(season) } }"
+          class="season-card group relative block w-full overflow-hidden rounded-md border border-line/70 bg-surface transition-[transform,border-color] duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus"
+          :class="{ 'border-blue/60': season === lastWatchedSeason }"
+          :aria-label="`${seasonTitle(season)} — ${episodeCount(list.length)}`"
+          :data-season="season"
+          data-media-card
+        >
+          <div class="ratio-2x3 relative aspect-[2/3] w-full overflow-hidden bg-elevated">
+            <img
+              v-if="seasonArt(list)"
+              :src="seasonArt(list)!"
+              :alt="seasonTitle(season)"
+              loading="lazy"
+              decoding="async"
+              class="absolute inset-0 h-full w-full object-cover transition-transform duration-normal group-hover:scale-[1.04]"
+            />
+            <div v-else class="absolute inset-0 flex items-center justify-center text-blue-dark" aria-hidden="true">
+              <Icon name="material-symbols:tv-gen-outline-rounded" class="h-10 w-10" />
+            </div>
+
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" aria-hidden="true" />
+
+            <span
+              v-if="season === lastWatchedSeason"
+              class="absolute left-2 top-2 rounded-sm bg-blue px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-[#04101f]"
+            >
+              Continuar
+            </span>
+
+            <div class="absolute inset-x-0 bottom-0 p-3">
+              <p class="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-blue">
+                {{ season === 0 ? 'Extras' : `T${season}` }}
+              </p>
+              <p class="mt-0.5 truncate text-base font-bold text-ink">{{ seasonTitle(season) }}</p>
+              <p class="mt-0.5 text-[0.72rem] tabular-nums text-ink-muted">{{ episodeCount(list.length) }}</p>
+            </div>
+          </div>
+        </NuxtLink>
+      </div>
+
+      <p v-if="episodes.hasNext.value" class="mt-6 text-center text-sm text-ink-muted">
+        Carregando mais episódios…
+      </p>
     </template>
 
     <BottomInfoBar
@@ -240,16 +288,177 @@ const continueLabel = computed(() => {
   return code ? `Assistir ${code}` : `Assistir ${target.title}`;
 });
 
-function watch(episode: MediaSummary): void {
+function playEpisode(episode: MediaSummary): void {
   navigateTo(`/medias/${episode.slug}`);
 }
 
-/* ---------- Infinite scroll ---------- */
+/* ---------- Temporadas em cards → episódios ---------- */
 
-const sentinel = ref<HTMLElement | null>(null);
-useIntersectionObserver(sentinel, (isIntersecting) => {
-  if (isIntersecting) episodes.loadMore();
+const router = useRouter();
+const { onGridKeydown } = useGridNav();
+
+/** Os cards precisam de TODAS as temporadas: carrega as páginas restantes
+ *  (100 por página) em sequência, logo ao abrir a série. */
+onMounted(async () => {
+  let guard = 0;
+  while (episodes.hasNext.value && guard++ < 50) {
+    await episodes.loadMore();
+  }
 });
+
+/** Temporada aberta vive na URL — o Voltar (controle/navegador) volta pros cards. */
+const openSeasonNumber = computed(() => {
+  const value = Number(route.query.season);
+  return route.query.season != null && Number.isFinite(value) ? value : null;
+});
+
+const openSeason = computed<[number, MediaSummary[]] | null>(() => {
+  const number = openSeasonNumber.value;
+  if (number === null) return null;
+  return seasons.value.find(([season]) => season === number) ?? null;
+});
+
+const lastWatchedSeason = computed(() => {
+  const id = lastWatchedId.value;
+  if (!id) return null;
+  const episode = episodes.items.value.find((item) => item.id === id);
+  return episode ? (episode.season ?? 0) : null;
+});
+
+function seasonTitle(season: number): string {
+  return season === 0 ? 'Especiais' : `Temporada ${season}`;
+}
+
+function episodeCount(count: number): string {
+  return `${count} ${count === 1 ? 'episódio' : 'episódios'}`;
+}
+
+/** Arte do card: a do 1º episódio da temporada, senão o pôster da série. */
+function seasonArt(list: MediaSummary[]): string | null {
+  return list[0]?.thumbnailUrl ?? posterUrl.value;
+}
+
+/** Botão "← Temporadas": desempilha se veio dos cards; senão troca a URL. */
+function closeSeason(): void {
+  if (window.history.state?.back) router.back();
+  else void router.replace({ query: { ...route.query, season: undefined } });
+}
+
+const seasonsEl = ref<HTMLElement | null>(null);
+const episodesEl = ref<HTMLElement | null>(null);
+const backToSeasonsEl = ref<HTMLElement | null>(null);
+const continueEl = ref<HTMLElement | null>(null);
+const seriesLinkEl = ref<{ $el: HTMLElement } | null>(null);
+
+/* ---------- D-pad: ordem vertical explícita ----------
+ * Séries → Continuar/Assistir → temporadas (ou "← Temporadas" → episódios).
+ * O botão fica à direita do pôster: pela geometria, o motor espacial descia
+ * de "Séries" direto pros cards e, de um card mais à direita, subia pro
+ * header — o botão principal ficava inalcançável. */
+
+function focusEl(element: HTMLElement | null | undefined): boolean {
+  if (!element) return false;
+  element.focus({ preventScroll: true });
+  element.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+  return true;
+}
+
+function focusContinue(event?: KeyboardEvent): void {
+  if (!continueEl.value) return;
+  event?.preventDefault();
+  focusEl(continueEl.value);
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+function onSeriesLinkDown(event: KeyboardEvent): void {
+  focusContinue(event);
+}
+
+/** Primeiro item abaixo do botão: "← Temporadas" (temporada aberta) ou o card da temporada em andamento. */
+function belowContinue(): HTMLElement | null {
+  if (openSeasonNumber.value !== null) return backToSeasonsEl.value;
+  const grid = seasonsEl.value;
+  const season = lastWatchedSeason.value;
+  return (
+    (season !== null ? grid?.querySelector<HTMLElement>(`[data-season="${season}"]`) : null) ??
+    grid?.querySelector<HTMLElement>('[data-media-card]') ??
+    null
+  );
+}
+
+function onContinueKey(event: KeyboardEvent): void {
+  if (event.key === 'ArrowDown') {
+    if (focusEl(belowContinue())) event.preventDefault();
+  } else if (event.key === 'ArrowUp') {
+    if (focusEl(seriesLinkEl.value?.$el)) event.preventDefault();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    // Nada ao lado do botão: não deixa o motor espacial pular pro header.
+    event.preventDefault();
+  }
+}
+
+/** ↑ na 1ª fileira de temporadas vai pro botão principal; o resto é a grade. */
+function onSeasonsKeydown(event: KeyboardEvent): void {
+  if (event.key === 'ArrowUp' && continueEl.value) {
+    const card = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-media-card]');
+    const first = seasonsEl.value?.querySelector<HTMLElement>('[data-media-card]');
+    if (card && first && card.offsetTop === first.offsetTop) {
+      focusContinue(event);
+      return;
+    }
+  }
+  onGridKeydown(event);
+}
+
+// Entrada (e volta do player): foco no botão principal — ou no episódio onde
+// parou, se a temporada já estava aberta. Sem isso nada ficava focado e o 1º ↓
+// passava por cima do botão.
+onMounted(async () => {
+  await nextTick();
+  if (openSeasonNumber.value !== null) {
+    const list = episodesEl.value;
+    const target =
+      (lastWatchedId.value && list?.querySelector<HTMLElement>(`[data-episode-id="${lastWatchedId.value}"]`)) ||
+      list?.querySelector<HTMLElement>('a');
+    if (focusEl(target)) return;
+  }
+  continueEl.value?.focus({ preventScroll: true });
+});
+
+/** Temporada de onde saiu — o card dela recebe o foco na volta. */
+let leftSeason: number | null = null;
+
+watch(openSeasonNumber, async (season, previous) => {
+  await nextTick();
+  if (season !== null) {
+    // Abriu: foco no episódio onde parou (ou no primeiro).
+    leftSeason = season;
+    const list = episodesEl.value;
+    const target =
+      (lastWatchedId.value && list?.querySelector<HTMLElement>(`[data-episode-id="${lastWatchedId.value}"]`)) ||
+      list?.querySelector<HTMLElement>('a');
+    (target || backToSeasonsEl.value)?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+    return;
+  }
+  // Voltou pros cards: foco no card da temporada que estava aberta.
+  const back = previous ?? leftSeason;
+  const card =
+    (back !== null && seasonsEl.value?.querySelector<HTMLElement>(`[data-season="${back}"]`)) ||
+    seasonsEl.value?.querySelector<HTMLElement>('[data-media-card]');
+  card?.focus({ preventScroll: true });
+  card?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+});
+
+/** Esc no teclado: dentro da temporada, volta pros cards. */
+function onEscape(event: KeyboardEvent): void {
+  if (event.key !== 'Escape' || event.defaultPrevented || openSeasonNumber.value === null) return;
+  event.preventDefault();
+  closeSeason();
+}
+
+onMounted(() => window.addEventListener('keydown', onEscape));
+onBeforeUnmount(() => window.removeEventListener('keydown', onEscape));
 
 useHead({ title: computed(() => (seriesTitle.value ? `Pryma — ${seriesTitle.value}` : 'Pryma — Série')) });
 </script>

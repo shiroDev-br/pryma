@@ -1,5 +1,6 @@
 import { useAuthStore } from '~/stores/auth';
 import { getAccessToken } from '~/utils/tokenStorage';
+import { isAdminPath, isStaff } from '~/utils/staff';
 
 /**
  * Guarda global de sessão: sem login válido você só acessa `/login`.
@@ -13,6 +14,8 @@ import { getAccessToken } from '~/utils/tokenStorage';
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) return;
+  // Painel de staff: guarda própria (middleware `admin`) e login próprio.
+  if (isAdminPath(to.path)) return;
 
   const store = useAuthStore();
   const isPublic = to.path === '/login';
@@ -32,4 +35,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (!store.isAuthenticated) return navigateTo('/login');
+
+  // Admin/revendedor não têm catálogo — o lugar deles é o painel.
+  if (isStaff(store.user)) return navigateTo('/admin');
 });

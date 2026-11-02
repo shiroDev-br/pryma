@@ -2,7 +2,7 @@
   <nav class="pointer-events-none fixed inset-x-0 bottom-0 z-40" aria-label="Navegação rápida">
     <div class="tv-safe pb-4 sm:pb-5">
       <div
-        class="rail-scroll pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-lg border border-white/10 bg-black/60 px-2 py-2 backdrop-blur-md"
+        class="rail-scroll pointer-events-auto flex items-center gap-2 overflow-x-auto rounded-lg border border-white/10 bg-black/80 px-2 py-2"
       >
         <ul class="flex shrink-0 items-center gap-1">
           <li v-for="link in links" :key="link.label">

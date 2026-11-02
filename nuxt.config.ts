@@ -17,6 +17,10 @@ export default defineNuxtConfig({
   // Ícones embutidos no bundle como SVG inline — TV/WebView sem internet
   // não depende da API pública do Iconify em runtime (ícone some = layout quebra).
   icon: {
+    // SVG inline (não máscara CSS): cada ícone em modo CSS é um <span> com
+    // mask-image — com a GPU da TV sem memória a máscara se perdia e o ícone
+    // virava um quadrado sólido (tela "sumida" só com quadradinhos).
+    mode: 'svg',
     // WebView antiga (<88) não parseia `:where()` e descarta a regra inteira —
     // os ícones CSS simplesmente não aparecem na TV.
     cssWherePseudo: false,
@@ -37,13 +41,21 @@ export default defineNuxtConfig({
   // Nomes planos: components/media/CategoryCard -> <CategoryCard>
   // Só .vue vira componente — arquivos .ts/.css co-locados são módulos internos.
   components: [{ path: '~/components', pathPrefix: false, extensions: ['vue'] }],
-  css: ['~/assets/css/main.css', '~/assets/css/responsive.css'],
+  // admin.css global (não importado pelas páginas): o painel roda sem SSR e,
+  // com cssCodeSplit desligado, CSS de componente vai para um style.css que o
+  // HTML não referencia — só o CSS global é embutido. Classes prefixadas adm-/admin-.
+  css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
   // TVs/sideloading costumam ter WebView antigo (Chromium <80) que não parseia
   // `?.`/`??` (ES2020) — sem isso o bundle quebra e a tela fica preta.
   vite: {
     build: {
       target: 'es2017',
       cssTarget: 'chrome61',
+      cssCodeSplit: false,
+      // NÃO desligar cssMinify: é a minificação (esbuild) que rebaixa o CSS
+      // para o cssTarget acima — `inset` vira top/right/bottom/left, #rrggbbaa
+      // vira rgba(). Sem ela a TV antiga ignora todo `inset-0` e home, prévia,
+      // player e loading global saem do lugar.
     },
     plugins: [
       // WebView <61 não executa `<script type="module">` e WebViews antigos
@@ -60,6 +72,22 @@ export default defineNuxtConfig({
   typescript: {
     tsConfig: {
       exclude: ['../prysma-home-redesign/**'],
+    },
+  },
+  // Painel de staff: sessão vive no localStorage — renderizar no servidor só
+  // geraria uma tela sem usuário e erro de hidratação. SPA no cliente.
+  routeRules: {
+    '/admin': { ssr: false },
+    '/admin/**': { ssr: false },
+  },
+  hooks: {
+    // Painel de staff (/admin) é só web: fora do build do APK (NUXT_SSR=0),
+    // para não ir embutido no app que o cliente final instala.
+    'pages:extend'(pages) {
+      if (process.env.NUXT_SSR !== '0') return;
+      for (let i = pages.length - 1; i >= 0; i--) {
+        if (pages[i].path === '/admin' || pages[i].path.startsWith('/admin/')) pages.splice(i, 1);
+      }
     },
   },
   runtimeConfig: {
