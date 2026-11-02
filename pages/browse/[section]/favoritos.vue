@@ -15,7 +15,7 @@
 
     <div
       v-else
-      class="grid grid-cols-6 gap-4"
+      class="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 lg:grid-cols-6"
       data-media-grid
       @keydown="onGridKeydown"
     >
@@ -27,7 +27,6 @@
 </template>
 
 <script setup lang="ts">
-import { SECTIONS, isSectionKey } from '~/constants';
 import { usePreferencesStore } from '~/stores/preferences';
 import type { MediaSummary } from '~/types';
 
@@ -36,15 +35,7 @@ const { onGridKeydown } = useGridNav();
 /** Título fixo da lista — usada no cabeçalho, no rodapé e no document.title. */
 const HEADING = 'Favoritos';
 
-const route = useRoute();
-
-const sectionParam = String(route.params.section);
-if (!isSectionKey(sectionParam)) {
-  throw createError({ statusCode: 404, statusMessage: 'Seção não encontrada', fatal: true });
-}
-
-const section = sectionParam;
-const sectionDef = SECTIONS[section];
+const { section, sectionDef } = useBrowseSection();
 
 /** Favoritos desta seção (filmes → vod, séries → series), do mais recente pro mais antigo. */
 const preferences = usePreferencesStore();

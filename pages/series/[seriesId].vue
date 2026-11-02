@@ -192,7 +192,6 @@ if (!seriesId) {
 /** Episódios da coletânea — ordenados por temporada/episódio (SPEC §6.7). */
 const episodes = useMediaList(computed(() => ({ series: seriesId, sort: 'episode', limit: 100 })));
 
-// SSR: hidrata com dados/404 reais em vez de "Carregando episódios…".
 await episodes.ready;
 
 const notFound = computed(() => episodes.error.value?.status === 404);
@@ -300,6 +299,7 @@ const { onGridKeydown } = useGridNav();
 /** Os cards precisam de TODAS as temporadas: carrega as páginas restantes
  *  (100 por página) em sequência, logo ao abrir a série. */
 onMounted(async () => {
+  await episodes.settled;
   let guard = 0;
   while (episodes.hasNext.value && guard++ < 50) {
     await episodes.loadMore();
@@ -414,6 +414,7 @@ function onSeasonsKeydown(event: KeyboardEvent): void {
 // parou, se a temporada já estava aberta. Sem isso nada ficava focado e o 1º ↓
 // passava por cima do botão.
 onMounted(async () => {
+  await episodes.settled;
   await nextTick();
   if (openSeasonNumber.value !== null) {
     const list = episodesEl.value;
@@ -456,6 +457,8 @@ function onEscape(event: KeyboardEvent): void {
   event.preventDefault();
   closeSeason();
 }
+
+useBackLayer(() => openSeasonNumber.value !== null, closeSeason);
 
 onMounted(() => window.addEventListener('keydown', onEscape));
 onBeforeUnmount(() => window.removeEventListener('keydown', onEscape));

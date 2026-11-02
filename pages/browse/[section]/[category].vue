@@ -63,7 +63,7 @@
       <!-- Filmes/séries: grade de pôsteres (como na busca); o card abre a tela de detalhes. -->
       <div
         v-else
-        class="grid grid-cols-6 gap-4"
+        class="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 lg:grid-cols-6"
         data-media-grid
         @keydown="onGridKeydown"
       >
@@ -90,32 +90,25 @@
 </template>
 
 <script setup lang="ts">
-import { DEFAULT_PAGE_SIZE, DEFAULT_SORT, SECTIONS, isSectionKey } from '~/constants';
+import { DEFAULT_PAGE_SIZE, DEFAULT_SORT } from '~/constants';
 import { isAdultCategory, isAdultItem } from '~/utils/adult';
-import { ALL_CATEGORY_SLUG, categoryBelongsToSection } from '~/utils/categorySections';
+import { ALL_CATEGORY_SLUG } from '~/utils/categorySections';
 import type { MediaSort } from '~/types';
 import TVLiveSplitView from '~/components/browse/TVLiveSplitView.vue';
 
 const { onGridKeydown } = useGridNav();
 
+const { section, sectionDef } = useBrowseSection();
 const route = useRoute();
-
-const sectionParam = String(route.params.section);
-if (!isSectionKey(sectionParam)) {
-  throw createError({ statusCode: 404, statusMessage: 'Seção não encontrada', fatal: true });
-}
-
-const section = sectionParam;
-const sectionDef = SECTIONS[section];
 const categorySlug = String(route.params.category);
 
 // Categoria adulta fora do desbloqueio — responde como inexistente.
-const adultUnlocked = useState<boolean>('adult.unlocked', () => false);
+const adultUnlocked = useAdultUnlocked();
 if (isAdultCategory(categorySlug) && !adultUnlocked.value) {
   throw createError({ statusCode: 404, statusMessage: 'Categoria não encontrada', fatal: true });
 }
 
-const categories = useCategories();
+const { categories, sectionCategories } = useSectionCategories(section);
 
 /** Ordenação da listagem — o servidor aceita os seis valores de `MediaSort`. */
 const sort = ref<MediaSort>(DEFAULT_SORT);
@@ -144,7 +137,6 @@ const mediaParams = computed(() => ({
 
 const mediaList = useMediaList(mediaParams);
 
-// SSR: página de categoria sai com itens (ou vazio/erro) no HTML.
 await mediaList.ready;
 
 const category = computed(() =>
@@ -155,14 +147,6 @@ const heading = computed(() => {
   if (isAll) return isSeriesSection.value ? 'Todas as séries' : 'Todos os filmes';
   return category.value?.name ?? categorySlug;
 });
-
-/** Categorias desta seção (o "Todos" soma elas e herda o tipo do catálogo). */
-const sectionCategories = computed(() =>
-  categories.categories.value.filter(
-    (item) =>
-      categoryBelongsToSection(item, section) && (adultUnlocked.value || !isAdultCategory(item.slug)),
-  ),
-);
 
 /** "Todos" lista sem filtro de categoria — o adulto sai aqui até o desbloqueio. */
 const visibleItems = computed(() =>
@@ -204,11 +188,14 @@ useIntersectionObserver(sentinel, (isIntersecting) => {
   if (isIntersecting) mediaList.loadMore();
 });
 
-// Foco no primeiro card — o D-pad segue pela grade.
-onMounted(() => {
+// Foco no primeiro card — o D-pad segue pela grade. Na carga direta a lista chega
+// depois de montar, então também espera ela.
+function focusFirstCard(): void {
   if (document.activeElement && document.activeElement !== document.body) return;
   document.querySelector<HTMLElement>('[data-media-grid] [data-media-card]')?.focus({ preventScroll: true });
-});
+}
+onMounted(focusFirstCard);
+watch(() => visibleItems.value.length, () => void nextTick(focusFirstCard));
 
 useHead({ title: computed(() => `Pryma — ${heading.value}`) });
 </script>

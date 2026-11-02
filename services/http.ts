@@ -57,12 +57,18 @@ function resolveSignal(external: AbortSignal | undefined, timeoutMs: number) {
     controller.abort();
   }, timeoutMs);
 
-  if (external) {
-    if (external.aborted) controller.abort();
-    else external.addEventListener('abort', () => controller.abort(), { once: true });
-  }
+  const onExternalAbort = (): void => controller.abort();
+  if (external?.aborted) controller.abort();
+  else external?.addEventListener('abort', onExternalAbort);
 
-  return { signal: controller.signal, timedOut: () => timedOutFlag, cleanup: () => clearTimeout(timer) };
+  return {
+    signal: controller.signal,
+    timedOut: () => timedOutFlag,
+    cleanup: () => {
+      clearTimeout(timer);
+      external?.removeEventListener('abort', onExternalAbort);
+    },
+  };
 }
 
 function extractErrorDetail(payload: unknown): { code: string; message: string } {
@@ -102,9 +108,9 @@ function isApiErrorLike(error: unknown): error is ApiError {
   );
 }
 
-function shouldRetry(method: string, attempt: number, status: number): boolean {
+function shouldRetry(method: string, attempt: number, maxRetries: number, status: number): boolean {
   const isIdempotent = method === 'GET' || method === 'HEAD';
-  if (!isIdempotent || attempt >= MAX_RETRIES) return false;
+  if (!isIdempotent || attempt >= maxRetries) return false;
   return status === 0 || status >= 500;
 }
 
@@ -150,7 +156,7 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
         const { code, message } = extractErrorDetail(payload);
         const apiError = createApiError(response.status, code, message, payload);
 
-        if (shouldRetry(method, attempt, response.status)) {
+        if (shouldRetry(method, attempt, maxRetries, response.status)) {
           attempt += 1;
           await delay(200 * attempt);
           continue;
@@ -172,13 +178,15 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
           throw error;
         }
 
-        const isTimeout = error instanceof Error && error.name === 'TimeoutError';
+        // O próprio timer aborta o fetch: pelo erro (AbortError) não dá para distinguir
+        // do cancelamento de quem chamou — só este, que ninguém mais quer, sobe direto.
+        const isTimeout = timedOut();
         const isAbort = error instanceof Error && error.name === 'AbortError';
 
         if (isAbort && !isTimeout) throw error;
 
         const retryStatus = isTimeout ? 503 : 0;
-        if (shouldRetry(method, attempt, retryStatus)) {
+        if (shouldRetry(method, attempt, maxRetries, retryStatus)) {
           attempt += 1;
           await delay(200 * attempt);
           continue;

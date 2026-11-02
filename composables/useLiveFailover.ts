@@ -159,7 +159,7 @@ export function useLiveFailover(options: UseLiveFailoverOptions) {
       sessionCache.set(media.id, sources);
       return sources;
     } catch {
-      sessionCache.set(media.id, []);
+      // Sem cache: queda de rede passageira não pode condenar a versão até sair da tela.
       return [];
     }
   }
@@ -325,8 +325,10 @@ export function useLiveFailover(options: UseLiveFailoverOptions) {
       exhausted.value = true;
       return;
     }
-    await play(first);
+    // Antes do `play`: ele espera o chunk do motor, e sair da tela nesse meio-tempo
+    // religava o vigia depois do `stop` — um timer de 1 s rodando para sempre.
     startWatch();
+    await play(first);
   }
 
   /** Motor desistiu (erro fatal) — trata como travamento. */
@@ -337,6 +339,7 @@ export function useLiveFailover(options: UseLiveFailoverOptions) {
 
   /** "Tentar de novo" depois de esgotar: recomeça a lista inteira. */
   function retry(): void {
+    sessionCache.clear();
     void start();
   }
 

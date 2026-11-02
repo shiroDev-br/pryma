@@ -49,34 +49,26 @@
 
         <!-- Card "Favoritos" — só filmes/séries; sempre visível (vazio explica como favoritar). -->
         <li v-if="sectionDef.type !== 'live'" class="min-w-0">
-          <NuxtLink
-            data-category-card
+          <CategoryShortcut
             :to="`/browse/${section}/favoritos`"
-            class="group relative block h-[6.5rem] w-[9.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-[transform,border-color] duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus sm:h-[9rem] sm:w-[11rem] md:h-[10.5rem] md:w-[12.5rem]"
-            aria-label="Favoritos"
-          >
-            <div class="relative flex h-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-[#ffc94d]/20 to-blue/10 p-3 sm:gap-2 sm:p-4">
-              <Icon name="material-symbols:star-rounded" class="h-8 w-8 text-[#ffc94d] sm:h-10 sm:w-10 md:h-12 md:w-12" aria-hidden="true" />
-              <p class="text-center text-xs font-semibold text-ink sm:text-sm">Favoritos</p>
-              <p class="text-center text-[0.62rem] text-ink-muted sm:text-[0.7rem]">{{ sectionDef.type === 'series' ? 'Suas séries marcadas' : 'Seus filmes marcados' }}</p>
-            </div>
-          </NuxtLink>
+            title="Favoritos"
+            :hint="sectionDef.type === 'series' ? 'Suas séries marcadas' : 'Seus filmes marcados'"
+            icon="material-symbols:star-rounded"
+            icon-class="text-[#ffc94d]"
+            tint="from-[#ffc94d]/20 to-blue/10"
+          />
         </li>
 
         <!-- Card "Continuar assistindo" — só filmes/séries, só se houver progresso local. -->
         <li v-if="sectionDef.type !== 'live' && hasRecents" class="min-w-0">
-          <NuxtLink
-            data-category-card
+          <CategoryShortcut
             :to="`/browse/${section}/${RECENTS_SLUG}`"
-            class="group relative block h-[6.5rem] w-[9.5rem] overflow-hidden rounded-lg border border-line/70 bg-surface transition-[transform,border-color] duration-normal hover:-translate-y-1 hover:border-blue-dark/70 hover:shadow-card focus-visible:shadow-focus sm:h-[9rem] sm:w-[11rem] md:h-[10.5rem] md:w-[12.5rem]"
-            aria-label="Continuar assistindo"
-          >
-            <div class="relative flex h-full flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-blue-dark/40 to-blue/10 p-3 sm:gap-2 sm:p-4">
-              <Icon name="material-symbols:history-rounded" class="h-8 w-8 text-blue-light sm:h-10 sm:w-10 md:h-12 md:w-12" aria-hidden="true" />
-              <p class="text-center text-xs font-semibold text-ink sm:text-sm">Continuar assistindo</p>
-              <p class="text-center text-[0.62rem] text-ink-muted sm:text-[0.7rem]">Filmes e séries recentes</p>
-            </div>
-          </NuxtLink>
+            title="Continuar assistindo"
+            hint="Filmes e séries recentes"
+            icon="material-symbols:history-rounded"
+            icon-class="text-blue-light"
+            tint="from-blue-dark/40 to-blue/10"
+          />
         </li>
 
         <li v-for="category in sectionCategories" :key="category.id" class="min-w-0">
@@ -113,40 +105,17 @@
 </template>
 
 <script setup lang="ts">
-import { SECTIONS, isSectionKey } from '~/constants';
-import { ALL_CATEGORY_SLUG, categoryBelongsToSection } from '~/utils/categorySections';
+import { ALL_CATEGORY_SLUG } from '~/utils/categorySections';
 import type { Category } from '~/types';
-import { isAdultCategory } from '~/utils/adult';
-import { pickSpatialBest } from '~/utils/spatial';
 import { RECENTS_SLUG, hasRecentProgress } from '~/utils/recentlyWatched';
-
-const route = useRoute();
+import { directionOf } from '~/utils/remoteKeys';
 
 /** Troca de seção (/browse/filmes → /browse/series) remonta a página com a seção nova.
  *  Só o caminho: `?full=1` (prévia da TV em tela cheia) não pode remontar a tela. */
 definePageMeta({ key: (route) => route.path });
 
-const sectionParam = String(route.params.section);
-if (!isSectionKey(sectionParam)) {
-  throw createError({ statusCode: 404, statusMessage: 'Seção não encontrada', fatal: true });
-}
-
-const section = sectionParam;
-const sectionDef = SECTIONS[section];
-
-const categories = useCategories();
-
-/** Categoria adulta fica oculta até o desbloqueio. */
-const adultUnlocked = useState<boolean>('adult.unlocked', () => false);
-
-/** Só as categorias que pertencem a esta seção (Filmes → filmes, Séries → séries, TV → ao vivo). */
-const sectionCategories = computed(() =>
-  categories.categories.value.filter(
-    (category) =>
-      categoryBelongsToSection(category, section) &&
-      (adultUnlocked.value || !isAdultCategory(category.slug)),
-  ),
-);
+const { section, sectionDef } = useBrowseSection();
+const { categories, sectionCategories } = useSectionCategories(section);
 
 /** Card "Todos": soma das categorias visíveis da seção (adulto fora até desbloquear). */
 const allCategory = computed<Category>(() => ({
@@ -257,15 +226,15 @@ function focusHighlights(): void {
 
 /** Navegação 2D por setas (teclado / controle remoto): ←→ colunas, ↑↓ fileiras e faixa inferior. */
 function onKeydown(event: KeyboardEvent): void {
-  const { key } = event;
-  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
+  const direction = directionOf(event);
+  if (!direction) return;
 
   const target = event.target as HTMLElement | null;
   if (!target) return;
 
   // Vindo da faixa inferior: ↑ volta para o último card focado.
   if (target.closest('[data-highlights]')) {
-    if (key === 'ArrowUp') {
+    if (direction === 'up') {
       event.preventDefault();
       focusCard(lastIndex);
     }
@@ -278,9 +247,9 @@ function onKeydown(event: KeyboardEvent): void {
   if (index < 0) return;
 
   let next = index;
-  if (key === 'ArrowRight') next = Math.min(index + ROWS, list.length - 1);
-  else if (key === 'ArrowLeft') next = index - ROWS;
-  else if (key === 'ArrowUp') next = index % ROWS > 0 ? index - 1 : -1;
+  if (direction === 'right') next = Math.min(index + ROWS, list.length - 1);
+  else if (direction === 'left') next = index - ROWS;
+  else if (direction === 'up') next = index % ROWS > 0 ? index - 1 : -1;
   else if (index % ROWS < ROWS - 1 && index + 1 < list.length) next = index + 1;
   else {
     event.preventDefault();
@@ -290,7 +259,7 @@ function onKeydown(event: KeyboardEvent): void {
   }
 
   // ↑ na fileira de cima: o motor global sobe pro header (sino, menu, logo).
-  if (key === 'ArrowUp' && next < 0) return;
+  if (direction === 'up' && next < 0) return;
   event.preventDefault();
   if (next < 0 || next === index) return;
   focusCard(next);
@@ -302,8 +271,9 @@ function focusFirstCard(): void {
   cards()[0]?.focus({ preventScroll: true });
 }
 
+// Pelo fim do carregamento também: seção sem categoria nenhuma ainda tem os atalhos para focar.
 watch(
-  () => sectionCategories.value.length,
+  [() => sectionCategories.value.length, categories.isLoading],
   async () => {
     await nextTick();
     updateEdges();

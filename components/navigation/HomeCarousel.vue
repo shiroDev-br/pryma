@@ -64,6 +64,7 @@
 
 <script setup lang="ts">
 import type { HomeMenuItem } from '~/composables/useHomeMenu';
+import { directionOf } from '~/utils/remoteKeys';
 
 const props = withDefaults(
   defineProps<{
@@ -157,9 +158,15 @@ function computeMetrics(w: number, h: number): HomeCarouselMetrics {
   };
 }
 
-const metrics = ref<HomeCarouselMetrics>(
-  import.meta.client ? computeMetrics(window.innerWidth, window.innerHeight) : computeMetrics(1280, 720),
-);
+/** Sem janela (servidor) e na hidratação, que precisa bater com o HTML do servidor: canvas padrão. */
+const SERVER_VIEWPORT = [1280, 720] as const;
+
+function currentMetrics(): HomeCarouselMetrics {
+  const unknownViewport = import.meta.server || tryUseNuxtApp()?.isHydrating;
+  return unknownViewport ? computeMetrics(...SERVER_VIEWPORT) : computeMetrics(window.innerWidth, window.innerHeight);
+}
+
+const metrics = ref<HomeCarouselMetrics>(currentMetrics());
 
 /** Altura aplicada no palco em px — sem `vh/clamp` na WebView antiga. */
 const viewportStyle = computed(() => ({ height: `${metrics.value.stageH}px` }));
@@ -200,12 +207,9 @@ let framePending = false;
 /** Passo dono do `framePending` — timeout atrasado não libera o passo seguinte. */
 let stepToken = 0;
 
-/** ←/→ — inclui nomes antigos e keyCode do D-pad Android (21/22). */
 function stepOf(event: KeyboardEvent): 1 | -1 | 0 {
-  const { key, keyCode } = event;
-  if (key === 'ArrowRight' || key === 'Right' || keyCode === 22) return 1;
-  if (key === 'ArrowLeft' || key === 'Left' || keyCode === 21) return -1;
-  return 0;
+  const direction = directionOf(event);
+  return direction === 'right' ? 1 : direction === 'left' ? -1 : 0;
 }
 
 function releaseFrame(token: number): void {
@@ -396,6 +400,7 @@ onMounted(() => {
   const updateMetrics = (): void => {
     metrics.value = computeMetrics(window.innerWidth, window.innerHeight);
   };
+  updateMetrics(); // depois da hidratação: agora a janela real vale
   window.addEventListener('resize', updateMetrics);
   onBeforeUnmount(() => window.removeEventListener('resize', updateMetrics));
 });

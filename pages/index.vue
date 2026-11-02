@@ -4,7 +4,8 @@
 
     <!-- Palco: ocupa o miolo entre o header (11%) e a barra inferior (11%). -->
     <div class="home-page__stage">
-      <HomeCarousel class="w-full" :items="menu.items.value" />
+      <HomeMenuGrid v-if="portraitPhone" :items="menu.items.value" />
+      <HomeCarousel v-else class="w-full" :items="menu.items.value" />
     </div>
 
     <!-- Faixa institucional — borda a borda, fixa na base da tela. -->
@@ -44,10 +45,10 @@
   height: var(--footer-h);
 }
 
-/* Retrato estreito: a home volta a rolar em vez de espremer os cards. */
-@media (max-width: 599px) and (orientation: portrait) {
+/* Celular em pé: a home vira grade (HomeMenuGrid) e rola como página comum. */
+@media (max-width: 640px) and (orientation: portrait) {
   .home-page {
-    --header-h: 5rem;
+    --header-h: 4rem;
     height: auto;
     min-height: var(--app-vh);
     overflow: visible;
@@ -69,4 +70,5 @@
 useHead({ title: 'Pryma — Início' });
 
 const menu = useHomeMenu();
+const portraitPhone = usePortraitPhone();
 </script>

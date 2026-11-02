@@ -1,12 +1,9 @@
 <template>
   <component
-    :is="cardTag"
-    v-bind="cardBind"
+    :is="link.tag.value"
+    v-bind="link.bind.value"
     class="nav-card group absolute left-1/2 top-1/2 block"
-    :class="[
-      depthClass,
-      { 'max-sm:hidden': !isActive },
-    ]"
+    :class="depthClass"
     :style="cardStyle"
     :aria-current="isActive ? 'true' : undefined"
     :aria-label="item.title"
@@ -148,11 +145,6 @@
 
 <script setup lang="ts">
 import type { CSSProperties } from 'vue';
-// NuxtLink é resolvido em compilação — import explícito pro `component :is` em runtime.
-import { NuxtLink } from '#components';
-import { Browser } from '@capacitor/browser';
-import { Capacitor } from '@capacitor/core';
-import { useUpdater } from '~/composables/useUpdater';
 import type { HomeMenuItem } from '~/composables/useHomeMenu';
 
 const props = defineProps<{
@@ -171,23 +163,7 @@ const emit = defineEmits<{
   activate: [];
 }>();
 
-const updater = useUpdater();
-
-/** Link externo (ex.: Atualizações) abre no navegador do sistema. */
-const isExternal = computed(() => Boolean(props.item.externalUrl));
-
-/** Com link externo → âncora; com rota → link de navegação; sem rota → botão inerte. */
-const cardTag = computed(() => {
-  if (isExternal.value) return 'a';
-  return props.item.to ? NuxtLink : 'button';
-});
-
-const cardBind = computed(() => {
-  if (isExternal.value) {
-    return { href: props.item.externalUrl, target: '_blank', rel: 'noopener noreferrer' };
-  }
-  return props.item.to ? { to: props.item.to } : { type: 'button' as const };
-});
+const link = useMenuItemLink(() => props.item);
 
 type Depth = 'active' | 'near' | 'far';
 
@@ -254,18 +230,7 @@ const cardStyle = computed<CSSProperties>(() => {
 
 function onClick(event: MouseEvent): void {
   if (props.isActive) {
-    // Link externo: abre no navegador do sistema (Fora do app).
-    if (isExternal.value && props.item.externalUrl) {
-      event.preventDefault();
-      // Atualizações: no APK vai pelo app Downloader (que instala o APK novo).
-      if (props.item.downloaderCode) {
-        void updater.openUpdates(props.item.downloaderCode, props.item.externalUrl);
-      } else if (Capacitor.isNativePlatform()) {
-        void Browser.open({ url: props.item.externalUrl });
-      } else {
-        window.open(props.item.externalUrl, '_blank', 'noopener');
-      }
-    }
+    link.openExternal(event);
     return;
   }
   event.preventDefault();

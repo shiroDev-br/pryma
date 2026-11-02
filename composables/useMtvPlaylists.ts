@@ -17,11 +17,13 @@ export function useMtvPlaylists(): MtvPlaylistsResult {
   const { data, status, error, refresh } = useAsyncData(
     'mtv-playlists',
     () => repository.listPlaylists(),
-    { transform: (result) => result.items },
+    // `server: false`: exige login, e o token só existe no cliente (no servidor: 401).
+    { transform: (result) => result.items, server: false },
   );
 
   const playlists = computed(() => data.value ?? []);
-  const isLoading = computed(() => status.value === 'pending');
+  // `idle` = ainda no servidor/hidratação: o pedido sai logo depois de montar.
+  const isLoading = computed(() => status.value === 'pending' || status.value === 'idle');
 
   return { playlists, isLoading, error, refresh };
 }

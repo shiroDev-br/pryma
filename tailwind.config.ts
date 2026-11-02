@@ -16,6 +16,9 @@ const lineColor = ({ opacityValue }: { opacityValue?: string }): string => {
   return `rgba(var(--color-border-rgb), ${+(ratio * BORDER_ALPHA).toFixed(3)})`;
 };
 
+/** Variante responsiva: sempre ligada em landscape; em retrato, por largura. */
+const landscapeOrWiderThan = (px: number) => ({ raw: `(orientation: landscape), (min-width: ${px}px)` });
+
 /** Alias "~" aponta para a raiz do projeto. */
 const root = new URL('.', import.meta.url).pathname;
 const src = (p: string) => `${root}${p}`;
@@ -43,17 +46,18 @@ export default <Partial<Config>>{
   content,
   theme: {
     /**
-     * Breakpoints neutralizados: o app escala via rem (plugin
-     * viewport-scale), então TODA tela landscape é o canvas 1440×810 —
-     * o mesmo estado do `xl` no notebook. Com sm..xl em 0px as variantes
-     * `sm: md: lg: xl:` sempre valem (a última vence) e `2xl:` nunca.
+     * Breakpoints só existem em RETRATO. O app escala via rem (plugin
+     * viewport-scale), então TODA tela landscape é o canvas 1440×810 — o mesmo
+     * estado do `xl` no notebook: lá `sm: md: lg: xl:` sempre valem. Em pé
+     * (celular/tablet) eles voltam a ser os de largura de sempre, e o que foi
+     * escrito mobile-first funciona. `2xl:` nunca vale.
      */
     screens: {
-      sm: '0px',
-      md: '0px',
-      lg: '0px',
-      xl: '0px',
-      '2xl': '99999px',
+      sm: landscapeOrWiderThan(640),
+      md: landscapeOrWiderThan(768),
+      lg: landscapeOrWiderThan(1024),
+      xl: landscapeOrWiderThan(1280),
+      '2xl': { raw: 'not all' },
     },
     extend: {
       // Cores com <alpha-value> (via --*-rgb do main.css): só assim o Tailwind

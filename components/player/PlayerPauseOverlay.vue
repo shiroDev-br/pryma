@@ -2,7 +2,7 @@
   <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-between gap-6 px-5 sm:px-8">
     <!-- Card da mídia -->
     <section
-      class="pointer-events-auto flex max-w-2xl gap-5 rounded-2xl border border-white/12 bg-[#06142d]/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.55)] overlay-rise"
+      class="overlay-card pointer-events-auto flex max-w-2xl gap-5 p-5"
       aria-label="Informações da mídia"
     >
       <div class="relative hidden w-40 shrink-0 overflow-hidden rounded-xl border border-white/10 sm:block">
@@ -13,9 +13,7 @@
           class="aspect-[2/3] w-full object-cover object-[center_30%]"
         />
         <div v-else class="grid aspect-[2/3] w-full place-items-center bg-[#0a2246]">
-          <svg class="h-10 w-10 text-blue/70" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z" />
-          </svg>
+          <HudIcon name="play" class="h-10 w-10 text-blue/70"/>
         </div>
         <span
           v-if="media.quality"
@@ -50,9 +48,7 @@
             class="inline-flex items-center gap-2.5 rounded-full bg-blue px-6 py-3 text-sm font-semibold text-[#04101f] shadow-[0_0_22px_rgba(22,136,255,0.5)] transition hover:bg-blue-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             @click="$emit('play')"
           >
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z" />
-            </svg>
+            <HudIcon name="play" class="h-4 w-4"/>
             {{ primaryLabel }}
           </button>
 
@@ -62,12 +58,8 @@
             :aria-pressed="isFavorite"
             @click="$emit('toggle-list')"
           >
-            <svg v-if="!isFavorite" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M6 4h12a1 1 0 0 1 1 1v16l-7-4-7 4V5a1 1 0 0 1 1-1Z" />
-            </svg>
-            <svg v-else class="h-4 w-4 text-blue" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M6 3h12a2 2 0 0 1 2 2v17.2a1 1 0 0 1-1.45.9L12 18.1l-6.55 3A1 1 0 0 1 4 20.2V5a2 2 0 0 1 2-2Z" />
-            </svg>
+            <HudIcon name="bookmark" v-if="!isFavorite" class="h-4 w-4"/>
+            <HudIcon name="bookmarkFilled" v-else class="h-4 w-4 text-blue"/>
             {{ isFavorite ? 'Na sua lista' : 'Minha lista' }}
           </button>
         </div>
@@ -77,7 +69,7 @@
     <!-- Card do próximo episódio (séries) -->
     <section
       v-if="nextEpisode"
-      class="pointer-events-auto hidden w-80 shrink-0 rounded-2xl border border-white/12 bg-[#06142d]/95 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.55)] overlay-rise lg:block"
+      class="overlay-card pointer-events-auto hidden w-80 shrink-0 p-4 lg:block"
       aria-label="Próximo episódio"
     >
       <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-white/60">Próximo episódio</p>
@@ -95,9 +87,7 @@
             class="aspect-video w-full object-cover"
           />
           <div v-else class="grid aspect-video w-full place-items-center bg-[#0a2246]">
-            <svg class="h-6 w-6 text-blue/70" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z" />
-            </svg>
+            <HudIcon name="play" class="h-6 w-6 text-blue/70"/>
           </div>
         </div>
 
@@ -107,19 +97,13 @@
         </div>
 
         <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/25 text-white/90 transition group-hover:border-blue group-hover:bg-blue group-hover:text-[#04101f]">
-          <svg class="ml-0.5 h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z" />
-          </svg>
+          <HudIcon name="play" class="ml-0.5 h-4 w-4"/>
         </span>
       </button>
 
       <div class="mt-2 flex justify-end gap-1 text-white/50">
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m9 18 6-6-6-6" />
-        </svg>
-        <svg class="-ml-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m9 18 6-6-6-6" />
-        </svg>
+        <HudIcon name="chevronRight" class="h-4 w-4"/>
+        <HudIcon name="chevronRight" class="-ml-2 h-4 w-4"/>
       </div>
     </section>
   </div>
@@ -176,7 +160,11 @@ const nextEpisodeMeta = computed(() => {
 </script>
 
 <style scoped>
-.overlay-rise {
+.overlay-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  background: rgba(6, 20, 45, 0.95);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
   animation: overlay-rise 0.35s ease-out both;
 }
 
@@ -192,7 +180,7 @@ const nextEpisodeMeta = computed(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .overlay-rise {
+  .overlay-card {
     animation: none;
   }
 }

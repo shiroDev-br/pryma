@@ -20,7 +20,9 @@ import AppIntro from '~/components/global/AppIntro.vue';
 import GlobalLoading from '~/components/global/GlobalLoading.vue';
 import ExitConfirmModal from '~/components/global/ExitConfirmModal.vue';
 import UpdateModal from '~/components/global/UpdateModal.vue';
+import { useBackLayer } from '~/composables/useBackLayer';
 import { useDoubleBackExit } from '~/composables/useDoubleBackExit';
+import { useUpdater } from '~/composables/useUpdater';
 
 // Vinheta de abertura: capa escura ANTES do primeiro paint (senão a página
 // aparece por um instante antes do overlay montar). O AppIntro tira a capa.
@@ -36,38 +38,26 @@ useHead({
 });
 
 const router = useRouter();
-const { handleBackButton } = useDoubleBackExit();
+const { handleBackButton, showExitModal, cancelExit } = useDoubleBackExit();
+const { updateModal, closeUpdateModal } = useUpdater();
 
-function handlePopState(event: PopStateEvent): void {
-  // No app nativo o voltar é do plugin do Capacitor — aqui, chegar na home pelo
-  // "voltar" contava como 1º toque de saída (o 2º já abria a confirmação).
-  if (Capacitor.isNativePlatform()) return;
-  // If on home page, let double-back handle exit
-  if (router.currentRoute.value.path === '/') {
-    event.preventDefault();
-    handleBackButton();
-    return;
-  }
-  // Otherwise allow normal back navigation
+// Janelas globais: o Voltar do aparelho fecha elas antes de qualquer outra coisa.
+useBackLayer(() => updateModal.value !== null, closeUpdateModal);
+useBackLayer(() => showExitModal.value, cancelExit);
+
+/** Teclado no navegador (no nativo, o Voltar vem pelo plugin do Capacitor). */
+function onBackspace(event: KeyboardEvent): void {
+  if (event.key !== 'Backspace' && event.key !== 'BrowserBack') return;
+  if (router.currentRoute.value.path !== '/') return;
+  event.preventDefault();
+  handleBackButton();
 }
 
 onMounted(() => {
-  window.addEventListener('popstate', handlePopState);
-  
-  // Also handle hardware back button (Android TV, etc)
-  window.addEventListener('keydown', (e) => {
-    // Nativo: o voltar já passa pelo plugin — contar aqui também abriria a confirmação no 1º toque.
-    if (Capacitor.isNativePlatform()) return;
-    if (e.key === 'Backspace' || e.key === 'BrowserBack' || e.code === 'Backspace') {
-      if (router.currentRoute.value.path === '/') {
-        e.preventDefault();
-        handleBackButton();
-      }
-    }
-  });
+  if (!Capacitor.isNativePlatform()) window.addEventListener('keydown', onBackspace);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('popstate', handlePopState);
+  window.removeEventListener('keydown', onBackspace);
 });
 </script>

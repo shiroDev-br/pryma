@@ -1,3 +1,5 @@
+import { directionOf } from '~/utils/remoteKeys';
+
 /**
  * D-pad em grade de cards (busca, recentes): navegação por linha/coluna.
  *
@@ -14,8 +16,8 @@
  */
 export function useGridNav(): { onGridKeydown: (event: KeyboardEvent) => void } {
   function onGridKeydown(event: KeyboardEvent): void {
-    const { key } = event;
-    if (key !== 'ArrowLeft' && key !== 'ArrowRight' && key !== 'ArrowUp' && key !== 'ArrowDown') return;
+    const direction = directionOf(event);
+    if (!direction) return;
 
     const grid = event.currentTarget as HTMLElement | null;
     const cards = Array.from(grid?.querySelectorAll<HTMLElement>('[data-media-card]') ?? []);
@@ -32,9 +34,9 @@ export function useGridNav(): { onGridKeydown: (event: KeyboardEvent) => void } 
     const column = index % columns;
     let target: number | null = null;
 
-    if (key === 'ArrowLeft') target = column > 0 ? index - 1 : index;
-    else if (key === 'ArrowRight') target = column < columns - 1 && index + 1 < cards.length ? index + 1 : index;
-    else if (key === 'ArrowUp') target = index - columns >= 0 ? index - columns : null;
+    if (direction === 'left') target = column > 0 ? index - 1 : index;
+    else if (direction === 'right') target = column < columns - 1 && index + 1 < cards.length ? index + 1 : index;
+    else if (direction === 'up') target = index - columns >= 0 ? index - columns : null;
     else {
       const rowStart = index - column;
       if (index + columns < cards.length) target = index + columns;

@@ -2,7 +2,7 @@
   <!-- Coluna 1: voltar + busca + grupos -->
   <aside
     ref="rootEl"
-    class="live-panel flex min-h-0 flex-col p-3 xl:p-4"
+    class="live-panel live-groups flex min-h-0 flex-col p-3 xl:p-4"
     aria-label="Grupos de canais"
   >
     <div class="flex shrink-0 items-center gap-3">
@@ -44,7 +44,7 @@
     </div>
 
     <!-- Grupos — abrir um grupo leva os canais dele pra coluna do meio. -->
-    <div ref="sideEl" class="rail-scroll mt-4 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1" role="list">
+    <div ref="sideEl" class="live-groups__list rail-scroll mt-4 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1" role="list">
       <button
         v-for="group in groups"
         :key="group.slug"

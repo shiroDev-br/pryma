@@ -26,7 +26,7 @@
           </button>
           <span :class="isAnnual ? 'text-blue' : 'text-ink-muted'">
             Anual
-            <span class="ml-1 text-sm text-blue-dark">economize 20%</span>
+            <span class="ml-1 text-sm text-blue-light">economize 20%</span>
           </span>
         </div>
       </div>

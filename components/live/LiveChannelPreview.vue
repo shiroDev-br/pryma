@@ -16,90 +16,22 @@
         @keydown.enter.prevent="expand"
         @pointermove.passive="expanded && pokeHud()"
       >
-        <!-- Tela cheia: HUD com botões de verdade (←/→ escolhem, OK aciona, ↑/↓ trocam de canal).
-             v-show: os botões continuam no DOM quando o HUD some — o índice do foco sobrevive. -->
-        <div v-if="expanded" v-show="hudVisible" ref="fullHud" class="pv-hud absolute inset-0 z-20">
-          <div class="absolute inset-x-0 top-0 flex items-center bg-gradient-to-b from-black/85 via-black/35 to-transparent px-10 pb-16 pt-8">
-            <button
-              type="button"
-              class="pv-ctl mr-5 grid h-12 w-12 shrink-0 place-items-center rounded-full border border-white/20 bg-black/70 text-white"
-              aria-label="Voltar para a lista"
-              data-full-ctl
-              @click.stop="collapse"
-            >
-              <Icon name="material-symbols:arrow-back-rounded" class="h-6 w-6" aria-hidden="true" />
-            </button>
-            <span class="min-w-0">
-              <span class="block truncate text-2xl font-semibold text-white">{{ media.title }}</span>
-              <span class="mt-0.5 block truncate text-sm text-white/70">
-                {{ media.categoryName ?? 'Ao vivo' }}
-                <template v-if="guide.current.value"> · {{ guide.current.value.title }}</template>
-              </span>
-            </span>
-          </div>
-
-          <div class="absolute inset-x-0 bottom-0 flex items-center bg-gradient-to-t from-black/85 via-black/40 to-transparent px-10 pb-8 pt-20">
-            <span class="mr-5 inline-flex items-center rounded-full border border-white/15 bg-black/70 px-3 py-1.5 text-[0.75rem] font-semibold uppercase tracking-wide text-white">
-              <span class="live-dot mr-2 h-2 w-2 rounded-full bg-[#ff4d4d]" aria-hidden="true" />
-              Ao vivo
-            </span>
-
-            <button
-              v-for="variant in variants"
-              :key="variant.media.id"
-              type="button"
-              class="pv-ctl mr-2.5 inline-flex h-11 min-w-[4.5rem] items-center justify-center rounded-full border px-4 text-[0.9rem] font-semibold tracking-wide"
-              :class="
-                variant.media.id === activeVariantId
-                  ? 'border-transparent bg-blue-dark text-white'
-                  : 'border-white/20 bg-black/70 text-white/80'
-              "
-              :aria-pressed="variant.media.id === activeVariantId"
-              data-full-ctl
-              @click.stop="pickVariant(variant.media)"
-            >
-              {{ variant.label }}
-            </button>
-
-            <span class="flex-1" />
-
-            <span class="mr-6 hidden items-center text-sm text-white/60 sm:inline-flex">
-              <Icon name="material-symbols:swap-vert-rounded" class="mr-1.5 h-5 w-5" aria-hidden="true" />
-              Trocar de canal
-            </span>
-
-            <button
-              type="button"
-              class="pv-ctl mr-2.5 inline-flex h-11 items-center rounded-full border border-white/20 bg-black/70 px-4 text-[0.9rem] font-medium text-white"
-              :aria-pressed="fillScreen"
-              data-full-ctl
-              @click.stop="toggleFill"
-            >
-              <Icon
-                :name="fillScreen ? 'material-symbols:fit-screen-outline-rounded' : 'material-symbols:fullscreen-rounded'"
-                class="mr-2 h-5 w-5"
-                aria-hidden="true"
-              />
-              {{ fillScreen ? 'Ajustar à tela' : 'Preencher tela' }}
-            </button>
-
-            <button
-              type="button"
-              class="pv-ctl inline-flex h-11 items-center rounded-full border border-white/20 bg-black/70 px-4 text-[0.9rem] font-medium text-white"
-              :aria-pressed="favorite"
-              data-full-ctl
-              @click.stop="toggleFavorite"
-            >
-              <Icon
-                :name="favorite ? 'material-symbols:star-rounded' : 'material-symbols:star-outline-rounded'"
-                class="mr-2 h-5 w-5"
-                :class="favorite ? 'text-[#ffc94d]' : ''"
-                aria-hidden="true"
-              />
-              {{ favorite ? 'Nos favoritos' : 'Favoritar' }}
-            </button>
-          </div>
-        </div>
+        <!-- v-show: os botões continuam no DOM quando o HUD some — o índice do foco sobrevive. -->
+        <LiveFullscreenHud
+          v-if="expanded"
+          v-show="hudVisible"
+          ref="fullHud"
+          :media="media"
+          :program-title="guide.current.value?.title ?? null"
+          :variants="variants"
+          :active-variant-id="activeVariantId"
+          :fill-screen="fillScreen"
+          :favorite="favorite"
+          @back="collapse"
+          @pick-variant="pickVariant"
+          @toggle-fill="toggleFill"
+          @toggle-favorite="toggleFavorite"
+        />
 
         <!-- Carregamento enquanto não há vídeo -->
         <div
@@ -196,7 +128,7 @@
       </div>
 
       <!-- Canal + programa atual -->
-      <section class="pv-card shrink-0 p-4 lg:p-5">
+      <section class="pv-card pv-info shrink-0 p-4 lg:p-5">
         <div class="flex items-center gap-4">
           <span
             class="hidden h-12 w-[4.5rem] shrink-0 items-center justify-center lg:flex"
@@ -390,69 +322,13 @@
     </template>
 
     <!-- Nenhum canal escolhido: mesma estrutura, vazia (nada focável, nada carrega). -->
-    <template v-else>
-      <div
-        class="pv-card pv-thumb relative block aspect-video min-h-[6rem] w-full shrink overflow-hidden"
-        aria-hidden="true"
-      >
-        <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-          <Icon name="material-symbols:live-tv-outline-rounded" class="h-10 w-10 text-ink-muted/60" />
-          <span class="text-sm font-medium text-ink-muted">
-            Aperte OK em um canal para ver a prévia
-          </span>
-        </div>
-      </div>
-
-      <section class="pv-card shrink-0 p-4 lg:p-5" aria-hidden="true">
-        <div class="flex items-center gap-4">
-          <span class="pv-blank hidden h-12 w-[4.5rem] shrink-0 rounded-lg lg:block" />
-          <span class="hidden h-9 w-px shrink-0 bg-white/12 lg:block" />
-          <div class="min-w-0 flex-1">
-            <span class="pv-blank block h-4 w-3/5 rounded" />
-            <span class="pv-blank mt-2 block h-3 w-2/5 rounded" />
-          </div>
-        </div>
-
-        <div class="mt-4 flex items-center gap-4">
-          <span class="h-1.5 flex-1 rounded-full bg-white/10" />
-          <span class="pv-blank block h-3 w-20 rounded" />
-        </div>
-
-        <div class="mt-4 flex flex-wrap gap-3">
-          <span class="inline-flex h-11 items-center gap-2 rounded-full bg-blue-dark/25 px-3 text-sm font-semibold text-ink/40 lg:px-6">
-            <Icon name="material-symbols:play-arrow-rounded" class="h-5 w-5" />
-            Assistir agora
-          </span>
-          <span class="inline-flex h-11 items-center gap-2 rounded-full border border-line/60 bg-elevated/40 px-5 text-sm font-medium text-ink/40">
-            <Icon name="material-symbols:star-outline-rounded" class="h-5 w-5" />
-            Favoritar
-          </span>
-        </div>
-      </section>
-
-      <section class="pv-card flex min-h-[8rem] flex-1 shrink-0 flex-col p-4 lg:p-5" aria-hidden="true">
-        <div class="flex shrink-0 items-center gap-3">
-          <Icon name="material-symbols:calendar-month-outline-rounded" class="h-6 w-6 text-ink-muted" />
-          <h2 class="flex-1 text-[1.05rem] font-medium text-ink">Programação</h2>
-          <Icon name="material-symbols:chevron-right-rounded" class="h-6 w-6 text-ink-muted" />
-        </div>
-        <ul class="mt-3">
-          <li
-            v-for="row in 4"
-            :key="row"
-            class="flex items-center gap-4 border-t border-white/[0.06] px-3 py-3 first:border-t-0"
-          >
-            <span class="pv-blank block h-3 w-12 shrink-0 rounded" />
-            <span class="pv-blank block h-3 rounded" :style="{ width: `${[55, 40, 62, 48][row - 1]}%` }" />
-          </li>
-        </ul>
-      </section>
-    </template>
+    <LivePreviewPlaceholder v-else />
   </aside>
 </template>
 
 <script setup lang="ts">
-import { BLANK_POSTER, STORAGE_KEYS } from '~/constants';
+import { BLANK_POSTER } from '~/constants';
+import { directionOf, isBackKey, isOkKey } from '~/utils/remoteKeys';
 import { useChannelGuide } from '~/composables/useChannelGuide';
 import { useLivePreview } from '~/composables/useLivePreview';
 import { usePreferencesStore } from '~/stores/preferences';
@@ -529,12 +405,12 @@ const { hudVisible, pokeHud } = useAutoHideHud(() => true);
 
 /* ── HUD da tela cheia ── */
 
-const fullHud = ref<HTMLElement | null>(null);
+const fullHud = ref<{ $el: HTMLElement } | null>(null);
 /** Botão do HUD em foco (índice entre os `[data-full-ctl]`) — sobrevive ao HUD sumir. */
 const hudIndex = ref(1);
 
 function hudControls(): HTMLElement[] {
-  return Array.from(fullHud.value?.querySelectorAll<HTMLElement>('[data-full-ctl]') ?? []);
+  return Array.from(fullHud.value?.$el.querySelectorAll<HTMLElement>('[data-full-ctl]') ?? []);
 }
 
 function focusControl(index: number): void {
@@ -544,27 +420,7 @@ function focusControl(index: number): void {
   controls[hudIndex.value].focus({ preventScroll: true });
 }
 
-/** Mesma preferência do player: esticar a imagem para ocupar a tela toda. */
-const fillScreen = ref(false);
-
-function toggleFill(): void {
-  fillScreen.value = !fillScreen.value;
-  try {
-    localStorage.setItem(STORAGE_KEYS.playerFill, fillScreen.value ? '1' : '0');
-  } catch {
-    /* storage bloqueado: vale só nesta sessão */
-  }
-}
-
-onMounted(() => {
-  try {
-    fillScreen.value = localStorage.getItem(STORAGE_KEYS.playerFill) === '1';
-  } catch {
-    /* sem storage */
-  }
-});
-
-const BACK_KEYS = ['Escape', 'Backspace', 'GoBack', 'BrowserBack'];
+const { fillScreen, toggleFill } = usePlayerFill();
 
 /**
  * Tela cheia (captura, antes da lista por trás e do motor espacial):
@@ -575,11 +431,10 @@ const BACK_KEYS = ['Escape', 'Backspace', 'GoBack', 'BrowserBack'];
  */
 function onFullKey(event: KeyboardEvent): void {
   if (!expanded.value) return;
-  const { key, keyCode } = event;
   event.preventDefault();
   event.stopImmediatePropagation();
 
-  if (BACK_KEYS.includes(key) || keyCode === 10009) {
+  if (isBackKey(event)) {
     collapse();
     return;
   }
@@ -587,23 +442,17 @@ function onFullKey(event: KeyboardEvent): void {
   const hidden = !hudVisible.value;
   pokeHud();
 
-  if (key === 'ArrowUp' || key === 'Up' || keyCode === 19) {
-    emit('zap', -1);
-    return;
-  }
-  if (key === 'ArrowDown' || key === 'Down' || keyCode === 20) {
-    emit('zap', 1);
+  const direction = directionOf(event);
+  if (direction === 'up' || direction === 'down') {
+    emit('zap', direction === 'up' ? -1 : 1);
     return;
   }
 
   void nextTick(() => {
-    if (hidden) {
-      focusControl(hudIndex.value);
-      return;
-    }
-    if (key === 'ArrowLeft' || key === 'Left' || keyCode === 21) focusControl(hudIndex.value - 1);
-    else if (key === 'ArrowRight' || key === 'Right' || keyCode === 22) focusControl(hudIndex.value + 1);
-    else if (key === 'Enter' || key === ' ' || keyCode === 13 || keyCode === 23) hudControls()[hudIndex.value]?.click();
+    if (hidden) focusControl(hudIndex.value);
+    else if (direction === 'left') focusControl(hudIndex.value - 1);
+    else if (direction === 'right') focusControl(hudIndex.value + 1);
+    else if (isOkKey(event)) hudControls()[hudIndex.value]?.click();
   });
 }
 
@@ -709,22 +558,8 @@ function toggleFavorite(): void {
 </script>
 
 <style scoped>
-.pv-card {
-  border: 1px solid rgba(124, 154, 255, 0.14);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(
-    180deg,
-    rgba(8, 22, 52, 0.96),
-    rgba(4, 12, 32, 0.98)
-  );
-}
-
 .pv-guide:focus-visible {
   border-color: rgba(124, 154, 255, 0.7);
-}
-
-.pv-thumb {
-  background: #050b1c;
 }
 
 .pv-thumb video {
@@ -755,28 +590,8 @@ function toggleFavorite(): void {
   object-fit: fill;
 }
 
-/* Foco do HUD sempre visível (mesmo fora do dpad-mode — o OK do controle não liga o modo). */
-.pv-ctl:focus {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
 .pv-thumb--full:focus-visible {
   box-shadow: none;
-}
-
-/* Traços do estado vazio (sem canal escolhido) — sem animação, só a forma. */
-.pv-blank {
-  background: rgba(255, 255, 255, 0.07);
-}
-
-/* WebView <88 não tem aspect-ratio: sem isto a prévia fica com 0px de altura
-   (todo o conteúdo dela é absoluto). Padding em % da largura = 16:9. */
-@supports not (aspect-ratio: 16 / 9) {
-  .pv-thumb {
-    height: 0;
-    padding-top: 56.25%;
-  }
 }
 
 .pv-thumb:focus-visible {

@@ -1,8 +1,9 @@
 <template>
-  <div class="absolute inset-0 z-20 select-none">
+  <!-- Só as barras recebem toque: a área do meio é do vídeo e do card de pausa (z-10). -->
+  <div class="pointer-events-none absolute inset-0 z-20 select-none">
     <!-- Topo: sair + chips de qualidade/legendas/velocidade/fullscreen -->
     <header
-      class="absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4 sm:px-8"
+      class="pointer-events-auto absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4 sm:px-8"
       :class="barGradient"
     >
       <button
@@ -14,16 +15,14 @@
         <span
           class="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-black/75 transition group-hover:border-white/40 group-hover:bg-white/10"
         >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
+          <HudIcon name="back" class="h-4 w-4"/>
         </span>
         <span class="hidden sm:inline">Voltar</span>
       </button>
 
       <!-- Nome do título: aparece junto com o HUD (inclusive ao avançar/voltar). -->
-      <div v-if="title" class="mx-6 min-w-0 flex-1 text-center">
-        <p class="truncate text-xl font-semibold leading-tight text-white drop-shadow">{{ title }}</p>
+      <div v-if="title" class="mx-2 min-w-0 flex-1 text-center sm:mx-6">
+        <p class="truncate text-base font-semibold leading-tight text-white drop-shadow sm:text-xl">{{ title }}</p>
         <p v-if="subtitle" class="mt-0.5 truncate text-sm text-white/70">{{ subtitle }}</p>
       </div>
 
@@ -71,9 +70,7 @@
                 @click="pickSpeed(rate)"
               >
                 {{ rate }}×
-                <svg v-if="rate === speed" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
+                <HudIcon name="check" v-if="rate === speed" class="h-4 w-4"/>
               </button>
             </li>
           </ul>
@@ -86,18 +83,14 @@
           :aria-pressed="isFullscreen"
           @click="$emit('toggle-fullscreen')"
         >
-          <svg v-if="!isFullscreen" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-          </svg>
-          <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-          </svg>
+          <HudIcon name="fill" v-if="!isFullscreen" class="h-4 w-4"/>
+          <HudIcon name="fit" v-else class="h-4 w-4"/>
         </button>
       </div>
     </header>
 
     <!-- Base: progresso + controles -->
-    <footer class="absolute inset-x-0 bottom-0 px-5 pb-5 sm:px-8" :class="barGradient">
+    <footer class="pointer-events-auto absolute inset-x-0 bottom-0 px-5 pb-5 sm:px-8" :class="barGradient">
       <!-- Ao vivo: não há linha do tempo pra percorrer — só o selo. -->
       <div v-if="live" class="mb-3 flex items-center">
         <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">
@@ -106,8 +99,8 @@
         </span>
       </div>
 
-      <div v-else class="mb-3 flex items-center gap-4">
-        <span class="w-14 shrink-0 text-right text-xs tabular-nums text-white/80">{{ currentLabel }}</span>
+      <div v-else class="mb-3 flex items-center gap-2 sm:gap-4">
+        <span class="w-11 shrink-0 text-right text-xs tabular-nums text-white/80 sm:w-14">{{ currentLabel }}</span>
 
         <div
           ref="track"
@@ -135,10 +128,10 @@
           />
         </div>
 
-        <span class="w-14 shrink-0 text-xs tabular-nums text-white/80">{{ durationLabel }}</span>
+        <span class="w-11 shrink-0 text-xs tabular-nums text-white/80 sm:w-14">{{ durationLabel }}</span>
       </div>
 
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-y-2">
         <div class="flex items-center gap-3">
           <!-- Ao vivo: sem pausa. O play só aparece se a transmissão parou
                (autoplay barrado, volta do segundo plano) — pra retomar. -->
@@ -149,12 +142,8 @@
             :aria-label="playing ? 'Pausar' : 'Reproduzir'"
             @click="$emit('toggle-play')"
           >
-            <svg v-if="playing" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M7 5.5A1.5 1.5 0 0 1 8.5 4h1A1.5 1.5 0 0 1 11 5.5v13A1.5 1.5 0 0 1 9.5 20h-1A1.5 1.5 0 0 1 7 18.5v-13Zm6 0A1.5 1.5 0 0 1 14.5 4h1A1.5 1.5 0 0 1 17 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-13Z" />
-            </svg>
-            <svg v-else class="ml-0.5 h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z" />
-            </svg>
+            <HudIcon name="pause" v-if="playing" class="h-6 w-6"/>
+            <HudIcon name="play" v-else class="ml-0.5 h-6 w-6"/>
           </button>
 
           <button
@@ -164,10 +153,7 @@
             aria-label="Voltar 10 segundos"
             @click="$emit('skip', -10)"
           >
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <path d="M3 4v5h5" />
-            </svg>
+            <HudIcon name="replay" class="h-5 w-5"/>
             <span class="absolute text-[9px] font-bold leading-none">10</span>
           </button>
 
@@ -178,10 +164,7 @@
             aria-label="Avançar 10 segundos"
             @click="$emit('skip', 10)"
           >
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 12a9 9 0 1 1-3-6.7" />
-              <path d="M21 4v5h-5" />
-            </svg>
+            <HudIcon name="forward" class="h-5 w-5"/>
             <span class="absolute text-[9px] font-bold leading-none">10</span>
           </button>
         </div>
@@ -196,19 +179,7 @@
             @click="qualityOpen = !qualityOpen"
           >
             {{ currentQualityLabel }}
-            <svg
-              class="h-3.5 w-3.5 transition-transform duration-200"
-              :class="{ 'rotate-180': qualityOpen }"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <HudIcon name="chevronDown" class="h-3.5 w-3.5 transition-transform duration-200" :class="{ 'rotate-180': qualityOpen }"/>
           </button>
           <ul
             v-if="qualityOpen"
@@ -225,9 +196,7 @@
                 @click="pickQuality(option.slug)"
               >
                 {{ option.label }}
-                <svg v-if="option.current" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
+                <HudIcon name="check" v-if="option.current" class="h-4 w-4"/>
               </button>
             </li>
           </ul>
@@ -240,14 +209,8 @@
             :aria-label="muted || volume === 0 ? 'Ativar som' : 'Silenciar'"
             @click="$emit('toggle-mute')"
           >
-            <svg v-if="muted || volume === 0" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M11 5 6 9H2v6h4l5 4V5Z" />
-              <path d="m22 9-6 6m0-6 6 6" />
-            </svg>
-            <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M11 5 6 9H2v6h4l5 4V5Z" />
-              <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
-            </svg>
+            <HudIcon name="muted" v-if="muted || volume === 0" class="h-5 w-5"/>
+            <HudIcon name="volume" v-else class="h-5 w-5"/>
           </button>
 
           <!-- Fora da navegação do controle (tabindex -1): a seta num range muda o
@@ -259,7 +222,7 @@
             max="1"
             step="0.05"
             :value="muted ? 0 : volume"
-            class="h-1.5 w-24 cursor-pointer accent-blue"
+            class="hidden h-1.5 w-24 cursor-pointer accent-blue sm:block"
             aria-label="Volume"
             tabindex="-1"
             @input="onVolumeInput"
@@ -268,30 +231,23 @@
           <button
             v-if="hasCaptions"
             type="button"
-            class="grid h-10 w-10 place-items-center rounded-full text-white/90 transition hover:bg-white/10"
+            class="hidden h-10 w-10 place-items-center rounded-full text-white/90 transition hover:bg-white/10 sm:grid"
             :class="{ 'text-blue': captionsOn }"
             aria-label="Legendas"
             @click="$emit('toggle-captions')"
           >
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="2" y="5" width="20" height="14" rx="2.5" />
-              <path d="M10 10.5a2.5 2.5 0 1 0 0 3M17.5 10.5a2.5 2.5 0 1 0 0 3" />
-            </svg>
+            <HudIcon name="captions" class="h-5 w-5"/>
           </button>
 
           <button
             type="button"
-            class="grid h-10 w-10 place-items-center rounded-full text-white/90 transition hover:bg-white/10"
+            class="hidden h-10 w-10 place-items-center rounded-full text-white/90 transition hover:bg-white/10 sm:grid"
             :aria-label="isFullscreen ? 'Ajustar à tela' : 'Tela cheia (preencher)'"
             :aria-pressed="isFullscreen"
             @click="$emit('toggle-fullscreen')"
           >
-            <svg v-if="!isFullscreen" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-            </svg>
-            <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-            </svg>
+            <HudIcon name="fill" v-if="!isFullscreen" class="h-5 w-5"/>
+            <HudIcon name="fit" v-else class="h-5 w-5"/>
           </button>
         </div>
       </div>
@@ -353,6 +309,13 @@ const speedOpen = ref(false);
 const qualityWrap = ref<HTMLElement | null>(null);
 const qualityOpen = ref(false);
 const scrubbing = ref(false);
+
+useBackLayer(() => speedOpen.value, () => {
+  speedOpen.value = false;
+});
+useBackLayer(() => qualityOpen.value, () => {
+  qualityOpen.value = false;
+});
 
 const currentQualityLabel = computed(
   () => props.qualityOptions.find((option) => option.current)?.label ?? props.quality ?? 'SD',

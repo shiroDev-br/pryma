@@ -3,6 +3,9 @@ import type { Ref } from 'vue';
 // Só tipos — hls.js/mpegts.js entram por import dinâmico (mesmo chunk do player).
 import type Hls from 'hls.js';
 import type mpegts from 'mpegts.js';
+import { canPlayNativeHls, loadHls, loadMpegts, streamKindOf } from '~/utils/stream';
+import type { HlsCtor } from '~/utils/stream';
+import { releaseVideo } from '~/utils/video';
 import { usePlayback } from '~/composables/usePlayback';
 import { useLiveFailover } from '~/composables/useLiveFailover';
 import type { LiveSource } from '~/composables/useLiveFailover';
@@ -115,12 +118,7 @@ export function useLivePreview(options: UseLivePreviewOptions): UseLivePreviewRe
       ts = null;
     }
 
-    const video = videoEl.value;
-    if (video) {
-      video.pause();
-      video.removeAttribute('src');
-      video.load(); // libera o decoder
-    }
+    releaseVideo(videoEl.value);
     playing.value = false;
   }
 
@@ -188,22 +186,21 @@ export function useLivePreview(options: UseLivePreviewOptions): UseLivePreviewRe
 
     const { url, protocol } = source;
     dbg('abrindo', { id: source.mediaId, protocol, url });
-    const isHls = /m3u8/i.test(url);
-    const isFile = protocol === 'file' || /\.(mp4|webm|mkv|ogv)(\?|#|$)/i.test(url);
+    const kind = streamKindOf(url, protocol);
 
-    if (isFile) {
+    if (kind === 'file') {
       video.src = url;
       void video.play().catch(() => undefined);
       return;
     }
 
-    if (isHls) {
-      const HlsCtor = (await import('hls.js')).default;
+    if (kind === 'hls') {
+      const Ctor = await loadHls();
       if (gen !== generation) return;
 
-      if (HlsCtor.isSupported()) {
-        attachHls(video, url, HlsCtor, gen);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      if (Ctor.isSupported()) {
+        attachHls(video, url, Ctor, gen);
+      } else if (canPlayNativeHls(video)) {
         video.src = url;
         void video.play().catch(() => undefined);
       } else {
@@ -215,8 +212,8 @@ export function useLivePreview(options: UseLivePreviewOptions): UseLivePreviewRe
     await attachMpegTs(video, url, gen);
   }
 
-  function attachHls(video: HTMLVideoElement, url: string, HlsCtor: typeof Hls, gen: number): void {
-    const instance = new HlsCtor({
+  function attachHls(video: HTMLVideoElement, url: string, Ctor: HlsCtor, gen: number): void {
+    const instance = new Ctor({
       enableWorker: true,
       lowLatencyMode: false,
       startLevel: 0, // menor qualidade primeiro — a prévia é pequena
@@ -236,10 +233,10 @@ export function useLivePreview(options: UseLivePreviewOptions): UseLivePreviewRe
 
     instance.loadSource(url);
     instance.attachMedia(video);
-    instance.on(HlsCtor.Events.MANIFEST_PARSED, () => {
+    instance.on(Ctor.Events.MANIFEST_PARSED, () => {
       void video.play().catch(() => undefined);
     });
-    instance.on(HlsCtor.Events.ERROR, (_event, data) => {
+    instance.on(Ctor.Events.ERROR, (_event, data) => {
       if (gen !== generation) return;
       // Lista que não é HLS de verdade → tenta MPEG-TS uma única vez.
       if (data.details === 'manifestParsingError' || data.details === 'manifestLoadError') {
@@ -260,7 +257,7 @@ export function useLivePreview(options: UseLivePreviewOptions): UseLivePreviewRe
   }
 
   async function attachMpegTs(video: HTMLVideoElement, url: string, gen: number): Promise<void> {
-    const mpegtsLib = (await import('mpegts.js')).default;
+    const mpegtsLib = await loadMpegts();
     if (gen !== generation) return;
     if (!mpegtsLib.isSupported()) {
       fail('mpegts.js sem suporte neste navegador');

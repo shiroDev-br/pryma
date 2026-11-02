@@ -136,6 +136,26 @@ input[type='submit'] {
   display: none;
 }
 
+/* Aviso "pressione voltar novamente" (composables/useDoubleBackExit). */
+#exit-hint-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  z-index: 10000;
+  padding: 0.75rem 1.5rem;
+  transform: translateX(-50%);
+  border: 1px solid rgba(22, 136, 255, 0.5);
+  border-radius: 9999px;
+  background: rgba(2, 8, 23, 0.95);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
 /* Áreas seguras para bordas de TV (overscan).
    Fallback ANTES: WebView antiga não resolve max() e derruba a declaração
    inteira — o fallback mantém logo e relógio longe da borda. */
@@ -183,6 +203,39 @@ input[type='submit'] {
 /* Brilho sutil no topo de superfícies. */
 .card-sheen {
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
+}
+
+/* Painéis da TV ao vivo. Fundo opaco, sem backdrop-filter: em colunas de altura
+   inteira o blur era recalculado com a lista rolando atrás (travava o D-pad). */
+.live-panel {
+  border: 1px solid rgba(124, 154, 255, 0.14);
+  border-radius: 1.35rem;
+  background: linear-gradient(180deg, rgba(8, 22, 52, 0.96), rgba(4, 12, 32, 0.98));
+}
+
+/* Cartões da coluna da prévia (LiveChannelPreview e o estado vazio dela). */
+.pv-card {
+  border: 1px solid rgba(124, 154, 255, 0.14);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(8, 22, 52, 0.96), rgba(4, 12, 32, 0.98));
+}
+
+.pv-thumb {
+  background: #050b1c;
+}
+
+/* WebView <88 não tem aspect-ratio: sem isto a prévia fica com 0px de altura
+   (todo o conteúdo dela é absoluto). Padding em % da largura = 16:9. */
+@supports not (aspect-ratio: 16 / 9) {
+  .pv-thumb {
+    height: 0;
+    padding-top: 56.25%;
+  }
+}
+
+/* Traços do estado vazio (sem canal escolhido) — sem animação, só a forma. */
+.pv-blank {
+  background: rgba(255, 255, 255, 0.07);
 }
 
 /* Fundo ambiente — base azul profundo, usada pelo AppBackground
@@ -520,4 +573,146 @@ html.no-flex-gap .yt-player__toast > [aria-hidden='true']:first-child,
 html.no-flex-gap .yt-card__external > [aria-hidden='true']:first-child,
 html.no-flex-gap .yt-feed__retry > [aria-hidden='true']:first-child {
   margin-right: 0.4rem;
+}
+
+/* ═══ Celular / tablet em pé ═════════════════════════════════════════════════
+   As variantes `sm: md: lg: xl:` funcionam por largura em retrato (tailwind.config).
+   Aqui fica só o que não é utilitário: gutter e o empilhamento da TV ao vivo. */
+@media (orientation: portrait) and (max-width: 640px) {
+  :root {
+    --page-gutter: 1rem;
+  }
+
+  /* Letreiro espaçado do header e relógio não cabem juntos num celular. */
+  .app-header .tv-safe {
+    height: 4rem;
+  }
+
+  .live-preview > .pv-thumb {
+    top: 4.25rem !important;
+  }
+
+  .live-preview > .pv-thumb.pv-thumb--full {
+    top: 0 !important;
+  }
+}
+
+/* TV ao vivo em pé: uma coluna na ordem de quem está com o celular na mão —
+   vídeo (fixo no topo enquanto a lista rola), dados do canal, grupos em faixa
+   lateral e a lista. A página inteira rola; nenhum painel tem rolagem própria. */
+@media (orientation: portrait) and (max-width: 1023px) {
+  #__nuxt .live-screen {
+    height: auto;
+    overflow: visible;
+    padding-top: 4.75rem;
+  }
+
+  .live-columns {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+
+  .live-groups {
+    order: 1;
+    padding: 0.75rem;
+  }
+
+  .live-groups__list {
+    display: flex;
+    flex: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-top: 0.75rem;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+  }
+
+  .live-groups__list > * {
+    flex: none;
+    width: auto;
+    max-width: 75vw;
+    margin-top: 0 !important;
+    margin-right: 0.5rem;
+  }
+
+  .live-groups__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .live-list {
+    order: 2;
+  }
+
+  .live-list > .rail-scroll {
+    overflow: visible;
+  }
+
+  /* `contents`: os cartões da prévia entram na ordem da página. */
+  .live-preview {
+    display: contents !important;
+  }
+
+  .live-preview--empty > * {
+    display: none;
+  }
+
+  /* A lista rola por trás: header translúcido deixaria os nomes aparecerem nele. */
+  .app-header {
+    background: var(--color-bg);
+  }
+
+  .live-preview > .pv-thumb {
+    position: sticky;
+    top: 5.25rem;
+    z-index: 20;
+    order: -3;
+    flex: none;
+  }
+
+  /* Expandida vira `position: fixed` — a regra acima não pode vencer. */
+  .live-preview > .pv-thumb.pv-thumb--full {
+    position: fixed;
+    top: 0;
+  }
+
+  .live-preview > [role='group'] {
+    order: -2;
+  }
+
+  .live-preview > .pv-info {
+    order: -1;
+  }
+
+  /* Programa atual já está nos dados do canal; a grade inteira empurraria a lista. */
+  .live-preview > .pv-guide {
+    display: none;
+  }
+}
+
+/* ═══ Aparelho na mão (celular em pé ou deitado) ═════════════════════════════
+   `pointer: coarse` separa do Fire Stick / TV em modo compat, que têm a mesma
+   altura de um celular deitado mas são controlados por D-pad. */
+@media (orientation: portrait) and (max-width: 640px), (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  /* "OK para abrir / ← → Navegar" não faz sentido no toque e tapa conteúdo. */
+  .info-bar {
+    display: none;
+  }
+
+  /* Linha do canal: o nome é o que importa — número e seta saem, o logo encolhe. */
+  .live-row__number,
+  .live-row .live-row__chevron {
+    display: none;
+  }
+
+  .live-row__logo {
+    width: 3.5rem;
+    height: 2.5rem;
+  }
+
+  /* Coluna de grupos: mesmo motivo. */
+  .live-groups__list > button > :last-child {
+    display: none;
+  }
 }

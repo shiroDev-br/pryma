@@ -20,8 +20,10 @@ export interface PaginatedQuery<T> {
   hasNext: ComputedRef<boolean>;
   isLoading: ComputedRef<boolean>;
   isPending: ComputedRef<boolean>;
-  /** Promise da primeira página — `await` no setup pra SSR sair com dados. */
+  /** Primeira página — `await` no setup segura a troca de tela até ter o que mostrar. */
   ready: Promise<void>;
+  /** Primeira página de fato concluída — também na hidratação, em que `ready` não espera. */
+  settled: Promise<void>;
   refresh(): Promise<void>;
   loadMore(): Promise<void>;
   reset(): void;
@@ -50,6 +52,10 @@ export function usePaginatedQuery<T>(
   const isPending = computed(() => status.value === 'pending' && items.value.length === 0);
 
   async function load(mode: 'replace' | 'append'): Promise<void> {
+    // O catálogo exige login e o token só existe no cliente: no servidor a API
+    // responde 401 e o HTML saía com "Não foi possível carregar".
+    if (import.meta.server) return;
+
     controller?.abort();
     const local = new AbortController();
     controller = local;
@@ -99,8 +105,14 @@ export function usePaginatedQuery<T>(
     });
   }
 
-  // Primeira página em voo — pages `await ready` pra não hidratar "Carregando".
-  const ready = options.immediate === false ? Promise.resolve() : refresh();
+  const immediate = options.immediate !== false;
+  // O servidor pinta "carregando"; a hidratação precisa encontrar o mesmo estado —
+  // por isso ela não espera a página (a lista entra logo depois de montar).
+  if (immediate && import.meta.server) status.value = 'pending';
+  const firstLoad = immediate ? refresh() : Promise.resolve();
+  const ready = tryUseNuxtApp()?.isHydrating ? Promise.resolve() : firstLoad;
 
-  return { items, status, error, total, hasNext, isLoading, isPending, ready, refresh, loadMore, reset };
+  onScopeDispose(() => controller?.abort());
+
+  return { items, status, error, total, hasNext, isLoading, isPending, ready, settled: firstLoad, refresh, loadMore, reset };
 }

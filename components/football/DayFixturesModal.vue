@@ -135,6 +135,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+useBackLayer(() => props.isOpen, () => close());
+
 const emit = defineEmits<{ close: [] }>();
 
 const { isLoading, error, data, fetchFixtures } = useDayFixtures();

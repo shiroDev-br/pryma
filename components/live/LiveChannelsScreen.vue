@@ -18,10 +18,10 @@
     />
 
     <!-- 3 colunas: grupos (esquerda) · canais do grupo (meio) · prévia (direita).
-         Os breakpoints do Tailwind aqui valem 0px (layout único, escalado pelo rem). -->
+         Em landscape é o layout único, escalado pelo rem; em pé, `.live-columns` empilha (main.css). -->
     <div
       v-else
-      class="grid h-[calc(var(--app-vh)_-_7.5rem)] min-h-[30rem] grid-cols-[minmax(14rem,0.6fr)_minmax(0,1fr)_minmax(18rem,0.82fr)] gap-5"
+      class="live-columns grid h-[calc(var(--app-vh)_-_7.5rem)] min-h-[30rem] grid-cols-[minmax(14rem,0.6fr)_minmax(0,1fr)_minmax(18rem,0.82fr)] gap-5"
     >
       <!-- Coluna 1: voltar + busca + grupos -->
       <LiveChannelsSidebar
@@ -39,7 +39,7 @@
       />
 
       <!-- Coluna 2: canais do grupo aberto -->
-      <section class="live-panel flex min-h-0 flex-col p-4" aria-labelledby="live-list-heading">
+      <section class="live-panel live-list flex min-h-0 flex-col p-4" aria-labelledby="live-list-heading">
         <header class="flex shrink-0 items-center gap-3">
           <Icon
             :name="headerIcon"
@@ -81,7 +81,8 @@
             </li>
           </ul>
 
-          <div ref="listSentinel" class="h-16" aria-hidden="true" />
+          <!-- Só com a lista na tela: sem ela o sentinela fica visível e já pediria a página 2. -->
+          <div v-if="channels.length > 0" ref="listSentinel" class="h-16" aria-hidden="true" />
           <p v-if="source?.isLoading.value && channels.length > 0" class="py-3 text-center text-sm text-ink-muted">
             Carregando…
           </p>
@@ -91,7 +92,8 @@
       <!-- Coluna 3: prévia + qualidades + programação -->
       <LiveChannelPreview
         ref="previewPanel"
-        class="flex"
+        class="live-preview flex"
+        :class="{ 'live-preview--empty': !selected }"
         :media="selected"
         :category-slug="selected?.categoryId ? (categoryById.get(selected.categoryId)?.slug ?? null) : null"
         @variant="pickVariant"
@@ -109,8 +111,7 @@ import { useSearchResults } from '~/composables/useSearchResults';
 import { usePaginatedQuery } from '~/composables/usePaginatedQuery';
 import type { PaginatedQuery } from '~/composables/usePaginatedQuery';
 import { usePreferencesStore } from '~/stores/preferences';
-import { categoryBelongsToSection } from '~/utils/categorySections';
-import { isAdultCategory, isAdultItem } from '~/utils/adult';
+import { isAdultItem } from '~/utils/adult';
 import { FAVORITES_SLUG, GAMES_SLUG, channelNumber, compareChannelTitles } from '~/utils/live';
 import { useDayGameChannels } from '~/composables/useDayGameChannels';
 import type { MediaQuery, MediaSummary } from '~/types';
@@ -129,18 +130,8 @@ const countFormatter = new Intl.NumberFormat('pt-BR');
 
 /* ── Categorias ────────────────────────────────────────────────────────── */
 
-const categories = useCategories();
-
-/** Conteúdo adulto oculto — desbloqueio futuro (flag fica pronta, nunca vem do servidor). */
-const adultUnlocked = useState<boolean>('adult.unlocked', () => false);
-
-const tvCategories = computed(() =>
-  categories.categories.value.filter(
-    (category) =>
-      categoryBelongsToSection(category, 'tv') &&
-      (adultUnlocked.value || !isAdultCategory(category.slug)),
-  ),
-);
+const { categories, sectionCategories: tvCategories } = useSectionCategories('tv');
+const adultUnlocked = useAdultUnlocked();
 
 const categoryById = computed(
   () => new Map(categories.categories.value.map((category) => [category.id, category])),
@@ -215,18 +206,19 @@ watch(search.search.query, (value) => {
   liveState.value.query = value;
 });
 
-// SSR: a tela sai com os primeiros canais no HTML.
 await mediaList.ready;
 
 const searching = computed(() => search.search.isReady.value);
 
 /** Busca fixa por termo — carrega os canais dos grupos especiais no servidor
- *  (ficam fora da primeira página paginada; filtrar client-side não alcança). */
+ *  (ficam fora da primeira página paginada; filtrar client-side não alcança).
+ *  Só ao abrir o grupo: eram 3 buscas de 50 canais a cada entrada na tela. */
 function fixedLiveSearch(term: string): PaginatedQuery<MediaSummary> {
   const repository = getRepositories().media;
   return usePaginatedQuery<MediaSummary>(
     (cursor, signal) =>
       repository.search({ q: term, cursor, type: 'live', limit: 50 }, { signal }),
+    { immediate: false },
   );
 }
 
@@ -236,9 +228,13 @@ const specialLists: Record<SpecialTabSlug, PaginatedQuery<MediaSummary>> = {
   __sportv__: fixedLiveSearch('sportv'),
 };
 
-const specialTotals = computed<Record<string, number>>(() =>
+/** Total dos grupos especiais já abertos — os outros ficam sem contagem até abrir. */
+const specialTotals = computed<Record<string, number | null>>(() =>
   Object.fromEntries(
-    Object.entries(specialLists).map(([slug, list]) => [slug, list.total.value]),
+    Object.entries(specialLists).map(([slug, list]) => [
+      slug,
+      list.status.value === 'success' ? list.total.value : null,
+    ]),
   ),
 );
 
@@ -260,6 +256,7 @@ watch(
   activeSlug,
   (slug) => {
     if (slug === GAMES_SLUG && import.meta.client) void games.load();
+    if (isSpecialSlug(slug) && specialLists[slug].status.value === 'idle') void specialLists[slug].refresh();
   },
   { immediate: true },
 );
@@ -493,6 +490,8 @@ async function restoreAfterPlayer(): Promise<void> {
   await until(() => !!listEl.value && !listPending.value);
   const id = liveState.value.selectedId;
   const list = source.value;
+  // Volta do player com grupo especial aberto: a lista dele só carrega sob demanda.
+  if (list?.status.value === 'idle') await list.refresh();
   if (id && list) {
     let guard = 0;
     while (!channels.value.some((channel) => channel.id === id) && list.hasNext.value && guard++ < 80) {
@@ -551,13 +550,3 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
-<style scoped>
-/* Painel — fundo opaco. Sem backdrop-filter: em colunas de altura inteira,
-   o blur era recalculado com a lista rolando atrás (travava D-pad e rolagem). */
-.live-panel {
-  border: 1px solid rgba(124, 154, 255, 0.14);
-  border-radius: 1.35rem;
-  background: linear-gradient(180deg, rgba(8, 22, 52, 0.96), rgba(4, 12, 32, 0.98));
-}
-</style>

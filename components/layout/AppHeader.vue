@@ -9,7 +9,7 @@
       <!-- Identidade — à esquerda do header. -->
       <NuxtLink
         to="/"
-        class="group flex shrink-0 items-center"
+        class="group flex min-w-0 shrink-0 items-center"
         aria-label="Pryma — início"
       >
         <img
@@ -18,7 +18,7 @@
           width="40"
           height="40"
           aria-hidden="true"
-          class="mr-2.5 h-9 w-9 shrink-0 transition-transform duration-fast group-hover:scale-105 sm:mr-3 sm:h-10 sm:w-10"
+          class="mr-2 h-8 w-8 shrink-0 transition-transform duration-fast group-hover:scale-105 sm:mr-3 sm:h-10 sm:w-10"
         />
         <span class="leading-none">
           <span class="block text-[0.95rem] font-semibold tracking-[0.3em] text-ink">
@@ -118,7 +118,7 @@
               >
                 <NuxtLink
                   to="/background"
-                  class="flex items-center rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
+                  class="header-menu-item"
                   @click="menuOpen = false"
                 >
                   <Icon name="material-symbols:wallpaper" class="mr-2.5 h-4 w-4" aria-hidden="true" />
@@ -126,7 +126,7 @@
                 </NuxtLink>
                 <NuxtLink
                   to="/team"
-                  class="flex items-center rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
+                  class="header-menu-item"
                   @click="menuOpen = false"
                 >
                   <Icon name="material-symbols:sports-soccer" class="mr-2.5 h-4 w-4" aria-hidden="true" />
@@ -134,7 +134,7 @@
                 </NuxtLink>
                 <button
                   type="button"
-                  class="flex w-full items-center rounded-sm px-3 py-2.5 text-sm text-ink-muted transition-colors duration-fast hover:bg-white/5 hover:text-ink"
+                  class="header-menu-item w-full"
                   @click="onLogout"
                 >
                   <Icon name="material-symbols:logout-rounded" class="mr-2.5 h-4 w-4" aria-hidden="true" />
@@ -156,6 +156,8 @@ const auth = useAuth();
 const menuOpen = ref(false);
 const triggerRef = ref<HTMLButtonElement | null>(null);
 const menuRef = ref<HTMLElement | null>(null);
+
+useBackLayer(() => menuOpen.value, () => closeMenu());
 
 function menuItems(): HTMLElement[] {
   return Array.from(menuRef.value?.querySelectorAll<HTMLElement>('a[href], button') ?? []);
@@ -256,6 +258,24 @@ onMounted(() => {
   transition:
     border-color var(--transition-fast),
     color var(--transition-fast);
+}
+
+.header-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.header-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
 }
 
 .header-btn:hover {

@@ -1,3 +1,5 @@
+import { directionOf } from '~/utils/remoteKeys';
+
 /**
  * ←/→ numa grade de cards: anda pro card vizinho da mesma fileira e, no fim
  * dela, a seta para ali.
@@ -7,8 +9,8 @@
  * cabeçalho fixo (`data-spatial-chrome`) — o foco pulava pro botão Home.
  */
 export function stopAtRowEdge(event: KeyboardEvent): void {
-  const step =
-    event.key === 'ArrowRight' || event.keyCode === 22 ? 1 : event.key === 'ArrowLeft' || event.keyCode === 21 ? -1 : 0;
+  const direction = directionOf(event);
+  const step = direction === 'right' ? 1 : direction === 'left' ? -1 : 0;
   if (!step || event.defaultPrevented) return;
   const grid = event.currentTarget as HTMLElement;
   const current = document.activeElement as HTMLElement | null;
